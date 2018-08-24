@@ -1,7 +1,16 @@
 # ucsHub
 This is a tool to import telemetry data from [UgCS](www.ugcs.com) to [DroneLogbook](www.dronelogbook.com) site.
 
-## Building client application
+## Getting pre-built release distribution
+1. Download [latest](https://github.com/ugcs/dronelogbook/releases/download/v1.0/ucsHub-1.0.zip) release distribution as zip-archive (or go to the [release page](https://github.com/ugcs/dronelogbook/releases) if you want a different one).
+
+2. Unpack downloaded archive to any place within your local filesystem.
+
+3. Run `ucsHub-1.0.jar` in the result folder (in Linux you may have to add execution permissions on jar-file).
+
+4. All configurations are available through `client.properties` file located in the distribution folder.
+
+## Building application from sources
 * Install [Maven](https://maven.apache.org/) tool (version 3.3.9 or higher)
 * Change to the directory where `pom.xml` is located and run the command:
 ```bash
