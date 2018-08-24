@@ -52,3 +52,8 @@ Successfully uploaded file will be moved to `uploaded` directory by default. You
  ```properties
  uploaded.file.folder=path_to_fodler
  ```
+ 
+ License
+ -------
+ 
+ Licensed under the [3-Clause BSD License](./LICENSE).
