@@ -52,7 +52,6 @@
         </resources>
 
         <plugins>
-            <!-- Set a compiler level -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -63,7 +62,6 @@
                 </configuration>
             </plugin>
 
-            <!-- Make this jar executable -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
@@ -81,7 +79,6 @@
                 </configuration>
             </plugin>
 
-            <!-- Copy project dependency to special folder -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
@@ -114,7 +111,6 @@
                         <configuration>
                             <outputDirectory>${project.build.directory}</outputDirectory>
                             <resources>
-                                <!-- copy settings to target directory as an example of configuration -->
                                 <resource>
                                     <directory>src/main/resources</directory>
                                     <includes>

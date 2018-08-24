@@ -6,10 +6,6 @@ import java.awt.event.ActionListener;
 import static ugcs.ucsHub.Settings.settings;
 
 public class LoginForm extends JPanel {
-
-    //todo add alignment to text fields according to labels length
-
-    // UCS server login and password
     private final JTextField loginField = new JTextField(settings().getUcsServerLoginLogin(), 25);
     private final JTextField passwordField = new JPasswordField(settings().getUcsServerPassword(), 25);
 
@@ -27,25 +23,21 @@ public class LoginForm extends JPanel {
 
         final JPanel loginPanel = new JPanel();
         loginPanel.add(new JLabel("UCS login:                  "));
-        //loginPanel.add(Box.createVerticalGlue());
         loginPanel.add(loginField);
         center.add(loginPanel);
 
         final JPanel passwordPanel = new JPanel();
-       // passwordPanel.add(Box.createVerticalGlue());
         passwordPanel.add(new JLabel("UCS Password:       "));
         passwordPanel.add(passwordField);
         center.add(passwordPanel);
 
         final JPanel loginDlbPanel = new JPanel();
         loginDlbPanel.add(new JLabel("LogBook login:          "));
-        //loginDlbPanel.add(Box.createVerticalGlue());
         loginDlbPanel.add(loginDlbField);
         center.add(loginDlbPanel);
 
         final JPanel passwordDlbPanel = new JPanel();
         passwordDlbPanel.add(new JLabel("LogBook password:"));
-        //passwordDlbPanel.add(Box.createVerticalGlue());
         passwordDlbPanel.add(passwordDlbField);
         center.add(passwordDlbPanel);
 
