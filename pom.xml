@@ -4,7 +4,7 @@
     <groupId>UgCS.ucs.hub</groupId>
     <artifactId>ucsHub</artifactId>
     <packaging>jar</packaging>
-    <version>0.01</version>
+    <version>1.0</version>
     <name>ucsHub</name>
 
     <properties>

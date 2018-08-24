@@ -7,7 +7,7 @@ This is a tool to import telemetry data from [UgCS](www.ugcs.com) to [DroneLogbo
 ```bash
 mvn clean package
 ```
-* after successful build you'll find executable `*.jar` application and `client.properties` configuration file in `distr` directory
+* after successful build you'll find executable `ucsHub-1.0.jar` application and `client.properties` configuration file in `distr` directory
 
 
 ## Connection with UGCS
