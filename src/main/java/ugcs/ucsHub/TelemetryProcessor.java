@@ -51,7 +51,7 @@ public class TelemetryProcessor {
                                         System.err.println("*** Merge fail:");
                                         System.err.println(t1);
                                         System.err.println(t2);
-                                        return t1; // TODO: instead of loosing t2 value, there should be way without data loss
+                                        return t1;
                                     })));
                 }
             }

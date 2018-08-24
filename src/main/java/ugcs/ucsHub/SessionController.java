@@ -33,27 +33,9 @@ public class SessionController implements AutoCloseable {
 
         try {
             client = new Client(serverAddress);
-
-            // Register a server telemetry event listener.
-            // This method just adds listeners to the client listeners
-            // collection and can be invoked any time during the client
-            // life-cycle (even after re-connections).
-            // This listener will stay quiet until event subscription will
-            // be registered on the-server side.
-            //client.addNotificationListener(new TelemetryListener());
             client.connect();
-
             session = new ClientSessionEx(client);
-
-            // To create a new client session application should send
-            // an AuthorizeHciRequest message and set the clientId field
-            // value to -1. In this case server will create a new session
-            // object and return its identity in the clientId field.
             session.authorizeHci();
-
-            // Any session should be associated with an authenticated user.
-            // To authenticate user provide its credentials via LoginRequest
-            // message.
             session.login(login, new String(password));
             Arrays.fill(password, 'x');
         } catch (Exception toRethrow) {
