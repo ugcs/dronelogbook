@@ -8,6 +8,7 @@ import java.io.BufferedWriter;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.nio.charset.Charset;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -59,8 +60,8 @@ public class TelemetryProcessor {
         return processedTelemetry;
     }
 
-    public void printAsCsv(OutputStream out) {
-        final PrintWriter writer = new PrintWriter(new BufferedWriter(new OutputStreamWriter(out)));
+    public void printAsCsv(OutputStream out, Charset charset) {
+        final PrintWriter writer = new PrintWriter(new BufferedWriter(new OutputStreamWriter(out, charset)));
         printCsvHeader(writer);
 
         final Map<String, String> currentRecord = new HashMap<>();

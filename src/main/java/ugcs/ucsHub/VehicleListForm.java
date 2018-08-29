@@ -2,7 +2,7 @@ package ugcs.ucsHub;
 
 import com.github.lgooddatepicker.components.DateTimePicker;
 import com.ugcs.ucs.proto.DomainProto.Vehicle;
-import ugcs.upload.MultipartUtility;
+import ugcs.upload.LogBookFileUploader;
 
 import javax.swing.*;
 import javax.swing.text.DefaultCaret;
@@ -10,6 +10,7 @@ import java.awt.*;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
@@ -26,12 +27,17 @@ import static ugcs.ucsHub.Settings.settings;
 
 public class VehicleListForm extends JPanel {
     private static final SimpleDateFormat FILE_DATE_FORMAT = new SimpleDateFormat("yyyyMMdd_HHmmss");
+    private static final Charset CSV_FILE_CHARSET = Charset.forName("UTF-8");
 
     private final Map<String, Vehicle> vehicleMap;
     private final JList<String> vehicleJList;
 
-    public VehicleListForm(SessionController controller) {
+    private final LogBookFileUploader uploader;
+
+    public VehicleListForm(SessionController controller, LogBookFileUploader uploader) {
         super(new BorderLayout());
+
+        this.uploader = uploader;
 
         final DateTimePicker startDateTimePicker = new DateTimePicker();
         final DateTimePicker endDateTimePicker = new DateTimePicker();
@@ -128,7 +134,7 @@ public class VehicleListForm extends JPanel {
 
     private void saveTelemetryToCsvFile(File fileToSave, TelemetryProcessor telemetryProcessor) {
         try (final OutputStream out = new FileOutputStream(fileToSave)) {
-            telemetryProcessor.printAsCsv(out);
+            telemetryProcessor.printAsCsv(out, CSV_FILE_CHARSET);
         } catch (Exception toRethrow) {
             throw new RuntimeException(toRethrow);
         }
@@ -142,12 +148,7 @@ public class VehicleListForm extends JPanel {
 
     private List<String> uploadCsvFile(File fileToUpload) {
         try {
-            MultipartUtility multipart = new MultipartUtility(settings().getUploadServerUrl(), "UTF-8");
-            multipart.addFormField("login", settings().getUploadServerLogin());
-            multipart.addFormField("password", settings().getUploadServerPassword());
-            multipart.addFilePart("data", fileToUpload);
-
-            return multipart.finish();
+            return uploader.uploadFile(fileToUpload, CSV_FILE_CHARSET);
         } catch (Exception toRethrow) {
             throw new RuntimeException(toRethrow);
         }

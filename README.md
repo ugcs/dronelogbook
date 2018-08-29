@@ -43,7 +43,7 @@ Firstly, you will need www.dronelogbook.com account information added to `client
 ```properties
 upload.server.url=https://www.dronelogbook.com/webservices/importFlight-ugcs.php
 upload.server.login=dronelogbook_login
-upload.server.password=dronelogbook_password
+upload.server.password=dronelogbook_password_or_md5_hash
 ```
 
 Uploading process of acquired telemetry starts if you check `Upload flight` checkbox and click on `Get telemetry` button.

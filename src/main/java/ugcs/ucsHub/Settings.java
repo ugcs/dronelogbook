@@ -64,7 +64,7 @@ public final class Settings {
         host = properties.getOrDefault("server.host", DEFAULT_HOST).toString();
         port = Integer.parseInt(properties.getOrDefault("server.port", DEFAULT_PORT).toString());
         ucsServerLogin = properties.getOrDefault("server.login", DEFAULT_UCS_LOGIN).toString();
-        ucsServerPassword=properties.getOrDefault("server.password", DEFAULT_HOST).toString();
+        ucsServerPassword=properties.getOrDefault("server.password", DEFAULT_UCS_PASSWORD).toString();
 
         uploadServerUrl = properties.getOrDefault("upload.server.url", DEFAULT_UPLOAD_SERVER_URL).toString();
         uploadServerLogin = properties.getOrDefault("upload.server.login", DEFAULT_UPLOAD_SERVER_LOGIN).toString();

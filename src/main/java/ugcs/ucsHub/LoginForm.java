@@ -10,7 +10,7 @@ public class LoginForm extends JPanel {
     private final JTextField passwordField = new JPasswordField(settings().getUcsServerPassword(), 25);
 
     private final JTextField loginDlbField = new JTextField(settings().getUploadServerLogin(), 25);
-    private final JTextField passwordDlbField = new JPasswordField(settings().getUcsServerPassword(), 25);
+    private final JTextField passwordDlbField = new JPasswordField(settings().getUploadServerPassword(), 25);
 
     private final JButton loginButton = new JButton("Login");
 
