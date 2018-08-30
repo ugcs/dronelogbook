@@ -1,15 +1,15 @@
-package ugcs.ucsHub;
+package ugcs.telemetry;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-public final class CsvFieldMapper {
+final class CsvFieldMapper {
     private final Map<String, String> typeNameToCsvFieldName;
 
     private static volatile CsvFieldMapper instance;
 
-    public static CsvFieldMapper mapper() {
+    static CsvFieldMapper mapper() {
         if (instance == null) {
             synchronized (CsvFieldMapper.class) {
                 if (instance == null) {
@@ -32,7 +32,7 @@ public final class CsvFieldMapper {
         this.typeNameToCsvFieldName = Collections.unmodifiableMap(typeNameToCsvFieldName);
     }
 
-    public String convertTypeName(String telemetryTypeName) {
+    String convertTypeName(String telemetryTypeName) {
         return typeNameToCsvFieldName.getOrDefault(telemetryTypeName, telemetryTypeName);
     }
 }

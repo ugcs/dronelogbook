@@ -1,15 +1,15 @@
-package ugcs.ucsHub;
+package ugcs.net;
 
 
 import com.ugcs.ucs.client.Client;
 import com.ugcs.ucs.client.ClientSession;
 
-public class ClientSessionEx extends ClientSession {
-    public ClientSessionEx(Client client) {
+class ClientSessionEx extends ClientSession {
+    ClientSessionEx(Client client) {
         super(client);
     }
 
-    public int getClientId() {
+    int getClientId() {
         return super.clientId;
     }
 }

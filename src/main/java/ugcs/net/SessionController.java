@@ -1,4 +1,4 @@
-package ugcs.ucsHub;
+package ugcs.net;
 
 import com.ugcs.ucs.client.Client;
 import com.ugcs.ucs.proto.DomainProto.DomainObjectWrapper;

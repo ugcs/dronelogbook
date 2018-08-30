@@ -1,5 +1,6 @@
 package ugcs.ucsHub;
 
+import ugcs.net.SessionController;
 import ugcs.upload.LogBookFileUploader;
 
 import javax.swing.*;

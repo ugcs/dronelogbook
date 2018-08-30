@@ -2,6 +2,8 @@ package ugcs.ucsHub;
 
 import com.github.lgooddatepicker.components.DateTimePicker;
 import com.ugcs.ucs.proto.DomainProto.Vehicle;
+import ugcs.net.SessionController;
+import ugcs.telemetry.TelemetryProcessor;
 import ugcs.upload.LogBookFileUploader;
 
 import javax.swing.*;
@@ -25,7 +27,7 @@ import static java.util.stream.Collectors.toMap;
 import static javax.swing.JOptionPane.INFORMATION_MESSAGE;
 import static ugcs.ucsHub.Settings.settings;
 
-public class VehicleListForm extends JPanel {
+class VehicleListForm extends JPanel {
     private static final SimpleDateFormat FILE_DATE_FORMAT = new SimpleDateFormat("yyyyMMdd_HHmmss");
     private static final Charset CSV_FILE_CHARSET = Charset.forName("UTF-8");
 
@@ -34,7 +36,7 @@ public class VehicleListForm extends JPanel {
 
     private final LogBookFileUploader uploader;
 
-    public VehicleListForm(SessionController controller, LogBookFileUploader uploader) {
+    VehicleListForm(SessionController controller, LogBookFileUploader uploader) {
         super(new BorderLayout());
 
         this.uploader = uploader;
@@ -142,7 +144,7 @@ public class VehicleListForm extends JPanel {
 
     private String generateFileName(String vehicleName, long startTimeEpochMilli) {
         return (vehicleName + "-" + FILE_DATE_FORMAT.format(new Date(startTimeEpochMilli)) + ".csv")
-                .replaceAll("[\\*/\\\\!\\|:?<>]", "_")
+                .replaceAll("[*/\\\\!|:?<>]", "_")
                 .replaceAll("(%22)", "_");
     }
 

@@ -1,4 +1,4 @@
-package ugcs.ucsHub;
+package ugcs.telemetry;
 
 import com.ugcs.ucs.proto.DomainProto.Telemetry;
 import com.ugcs.ucs.proto.DomainProto.Value;
