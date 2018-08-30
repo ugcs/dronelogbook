@@ -1,4 +1,4 @@
-package ugcs.upload;
+package ugcs.upload.logbook;
 
 import java.io.BufferedReader;
 

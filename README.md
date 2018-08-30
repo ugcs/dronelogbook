@@ -46,7 +46,7 @@ upload.server.login=dronelogbook_login
 upload.server.password=dronelogbook_password_or_md5_hash
 ```
 
-Uploading process of acquired telemetry starts if you check `Upload flight` checkbox and click on `Get telemetry` button.
+Uploading process of acquired telemetry starts if you check `Upload flights` checkbox and click on `Get telemetry` button.
 
 Successfully uploaded file will be moved to `uploaded` directory by default. You can change target directory of uploaded files in `client.properties`:
  ```properties

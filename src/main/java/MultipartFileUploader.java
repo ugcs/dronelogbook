@@ -1,4 +1,4 @@
-import ugcs.upload.MultipartUtility;
+import ugcs.upload.logbook.MultipartUtility;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,7 +27,7 @@ public class MultipartFileUploader {
 				System.out.println(line);
 			}
 		} catch (IOException ex) {
-			System.err.println(ex);
+			ex.printStackTrace();
 		}
 	}
 }

@@ -1,7 +1,7 @@
 package ugcs.ucsHub;
 
 import ugcs.net.SessionController;
-import ugcs.upload.LogBookFileUploader;
+import ugcs.upload.logbook.LogBookUploader;
 
 import javax.swing.*;
 import java.awt.*;
@@ -33,12 +33,12 @@ public class Main {
                     new SessionController(settings().getHost(), settings().getPort(), loginForm.getLogin(), loginForm.getPassword());
             sessionController.connect();
 
-            final LogBookFileUploader logBookFileUploader =
-                    new LogBookFileUploader(settings().getUploadServerUrl(), loginForm.getDlbLogin(), loginForm.getDlbPassword());
+            final LogBookUploader logBookUploader =
+                    new LogBookUploader(settings().getUploadServerUrl(), loginForm.getDlbLogin(), loginForm.getDlbPassword());
 
             frame.addWindowListener(new ActionOnCloseWindowAdapter(sessionController::close));
 
-            final VehicleListForm vehicleForm = new VehicleListForm(sessionController, logBookFileUploader);
+            final VehicleListForm vehicleForm = new VehicleListForm(sessionController, logBookUploader);
             contentPane.remove(loginForm);
             contentPane.add(vehicleForm);
             frame.setSize(600, 500);
