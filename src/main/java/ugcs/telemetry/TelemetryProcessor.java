@@ -2,6 +2,8 @@ package ugcs.telemetry;
 
 import com.ugcs.ucs.proto.DomainProto.Telemetry;
 import com.ugcs.ucs.proto.DomainProto.Value;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 
 import java.io.BufferedWriter;
 import java.io.OutputStream;
@@ -11,7 +13,9 @@ import java.nio.charset.Charset;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -29,6 +33,7 @@ public class TelemetryProcessor {
     private final List<Telemetry> telemetryList;
     private SortedMap<Long, Map<String, Telemetry>> processedTelemetry = null;
     private Set<String> allFieldCodes = null;
+    private List<FlightTelemetry> flightTelemetries = null;
 
     public TelemetryProcessor(List<Telemetry> telemetryList) {
         this.telemetryList = telemetryList;
@@ -67,6 +72,47 @@ public class TelemetryProcessor {
         return allFieldCodes;
     }
 
+    private List<FlightTelemetry> getFlightTelemetries() {
+        if (flightTelemetries == null) {
+            synchronized (this) {
+                if (flightTelemetries == null) {
+                    flightTelemetries = new ArrayList<>();
+
+                    final SortedMap<Long, Map<String, Telemetry>> allTelemetry = getProcessedTelemetry();
+
+                    long lastTelemetryTime = 0;
+                    final List<Triple<Long, Long, Map<String, Telemetry>>> telemetryByTimeDiff = new LinkedList<>();
+                    for (Map.Entry<Long, Map<String, Telemetry>> entry : allTelemetry.entrySet()) {
+                        if (lastTelemetryTime == 0) {
+                            telemetryByTimeDiff.add(Triple.of(Long.MAX_VALUE, entry.getKey(), entry.getValue()));
+                        } else {
+                            telemetryByTimeDiff.add(Triple.of(entry.getKey() - lastTelemetryTime, entry.getKey(), entry.getValue()));
+                        }
+                        lastTelemetryTime = entry.getKey();
+                    }
+
+                    List<Pair<Long, Map<String, Telemetry>>> currentFlightTelemetry = new LinkedList<>();
+                    for (Triple<Long, Long, Map<String, Telemetry>> telemetryWithTimeDiff : telemetryByTimeDiff) {
+                        final Pair<Long, Map<String, Telemetry>> telemetryRecord =
+                                Pair.of(telemetryWithTimeDiff.getMiddle(), telemetryWithTimeDiff.getRight());
+                        if (currentFlightTelemetry.isEmpty()) {
+                            currentFlightTelemetry.add(telemetryRecord);
+                        } else {
+                            if (telemetryWithTimeDiff.getLeft() < 10000) {
+                                currentFlightTelemetry.add(telemetryRecord);
+                            } else {
+                                if (currentFlightTelemetry.size() > 1) {
+                                    flightTelemetries.add(new FlightTelemetry(currentFlightTelemetry));
+                                }
+                                currentFlightTelemetry = new LinkedList<>();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return flightTelemetries;
+    }
 
     public void printAsCsv(OutputStream out, Charset charset) {
         final PrintWriter writer = new PrintWriter(new BufferedWriter(new OutputStreamWriter(out, charset)));
