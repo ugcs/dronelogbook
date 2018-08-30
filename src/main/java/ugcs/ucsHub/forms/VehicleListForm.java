@@ -1,4 +1,4 @@
-package ugcs.ucsHub;
+package ugcs.ucsHub.forms;
 
 import com.github.lgooddatepicker.components.DateTimePicker;
 import com.ugcs.ucs.proto.DomainProto.Vehicle;
@@ -28,13 +28,13 @@ import static java.util.stream.Collectors.toMap;
 import static javax.swing.JOptionPane.INFORMATION_MESSAGE;
 import static ugcs.ucsHub.Settings.settings;
 
-class VehicleListForm extends JPanel {
+public class VehicleListForm extends JPanel {
     private static final SimpleDateFormat FILE_DATE_FORMAT = new SimpleDateFormat("yyyyMMdd_HHmmss");
 
     private final Map<String, Vehicle> vehicleMap;
     private final JList<String> vehicleJList;
 
-    VehicleListForm(SessionController controller, LogBookUploader uploader) {
+    public VehicleListForm(SessionController controller, LogBookUploader uploader) {
         super(new BorderLayout());
 
         final DateTimePicker startDateTimePicker = new DateTimePicker();
@@ -92,22 +92,40 @@ class VehicleListForm extends JPanel {
                         telemetryProcessor.getAllFieldCodes());
 
                 if (uploadFlightCheckBox.isSelected()) {
-                    final List<Pair<FlightTelemetry, File>> flightsAndUploadedFiles = uploader.uploadFlights(
-                            telemetryProcessor.getFlightTelemetries(),
-                            vehicle.getName(),
-                            telemetryProcessor.getAllFieldCodes());
+                    final List<FlightTelemetry> flights = telemetryProcessor.getFlightTelemetries();
 
-                    final Path uploadFolder = Paths.get(settings().getUploadedFileFolder());
-                    final Path uploadPath = uploadFolder.isAbsolute()
-                            ? uploadFolder
-                            : selectedFile.toPath().getParent().resolve(uploadFolder);
+                    if (flights.size() == 0) {
+                        JOptionPane.showMessageDialog(this,
+                                "There are no flights to upload in acquired telemetry...",
+                                "Telemetry uploading is skipped", INFORMATION_MESSAGE);
+                    } else {
+                        final FlightListForm flightListForm = new FlightListForm(flights, vehicle.getName());
+                        flightListForm.setLocationRelativeTo(this);
+                        flightListForm.setVisible(true);
 
-                    moveUploadedFiles(flightsAndUploadedFiles, uploadPath,
-                            flight -> generateFileName(vehicle.getName(), flight));
+                        final List<FlightTelemetry> selectedFlights = flightListForm.getSelectedFlights();
 
-                    JOptionPane.showMessageDialog(this,
-                            "Telemetry data is saved to: " + uploadPath.toString(),
-                            "Server Upload Successful", INFORMATION_MESSAGE);
+                        if (selectedFlights.size() > 0) {
+                            final List<Pair<FlightTelemetry, File>> flightsAndUploadedFiles = uploader.uploadFlights(
+                                    selectedFlights,
+                                    vehicle.getName(),
+                                    telemetryProcessor.getAllFieldCodes());
+
+                            final Path uploadFolder = Paths.get(settings().getUploadedFileFolder());
+                            final Path uploadPath = uploadFolder.isAbsolute()
+                                    ? uploadFolder
+                                    : selectedFile.toPath().getParent().resolve(uploadFolder);
+
+                            moveUploadedFiles(flightsAndUploadedFiles, uploadPath,
+                                    flight -> generateFileName(vehicle.getName(), flight));
+
+                            JOptionPane.showMessageDialog(this,
+                                    "Telemetry data of " + selectedFlights.size() +
+                                            " flights is saved to:\n" + uploadPath.toString(),
+                                    "Server Upload Successful", INFORMATION_MESSAGE);
+                        }
+                    }
+
                 }
             }
         }));
