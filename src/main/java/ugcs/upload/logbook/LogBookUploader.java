@@ -1,5 +1,6 @@
 package ugcs.upload.logbook;
 
+import com.ugcs.ucs.proto.DomainProto.Semantic;
 import com.ugcs.ucs.proto.DomainProto.Telemetry;
 import com.ugcs.ucs.proto.DomainProto.Value;
 import org.apache.commons.lang3.tuple.Pair;
@@ -25,6 +26,9 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static com.ugcs.ucs.proto.DomainProto.Semantic.S_LATITUDE;
+import static com.ugcs.ucs.proto.DomainProto.Semantic.S_LONGITUDE;
+import static java.lang.Math.toDegrees;
 import static java.util.Objects.isNull;
 import static javax.xml.bind.DatatypeConverter.printHexBinary;
 import static ugcs.upload.logbook.FieldCodeToCsvColumnNameMapper.mapper;
@@ -56,16 +60,7 @@ public class LogBookUploader {
             final CsvWriter csvWriter = new CsvWriter(columnNames, out, CSV_FILE_CHARSET);
             csvWriter.printHeader(fieldCode -> mapper().convert(fieldCode));
             telemetryData.forEach((epochMilli, telemetryRecord) ->
-                    csvWriter.printRecord(colName -> {
-                        if ("Time".equals(colName)) {
-                            return convertDateTime(epochMilli);
-                        }
-                        final Telemetry telemetry = telemetryRecord.get(colName);
-                        if (isNull(telemetry)) {
-                            return "";
-                        }
-                        return valueToString(telemetry.getValue());
-                    }));
+                    printCsvRecord(csvWriter, epochMilli, telemetryRecord));
         } catch (IOException toRethrow) {
             throw new RuntimeException(toRethrow);
         }
@@ -84,16 +79,8 @@ public class LogBookUploader {
                     final CsvWriter csvWriter = new CsvWriter(columnNames, out, CSV_FILE_CHARSET);
                     csvWriter.printHeader(fieldCode -> mapper().convert(fieldCode));
                     flight.getTelemetry().forEach(timeAndTelemetry ->
-                            csvWriter.printRecord(colName -> {
-                                if ("Time".equals(colName)) {
-                                    return convertDateTime(timeAndTelemetry.getLeft());
-                                }
-                                final Telemetry telemetry = timeAndTelemetry.getRight().get(colName);
-                                if (isNull(telemetry)) {
-                                    return "";
-                                }
-                                return valueToString(telemetry.getValue());
-                            }));
+                            printCsvRecord(csvWriter, timeAndTelemetry.getLeft(), timeAndTelemetry.getRight())
+                    );
                 }
                 return Pair.of(flight, csvFile);
             } catch (IOException io) {
@@ -118,11 +105,28 @@ public class LogBookUploader {
         }
     }
 
+    private static void printCsvRecord(CsvWriter csvWriter, long timeEpochMilli, Map<String, Telemetry> telemetryRecord) {
+        csvWriter.printRecord(colName -> {
+            if ("Time".equals(colName)) {
+                return convertDateTime(timeEpochMilli);
+            }
+            final Telemetry telemetry = telemetryRecord.get(colName);
+            if (isNull(telemetry)) {
+                return "";
+            }
+            return valueToCsvString(telemetry.getValue(), telemetry.getTelemetryField().getSemantic());
+        });
+    }
+
     private static String convertDateTime(long epochMilli) {
         return LocalDateTime.ofInstant(Instant.ofEpochMilli(epochMilli), ZoneId.systemDefault()).toString();
     }
 
-    private static String valueToString(Value value) {
+    private static String valueToCsvString(Value value, Semantic semantic) {
+        if (S_LATITUDE.equals(semantic) || S_LONGITUDE.equals(semantic)) {
+            return String.valueOf(toDegrees(value.getDoubleValue()));
+        }
+
         if (value.hasFloatValue()) {
             return String.valueOf(value.getFloatValue());
         }
