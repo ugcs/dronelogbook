@@ -2,6 +2,7 @@ package ugcs.ucsHub.forms;
 
 import com.github.lgooddatepicker.components.DateTimePicker;
 import com.ugcs.ucs.proto.DomainProto.Vehicle;
+import com.ugcs.ucs.proto.MessagesProto;
 import org.apache.commons.lang3.tuple.Pair;
 import ugcs.net.SessionController;
 import ugcs.telemetry.FlightTelemetry;
@@ -80,9 +81,13 @@ public class VehicleListForm extends JPanel {
             final long startTimeEpochMilli = getTimeAsEpochMilli(startDateTimePicker);
             final long endTimeEpochMilli = getTimeAsEpochMilli(endDateTimePicker);
 
-            final TelemetryProcessor telemetryProcessor = new TelemetryProcessor(controller
-                    .getTelemetry(vehicle, startTimeEpochMilli, endTimeEpochMilli)
-                    .getTelemetryList());
+            final MessagesProto.GetTelemetryResponse telemetry = waitForm().waitOnCallable(
+                    "Acquiring data from UgCS..."
+                    , () -> controller.getTelemetry(vehicle, startTimeEpochMilli, endTimeEpochMilli)
+                    , this
+            );
+
+            final TelemetryProcessor telemetryProcessor = new TelemetryProcessor(telemetry.getTelemetryList());
 
             final JFileChooser directoryChooser = new JFileChooser(".");
             directoryChooser.setDialogType(JFileChooser.SAVE_DIALOG);
@@ -125,8 +130,7 @@ public class VehicleListForm extends JPanel {
                                     flight -> generateFileName(vehicle.getName(), flight));
 
                             JOptionPane.showMessageDialog(this,
-                                    "Telemetry data of " + selectedFlights.size() +
-                                            " flights is saved to:\n" + uploadPath.toString(),
+                                    "Telemetry data of the flight is saved to:\n" + uploadPath.toString(),
                                     "Server Upload Successful", INFORMATION_MESSAGE);
                         }
                     }

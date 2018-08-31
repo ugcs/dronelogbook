@@ -96,16 +96,15 @@ public class LogBookUploader {
         }).collect(Collectors.toList());
 
         try {
-            MultipartUtility multipart = new MultipartUtility(serverUrl, CSV_FILE_CHARSET.displayName());
-
-            multipart.addFormField("login", login);
-            multipart.addFormField("password", passwordAsMd5Hash);
             for (Pair<FlightTelemetry, File> pair : flightsAndCsvFiles) {
+                MultipartUtility multipart = new MultipartUtility(serverUrl, CSV_FILE_CHARSET.displayName());
+
+                multipart.addFormField("login", login);
+                multipart.addFormField("password", passwordAsMd5Hash);
                 multipart.addFilePart("data", pair.getRight());
+
+                multipart.finish();
             }
-
-            multipart.finish();
-
             return flightsAndCsvFiles;
         } catch (IOException toRethrow) {
             throw new RuntimeException(toRethrow);

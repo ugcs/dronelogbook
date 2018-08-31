@@ -7,12 +7,11 @@ import ugcs.telemetry.FlightTelemetry;
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
-import java.awt.event.ActionListener;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
-import static java.lang.Boolean.TRUE;
+import static java.lang.Boolean.FALSE;
 import static java.util.stream.Collectors.toList;
 
 class FlightListForm extends JDialog {
@@ -23,19 +22,19 @@ class FlightListForm extends JDialog {
 
     FlightListForm(List<FlightTelemetry> flights, String vehicleName) throws HeadlessException {
         super((JFrame) null, true);
+        this.setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
 
-        this.setTitle("Choose flights of '" + vehicleName + "' to upload");
+        this.setTitle("Choose flight of '" + vehicleName + "' to upload");
 
-        this.flightsAndSelection = flights.stream().map(flight -> MutablePair.of(flight, TRUE)).collect(toList());
+        this.flightsAndSelection = flights.stream().map(flight -> MutablePair.of(flight, FALSE)).collect(toList());
 
         JPanel mainPanel = new JPanel(new BorderLayout());
 
         JPanel bottomPanel = new JPanel();
 
         JButton uploadBtn = new JButton("Upload");
+        uploadBtn.setEnabled(false);
         JButton cancelBtn = new JButton("Cancel");
-
-        ActionListener closeOnClickAction = e -> setVisible(false);
 
         uploadBtn.addActionListener(e -> setVisible(false));
         cancelBtn.addActionListener(e -> {
@@ -48,7 +47,8 @@ class FlightListForm extends JDialog {
 
         mainPanel.add(bottomPanel, BorderLayout.SOUTH);
 
-        JTable flightsTable = new JTable(new AbstractTableModel() {
+        JTable flightsTable = new JTable();
+        flightsTable.setModel(new AbstractTableModel() {
             @Override
             public int getRowCount() {
                 return flightsAndSelection.size();
@@ -90,10 +90,19 @@ class FlightListForm extends JDialog {
             @Override
             public void setValueAt(Object boolValue, int rowIndex, int columnIndex) {
                 if (boolValue instanceof Boolean) {
-                    flightsAndSelection.get(rowIndex).setValue((Boolean) boolValue);
+                    final Boolean isSelected = (Boolean) boolValue;
+                    if (isSelected) {
+                        clearSelection();
+                    }
+                    flightsAndSelection.get(rowIndex).setValue(isSelected);
 
                     uploadBtn.setEnabled(!getSelectedFlights().isEmpty());
+                    fireTableDataChanged();
                 }
+            }
+
+            private void clearSelection() {
+                flightsAndSelection.forEach(pair -> pair.setValue(false));
             }
         });
         mainPanel.add(new JScrollPane(flightsTable), BorderLayout.CENTER);
