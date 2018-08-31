@@ -9,6 +9,7 @@ import javax.swing.*;
 import java.awt.*;
 
 import static ugcs.ucsHub.Settings.settings;
+import static ugcs.ucsHub.forms.WaitForm.waitForm;
 
 public class Main {
     public static void main(String[] args) {
@@ -33,7 +34,8 @@ public class Main {
         loginForm.addLoginButtonListener(event -> {
             final SessionController sessionController =
                     new SessionController(settings().getHost(), settings().getPort(), loginForm.getLogin(), loginForm.getPassword());
-            sessionController.connect();
+
+            waitForm().waitOnAction("Connecting to UgCS...", sessionController::connect, loginForm);
 
             final LogBookUploader logBookUploader =
                     new LogBookUploader(settings().getUploadServerUrl(), loginForm.getDlbLogin(), loginForm.getDlbPassword());

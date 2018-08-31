@@ -27,6 +27,7 @@ import java.util.function.Function;
 import static java.util.stream.Collectors.toMap;
 import static javax.swing.JOptionPane.INFORMATION_MESSAGE;
 import static ugcs.ucsHub.Settings.settings;
+import static ugcs.ucsHub.forms.WaitForm.waitForm;
 
 public class VehicleListForm extends JPanel {
     private static final SimpleDateFormat FILE_DATE_FORMAT = new SimpleDateFormat("yyyyMMdd_HHmmss");
@@ -87,9 +88,10 @@ public class VehicleListForm extends JPanel {
             if (directoryChooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
                 final File selectedFile = directoryChooser.getSelectedFile();
 
-                uploader.saveTelemetryDataToCsvFile(selectedFile,
-                        telemetryProcessor.getProcessedTelemetry(),
-                        telemetryProcessor.getAllFieldCodes());
+                waitForm().waitOnAction("Saving telemetry data...",
+                        () -> uploader.saveTelemetryDataToCsvFile(selectedFile,
+                                telemetryProcessor.getProcessedTelemetry(),
+                                telemetryProcessor.getAllFieldCodes()), this);
 
                 if (uploadFlightCheckBox.isSelected()) {
                     final List<FlightTelemetry> flights = telemetryProcessor.getFlightTelemetries();
@@ -106,10 +108,13 @@ public class VehicleListForm extends JPanel {
                         final List<FlightTelemetry> selectedFlights = flightListForm.getSelectedFlights();
 
                         if (selectedFlights.size() > 0) {
-                            final List<Pair<FlightTelemetry, File>> flightsAndUploadedFiles = uploader.uploadFlights(
-                                    selectedFlights,
-                                    vehicle.getName(),
-                                    telemetryProcessor.getAllFieldCodes());
+                            final List<Pair<FlightTelemetry, File>> flightsAndUploadedFiles =
+                                    waitForm().waitOnCallable("Uploading flights to LogBook...",
+                                            () -> uploader.uploadFlights(
+                                                    selectedFlights,
+                                                    vehicle.getName(),
+                                                    telemetryProcessor.getAllFieldCodes()), this
+                                    );
 
                             final Path uploadFolder = Paths.get(settings().getUploadedFileFolder());
                             final Path uploadPath = uploadFolder.isAbsolute()
