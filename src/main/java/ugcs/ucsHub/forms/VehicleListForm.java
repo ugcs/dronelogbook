@@ -26,6 +26,7 @@ import java.util.function.Function;
 
 import static java.util.stream.Collectors.toMap;
 import static javax.swing.JOptionPane.INFORMATION_MESSAGE;
+import static javax.swing.ListSelectionModel.SINGLE_SELECTION;
 import static ugcs.ucsHub.Settings.settings;
 import static ugcs.ucsHub.forms.WaitForm.waitForm;
 
@@ -51,6 +52,7 @@ public class VehicleListForm extends JPanel {
         leftPanel.setBorder(BorderFactory.createBevelBorder(0));
         leftPanel.add(BorderLayout.NORTH, new JLabel("List of all vehicles:"));
         vehicleJList.setBorder(BorderFactory.createTitledBorder(""));
+        vehicleJList.setSelectionMode(SINGLE_SELECTION);
         leftPanel.add(BorderLayout.CENTER, new JScrollPane(vehicleJList));
         this.add(BorderLayout.WEST, leftPanel);
 
@@ -109,11 +111,9 @@ public class VehicleListForm extends JPanel {
 
                         if (selectedFlights.size() > 0) {
                             final List<Pair<FlightTelemetry, File>> flightsAndUploadedFiles =
-                                    waitForm().waitOnCallable("Uploading flights to LogBook...",
-                                            () -> uploader.uploadFlights(
-                                                    selectedFlights,
-                                                    vehicle.getName(),
-                                                    telemetryProcessor.getAllFieldCodes()), this
+                                    waitForm().waitOnCallable("Uploading flights to LogBook..."
+                                            , () -> uploader.uploadFlights(selectedFlights, vehicle.getName())
+                                            , this
                                     );
 
                             final Path uploadFolder = Paths.get(settings().getUploadedFileFolder());

@@ -4,6 +4,7 @@ import com.ugcs.ucs.proto.DomainProto.Semantic;
 import com.ugcs.ucs.proto.DomainProto.Telemetry;
 import com.ugcs.ucs.proto.DomainProto.Value;
 import org.apache.commons.lang3.tuple.Pair;
+import ugcs.csv.CsvWriter;
 import ugcs.telemetry.FlightTelemetry;
 
 import java.io.File;
@@ -16,6 +17,7 @@ import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +38,16 @@ import static ugcs.upload.logbook.FieldCodeToCsvColumnNameMapper.mapper;
 public class LogBookUploader {
     private static final Predicate<String> MD5_HASH_PREDICATE = Pattern.compile("^[a-fA-F0-9]{32}$").asPredicate();
     private static final Charset CSV_FILE_CHARSET = Charset.forName("UTF-8");
+
+    private static final List<String> FILED_CODES = Arrays.asList(
+            "Time",
+            "latitude",
+            "longitude",
+            "altitude_agl",
+            "ground_speed",
+            "main_voltage",
+            "main_current"
+    );
 
     private final String serverUrl;
     private final String login;
@@ -66,17 +78,12 @@ public class LogBookUploader {
         }
     }
 
-    public List<Pair<FlightTelemetry, File>> uploadFlights(
-            List<FlightTelemetry> flights, String vehicleName, Set<String> fieldCodes) {
-        final List<String> columnNames = new LinkedList<>();
-        columnNames.add("Time");
-        columnNames.addAll(fieldCodes);
-
+    public List<Pair<FlightTelemetry, File>> uploadFlights(List<FlightTelemetry> flights, String vehicleName) {
         final List<Pair<FlightTelemetry, File>> flightsAndCsvFiles = flights.stream().map(flight -> {
             try {
                 final File csvFile = File.createTempFile(vehicleName, "");
                 try (final OutputStream out = new FileOutputStream(csvFile)) {
-                    final CsvWriter csvWriter = new CsvWriter(columnNames, out, CSV_FILE_CHARSET);
+                    final CsvWriter csvWriter = new CsvWriter(FILED_CODES, out, CSV_FILE_CHARSET);
                     csvWriter.printHeader(fieldCode -> mapper().convert(fieldCode));
                     flight.getTelemetry().forEach(timeAndTelemetry ->
                             printCsvRecord(csvWriter, timeAndTelemetry.getLeft(), timeAndTelemetry.getRight())
