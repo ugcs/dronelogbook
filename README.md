@@ -48,7 +48,7 @@ upload.server.password=dronelogbook_password_or_md5_hash
 
 Uploading process of acquired telemetry starts if you check `Upload flights` checkbox and click on `Get telemetry` button.
 
-Successfully uploaded file will be moved to `uploaded` directory by default. You can change target directory of uploaded files in `client.properties`:
+Successfully uploaded flight's telemetry will be saved to `uploaded` directory by default. For each flight separate file is created. You can change target directory of uploaded files in `client.properties`:
  ```properties
  uploaded.file.folder=path_to_fodler
  ```
