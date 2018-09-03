@@ -12,6 +12,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
+import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
@@ -61,14 +62,14 @@ public class LogBookUploader {
                 .orElseGet(() -> calculateMd5Hash(rawPasswordOrMd5Hash.getBytes()));
     }
 
-    public void saveTelemetryDataToCsvFile(File file,
+    public void saveTelemetryDataToCsvFile(Path pathToFile,
                                            SortedMap<Long, Map<String, Telemetry>> telemetryData,
                                            Set<String> fieldCodes) {
         final List<String> columnNames = new LinkedList<>();
         columnNames.add("Time");
         columnNames.addAll(fieldCodes);
 
-        try (final OutputStream out = new FileOutputStream(file)) {
+        try (final OutputStream out = new FileOutputStream(pathToFile.toFile())) {
             final CsvWriter csvWriter = new CsvWriter(columnNames, out, CSV_FILE_CHARSET);
             csvWriter.printHeader(fieldCode -> mapper().convert(fieldCode));
             telemetryData.forEach((epochMilli, telemetryRecord) ->

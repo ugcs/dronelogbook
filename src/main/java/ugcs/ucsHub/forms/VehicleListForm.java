@@ -15,7 +15,6 @@ import java.awt.*;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -25,6 +24,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
+import static java.nio.file.Files.isDirectory;
 import static java.util.stream.Collectors.toMap;
 import static javax.swing.JOptionPane.INFORMATION_MESSAGE;
 import static javax.swing.ListSelectionModel.SINGLE_SELECTION;
@@ -89,53 +89,45 @@ public class VehicleListForm extends JPanel {
 
             final TelemetryProcessor telemetryProcessor = new TelemetryProcessor(telemetry.getTelemetryList());
 
-            final JFileChooser directoryChooser = new JFileChooser(".");
-            directoryChooser.setDialogType(JFileChooser.SAVE_DIALOG);
-            directoryChooser.setSelectedFile(new File(generateFileName(vehicle.getName(), startTimeEpochMilli)));
-            if (directoryChooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
-                final File selectedFile = directoryChooser.getSelectedFile();
+            final Path pathToTelemetryFile = settings().getTelemetryPath()
+                    .resolve(generateFileName(vehicle.getName(), startTimeEpochMilli, endTimeEpochMilli));
 
-                waitForm().waitOnAction("Saving telemetry data...",
-                        () -> uploader.saveTelemetryDataToCsvFile(selectedFile,
-                                telemetryProcessor.getProcessedTelemetry(),
-                                telemetryProcessor.getAllFieldCodes()), this);
+            waitForm().waitOnAction("Saving telemetry data...",
+                    () -> uploader.saveTelemetryDataToCsvFile(pathToTelemetryFile,
+                            telemetryProcessor.getProcessedTelemetry(),
+                            telemetryProcessor.getAllFieldCodes()), this);
 
-                if (uploadFlightCheckBox.isSelected()) {
-                    final List<FlightTelemetry> flights = telemetryProcessor.getFlightTelemetries();
+            if (uploadFlightCheckBox.isSelected()) {
+                final List<FlightTelemetry> flights = telemetryProcessor.getFlightTelemetries();
 
-                    if (flights.size() == 0) {
+                if (flights.size() == 0) {
+                    JOptionPane.showMessageDialog(this,
+                            "There are no flights to upload in acquired telemetry...",
+                            "Telemetry uploading is skipped", INFORMATION_MESSAGE);
+                } else {
+                    final FlightListForm flightListForm = new FlightListForm(flights, vehicle.getName());
+                    flightListForm.setLocationRelativeTo(this);
+                    flightListForm.setVisible(true);
+
+                    final List<FlightTelemetry> selectedFlights = flightListForm.getSelectedFlights();
+
+                    if (selectedFlights.size() > 0) {
+                        final List<Pair<FlightTelemetry, File>> flightsAndUploadedFiles =
+                                waitForm().waitOnCallable("Uploading flights to LogBook..."
+                                        , () -> uploader.uploadFlights(selectedFlights, vehicle.getName())
+                                        , this
+                                );
+
+                        final Path uploadPath = settings().getUploadedFlightsPath();
+                        moveUploadedFiles(flightsAndUploadedFiles, uploadPath,
+                                flight -> generateFileName(vehicle.getName(), flight));
+
                         JOptionPane.showMessageDialog(this,
-                                "There are no flights to upload in acquired telemetry...",
-                                "Telemetry uploading is skipped", INFORMATION_MESSAGE);
-                    } else {
-                        final FlightListForm flightListForm = new FlightListForm(flights, vehicle.getName());
-                        flightListForm.setLocationRelativeTo(this);
-                        flightListForm.setVisible(true);
-
-                        final List<FlightTelemetry> selectedFlights = flightListForm.getSelectedFlights();
-
-                        if (selectedFlights.size() > 0) {
-                            final List<Pair<FlightTelemetry, File>> flightsAndUploadedFiles =
-                                    waitForm().waitOnCallable("Uploading flights to LogBook..."
-                                            , () -> uploader.uploadFlights(selectedFlights, vehicle.getName())
-                                            , this
-                                    );
-
-                            final Path uploadFolder = Paths.get(settings().getUploadedFileFolder());
-                            final Path uploadPath = uploadFolder.isAbsolute()
-                                    ? uploadFolder
-                                    : selectedFile.toPath().getParent().resolve(uploadFolder);
-
-                            moveUploadedFiles(flightsAndUploadedFiles, uploadPath,
-                                    flight -> generateFileName(vehicle.getName(), flight));
-
-                            JOptionPane.showMessageDialog(this,
-                                    "Telemetry data of the flight is saved to:\n" + uploadPath.toString(),
-                                    "Server Upload Successful", INFORMATION_MESSAGE);
-                        }
+                                "Telemetry data of the flight is saved to:\n" + uploadPath.toString(),
+                                "Server Upload Successful", INFORMATION_MESSAGE);
                     }
-
                 }
+
             }
         }));
         this.add(BorderLayout.SOUTH, bottomPanel);
@@ -172,8 +164,9 @@ public class VehicleListForm extends JPanel {
         return dateTimePicker.getDateTimePermissive().atZone(ZoneId.systemDefault()).toInstant().getEpochSecond() * 1000L;
     }
 
-    private String generateFileName(String vehicleName, long startTimeEpochMilli) {
-        return (vehicleName + "-" + FILE_DATE_FORMAT.format(new Date(startTimeEpochMilli)) + ".csv")
+    private String generateFileName(String vehicleName, long startTimeEpochMilli, long endTimeEpochMilli) {
+        return (vehicleName + "-" + FILE_DATE_FORMAT.format(new Date(startTimeEpochMilli)) +
+                "-" + FILE_DATE_FORMAT.format(new Date(endTimeEpochMilli)) + ".csv")
                 .replaceAll("[*/\\\\!|:?<>]", "_")
                 .replaceAll("(%22)", "_");
     }
@@ -188,7 +181,7 @@ public class VehicleListForm extends JPanel {
     private static void moveUploadedFiles(List<Pair<FlightTelemetry, File>> flightsAndUploadedFiles, Path targetFolder,
                                           Function<FlightTelemetry, String> flightToFileName) {
         try {
-            if (!Files.isDirectory(targetFolder)) {
+            if (!isDirectory(targetFolder)) {
                 Files.createDirectory(targetFolder);
             }
 

@@ -8,19 +8,25 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Properties;
 
+import static com.privatejgoodies.common.base.Strings.isEmpty;
+import static java.nio.file.Files.createDirectories;
+import static java.util.Objects.isNull;
+
 public final class Settings {
     private final static String SETTINGS_FILE_NAME = "client.properties";
 
     private final static String DEFAULT_HOST = "127.0.0.1";
-    private final static int    DEFAULT_PORT = 3334;
+    private final static String DEFAULT_PORT = "3334";
     private final static String DEFAULT_UCS_LOGIN = "undefined";
     private final static String DEFAULT_UCS_PASSWORD = "undefined";
-
 
     private final static String DEFAULT_UPLOAD_SERVER_URL = "https://www.dronelogbook.com/webservices/importFlight-ugcs.php";
     private final static String DEFAULT_UPLOAD_SERVER_LOGIN = "undefined";
     private final static String DEFAULT_UPLOAD_SERVER_PASSWORD = "undefined";
     private final static String DEFAULT_UPLOADED_FILE_FOLDER = "uploaded";
+
+    private final static String DEFAULT_DATA_FOLDER = System.getProperty("user.home") + "/.dronelogbook";
+    private final static String DEFAULT_TELEMETRY_FOLDER = "telemetry";
 
     private static volatile Settings instance;
 
@@ -43,6 +49,8 @@ public final class Settings {
     private final String uploadServerLogin;
     private final String uploadServerPassword;
     private final String uploadedFileFolder;
+    private final String dataFolder;
+    private final String telemetryFolder;
 
     private Settings() {
         final Properties properties = new Properties();
@@ -61,16 +69,19 @@ public final class Settings {
             } catch (IOException ignored) {
             }
         }
-        host = properties.getOrDefault("server.host", DEFAULT_HOST).toString();
-        port = Integer.parseInt(properties.getOrDefault("server.port", DEFAULT_PORT).toString());
-        ucsServerLogin = properties.getOrDefault("server.login", DEFAULT_UCS_LOGIN).toString();
-        ucsServerPassword=properties.getOrDefault("server.password", DEFAULT_UCS_PASSWORD).toString();
+        host = getProperty(properties, "server.host", DEFAULT_HOST);
+        port = Integer.parseInt(getProperty(properties, "server.port", DEFAULT_PORT));
+        ucsServerLogin = getProperty(properties, "server.login", DEFAULT_UCS_LOGIN);
+        ucsServerPassword=getProperty(properties, "server.password", DEFAULT_UCS_PASSWORD);
 
-        uploadServerUrl = properties.getOrDefault("upload.server.url", DEFAULT_UPLOAD_SERVER_URL).toString();
-        uploadServerLogin = properties.getOrDefault("upload.server.login", DEFAULT_UPLOAD_SERVER_LOGIN).toString();
-        uploadServerPassword = properties.getOrDefault("upload.server.password", DEFAULT_UPLOAD_SERVER_PASSWORD).toString();
+        uploadServerUrl = getProperty(properties, "upload.server.url", DEFAULT_UPLOAD_SERVER_URL);
+        uploadServerLogin = getProperty(properties, "upload.server.login", DEFAULT_UPLOAD_SERVER_LOGIN);
+        uploadServerPassword = getProperty(properties, "upload.server.password", DEFAULT_UPLOAD_SERVER_PASSWORD);
 
-        uploadedFileFolder = properties.getOrDefault("uploaded.file.folder", DEFAULT_UPLOADED_FILE_FOLDER).toString();
+        uploadedFileFolder = getProperty(properties, "uploaded.file.folder", DEFAULT_UPLOADED_FILE_FOLDER);
+
+        dataFolder = getProperty(properties, "application.data.folder", DEFAULT_DATA_FOLDER);
+        telemetryFolder = getProperty(properties, "telemetry.file.folder", DEFAULT_TELEMETRY_FOLDER);
     }
 
     public String getHost() {
@@ -103,5 +114,45 @@ public final class Settings {
 
     public String getUploadedFileFolder() {
         return uploadedFileFolder;
+    }
+
+    public String getDataFolder() {
+        return dataFolder;
+    }
+
+    public String getTelemetryFolder() {
+        return telemetryFolder;
+    }
+
+    public Path getTelemetryPath () {
+        return createFolderIfNotPresent(resolveOnDataFolder(getTelemetryFolder()));
+    }
+
+    public Path getUploadedFlightsPath() {
+        return createFolderIfNotPresent(resolveOnDataFolder(getUploadedFileFolder()));
+    }
+
+    private Path resolveOnDataFolder(String folderToResolve) {
+        final Path folderPath = Paths.get(folderToResolve);
+        if (folderPath.isAbsolute()) {
+            return folderPath;
+        }
+        return Paths.get(getDataFolder()).resolve(folderPath);
+    }
+
+    private Path createFolderIfNotPresent(Path pathToFolder) {
+        try {
+            return createDirectories(pathToFolder);
+        } catch (IOException toRethrow) {
+            throw new RuntimeException(toRethrow);
+        }
+    }
+
+    private static String getProperty(Properties properties, String propertyName, String defaultValue) {
+        final Object propVal = properties.get(propertyName);
+        if (isNull(propVal) || isEmpty(propVal.toString())) {
+            return defaultValue;
+        }
+        return propVal.toString();
     }
 }
