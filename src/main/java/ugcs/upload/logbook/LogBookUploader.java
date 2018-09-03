@@ -5,6 +5,7 @@ import com.ugcs.ucs.proto.DomainProto.Telemetry;
 import com.ugcs.ucs.proto.DomainProto.Value;
 import org.apache.commons.lang3.tuple.Pair;
 import ugcs.csv.CsvWriter;
+import ugcs.exceptions.ExpectedException;
 import ugcs.telemetry.FlightTelemetry;
 
 import java.io.File;
@@ -107,8 +108,8 @@ public class LogBookUploader {
                 multipart.finish();
             }
             return flightsAndCsvFiles;
-        } catch (IOException toRethrow) {
-            throw new RuntimeException(toRethrow);
+        } catch (IOException connectException) {
+            throw new ExpectedException("LogBook service unavailable.", connectException);
         }
     }
 

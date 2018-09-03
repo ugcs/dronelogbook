@@ -4,9 +4,10 @@ import com.ugcs.ucs.client.Client;
 import com.ugcs.ucs.proto.DomainProto.DomainObjectWrapper;
 import com.ugcs.ucs.proto.DomainProto.Vehicle;
 import com.ugcs.ucs.proto.MessagesProto;
+import ugcs.exceptions.ExpectedException;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -37,7 +38,8 @@ public class SessionController implements AutoCloseable {
             session = new ClientSessionEx(client);
             session.authorizeHci();
             session.login(login, new String(password));
-            Arrays.fill(password, 'x');
+        } catch (IOException connectException) {
+            throw new ExpectedException("UgCS not available.", connectException);
         } catch (Exception toRethrow) {
             throw new RuntimeException(toRethrow);
         }

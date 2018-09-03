@@ -61,21 +61,21 @@ public class WaitForm extends JDialog {
                     pack();
                     setLocationRelativeTo(parentOrNull);
                 });
-                final T result = callable.call();
-                SwingUtilities.invokeLater(() -> setVisible(false));
-                return result;
+                return callable.call();
             } catch (Exception toRethrow) {
-                SwingUtilities.invokeLater(() -> setVisible(false));
                 throw new RuntimeException(toRethrow);
+            } finally {
+                SwingUtilities.invokeLater(() -> setVisible(false));
             }
         });
-        executorService.shutdown();
 
         setVisible(true);
         try {
             return resultFuture.get();
         } catch (InterruptedException | ExecutionException toRethrow) {
             throw new RuntimeException(toRethrow);
+        } finally {
+            executorService.shutdown();
         }
     }
 }

@@ -1,5 +1,6 @@
 package ugcs.ucsHub;
 
+import ugcs.exceptions.ExpectedException;
 import ugcs.net.SessionController;
 import ugcs.ucsHub.forms.LoginForm;
 import ugcs.ucsHub.forms.VehicleListForm;
@@ -8,6 +9,7 @@ import ugcs.upload.logbook.LogBookUploader;
 import javax.swing.*;
 import java.awt.*;
 
+import static java.util.Objects.isNull;
 import static ugcs.ucsHub.Settings.settings;
 import static ugcs.ucsHub.forms.WaitForm.waitForm;
 
@@ -27,7 +29,18 @@ public class Main {
 
         Thread.setDefaultUncaughtExceptionHandler((thread, ex) -> {
             ex.printStackTrace();
-            JOptionPane.showMessageDialog(null, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+
+            Throwable rootException = getRootException(ex);
+
+            if (rootException instanceof ExpectedException) {
+                System.err.println("Cause of ExpectedException:");
+                final Throwable attachedCause = ((ExpectedException) rootException).getAttachedCause();
+                if (!isNull(attachedCause)) {
+                    attachedCause.printStackTrace();
+                }
+            }
+
+            JOptionPane.showMessageDialog(null, getExceptionMessage(rootException), "Error", JOptionPane.ERROR_MESSAGE);
         });
 
         loginForm.makeLoginButtonDefault();
@@ -47,5 +60,21 @@ public class Main {
             contentPane.add(vehicleForm);
             frame.setSize(600, 500);
         });
+
+    }
+
+    private static String getExceptionMessage(Throwable ex) {
+        if (ex instanceof ExpectedException) {
+            return ex.getMessage();
+        }
+        return "Unknown error: " + ex.getMessage() + "\nTry to restart application.";
+    }
+
+    private static Throwable getRootException(Throwable ex) {
+        Throwable rootException = ex;
+        while (rootException.getCause() != null) {
+            rootException = rootException.getCause();
+        }
+        return rootException;
     }
 }

@@ -1,5 +1,7 @@
 package ugcs.upload.logbook;
 
+import ugcs.exceptions.ExpectedException;
+
 import java.io.BufferedReader;
 
 import java.io.File;
@@ -15,6 +17,9 @@ import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
 
+import static java.net.HttpURLConnection.HTTP_OK;
+import static java.net.HttpURLConnection.HTTP_UNAUTHORIZED;
+
 public class MultipartUtility {
     private final String boundary;
     private static final String LINE_FEED = "\r\n";
@@ -22,8 +27,6 @@ public class MultipartUtility {
     private String charset;
     private OutputStream outputStream;
     private PrintWriter writer;
-
-    public String strHttpReponseCode;
 
     public MultipartUtility(String requestURL, String charset)
             throws IOException {
@@ -75,7 +78,7 @@ public class MultipartUtility {
 
         FileInputStream inputStream = new FileInputStream(uploadFile);
         byte[] buffer = new byte[4096];
-        int bytesRead = -1;
+        int bytesRead;
         while ((bytesRead = inputStream.read(buffer)) != -1) {
             outputStream.write(buffer, 0, bytesRead);
         }
@@ -92,7 +95,7 @@ public class MultipartUtility {
     }
 
     public List<String> finish() throws IOException {
-        List<String> response = new ArrayList<String>();
+        List<String> response = new ArrayList<>();
 
         writer.append(LINE_FEED).flush();
         writer.append("--" + boundary + "--").append(LINE_FEED);
@@ -100,19 +103,22 @@ public class MultipartUtility {
 
         int status = httpConn.getResponseCode();
         System.out.println(String.valueOf(status));
-        if (status == HttpURLConnection.HTTP_OK) {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(
-                    httpConn.getInputStream()));
-            String line = null;
-            while ((line = reader.readLine()) != null) {
-                response.add(line);
-            }
-            reader.close();
-            httpConn.disconnect();
-        } else {
-            throw new IOException("Server returned non-OK status: " + status);
+        switch (status) {
+            case HTTP_OK:
+                BufferedReader reader = new BufferedReader(new InputStreamReader(
+                        httpConn.getInputStream()));
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    response.add(line);
+                }
+                reader.close();
+                httpConn.disconnect();
+                break;
+            case HTTP_UNAUTHORIZED:
+                throw new ExpectedException("LogBook login failed.");
+            default:
+                throw new ExpectedException("Uploading data to LogBook failed.");
         }
-
         return response;
     }
 }
