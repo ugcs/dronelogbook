@@ -22,8 +22,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 
+import static java.nio.file.Files.exists;
 import static java.nio.file.Files.isDirectory;
 import static java.util.stream.Collectors.toMap;
 import static javax.swing.JOptionPane.INFORMATION_MESSAGE;
@@ -89,8 +90,7 @@ public class VehicleListForm extends JPanel {
 
             final TelemetryProcessor telemetryProcessor = new TelemetryProcessor(telemetry.getTelemetryList());
 
-            final Path pathToTelemetryFile = settings().getTelemetryPath()
-                    .resolve(generateFileName(vehicle.getName(), startTimeEpochMilli, endTimeEpochMilli));
+            final Path pathToTelemetryFile = getPathToTelemetryFile(vehicle, startTimeEpochMilli, endTimeEpochMilli);
 
             waitForm().waitOnAction("Saving telemetry data...",
                     () -> uploader.saveTelemetryDataToCsvFile(pathToTelemetryFile,
@@ -120,7 +120,10 @@ public class VehicleListForm extends JPanel {
 
                         final Path uploadPath = settings().getUploadedFlightsPath();
                         moveUploadedFiles(flightsAndUploadedFiles, uploadPath,
-                                flight -> generateFileName(vehicle.getName(), flight));
+                                (flight, fileSuffix) -> generateFileName(vehicle.getName(),
+                                        flight.getFlightStartEpochMilli(),
+                                        flight.getFlightEndEpochMilli(),
+                                        fileSuffix));
 
                         JOptionPane.showMessageDialog(this,
                                 "Telemetry data of the flight is saved to:\n" + uploadPath.toString(),
@@ -156,6 +159,19 @@ public class VehicleListForm extends JPanel {
                 }));
     }
 
+    private Path getPathToTelemetryFile(Vehicle vehicle, long startTimeEpochMilli, long endTimeEpochMilli) {
+        Path pathToTelemetryFile = settings().getTelemetryPath()
+                .resolve(generateFileName(vehicle.getName(), startTimeEpochMilli, endTimeEpochMilli, ""));
+        int numberOfTries = 1;
+        while (exists(pathToTelemetryFile) && numberOfTries < 1000) {
+            final String telemetryFileName =
+                    generateFileName(vehicle.getName(), startTimeEpochMilli, endTimeEpochMilli, "-" + numberOfTries);
+            pathToTelemetryFile = settings().getTelemetryPath().resolve(telemetryFileName);
+            ++numberOfTries;
+        }
+        return pathToTelemetryFile;
+    }
+
     private Optional<Vehicle> getSelectedVehicle() {
         return Optional.ofNullable(vehicleMap.get(vehicleJList.getSelectedValue()));
     }
@@ -164,29 +180,28 @@ public class VehicleListForm extends JPanel {
         return dateTimePicker.getDateTimePermissive().atZone(ZoneId.systemDefault()).toInstant().getEpochSecond() * 1000L;
     }
 
-    private String generateFileName(String vehicleName, long startTimeEpochMilli, long endTimeEpochMilli) {
+    private String generateFileName(String vehicleName, long startTimeEpochMilli, long endTimeEpochMilli,
+                                    String fileSuffix) {
         return (vehicleName + "-" + FILE_DATE_FORMAT.format(new Date(startTimeEpochMilli)) +
-                "-" + FILE_DATE_FORMAT.format(new Date(endTimeEpochMilli)) + ".csv")
-                .replaceAll("[*/\\\\!|:?<>]", "_")
-                .replaceAll("(%22)", "_");
-    }
-
-    private String generateFileName(String vehicleName, FlightTelemetry flight) {
-        return (vehicleName + "-" + FILE_DATE_FORMAT.format(new Date(flight.getFlightStartEpochMilli())) +
-                "-" + FILE_DATE_FORMAT.format(new Date(flight.getFlightEndEpochMilli())) + ".csv")
+                "-" + FILE_DATE_FORMAT.format(new Date(endTimeEpochMilli)) + fileSuffix + ".csv")
                 .replaceAll("[*/\\\\!|:?<>]", "_")
                 .replaceAll("(%22)", "_");
     }
 
     private static void moveUploadedFiles(List<Pair<FlightTelemetry, File>> flightsAndUploadedFiles, Path targetFolder,
-                                          Function<FlightTelemetry, String> flightToFileName) {
+                                          BiFunction<FlightTelemetry, String, String> flightToFileName) {
         try {
             if (!isDirectory(targetFolder)) {
                 Files.createDirectory(targetFolder);
             }
 
             for (Pair<FlightTelemetry, File> pair : flightsAndUploadedFiles) {
-                final Path targetFilePath = targetFolder.resolve(flightToFileName.apply(pair.getLeft()));
+                Path targetFilePath = targetFolder.resolve(flightToFileName.apply(pair.getLeft(), ""));
+                int numberOfTries = 1;
+                while (exists(targetFilePath) && numberOfTries < 1000) {
+                    targetFilePath = targetFolder.resolve(flightToFileName.apply(pair.getLeft(), "-" + numberOfTries));
+                    ++numberOfTries;
+                }
                 Files.move(pair.getRight().toPath(), targetFilePath);
             }
         } catch (Exception toRethrow) {
