@@ -40,8 +40,8 @@ public class SessionController implements AutoCloseable {
             session.login(login, new String(password));
         } catch (IOException connectException) {
             throw new ExpectedException("UgCS not available.", connectException);
-        } catch (Exception toRethrow) {
-            throw new RuntimeException(toRethrow);
+        } catch (Exception ugcsException) {
+            throw new ExpectedException("UgCS: " + ugcsException.getMessage(), ugcsException);
         }
     }
 

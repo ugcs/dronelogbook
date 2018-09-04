@@ -45,6 +45,9 @@ public class Main {
 
         loginForm.makeLoginButtonDefault();
         loginForm.addLoginButtonListener(event -> {
+            settings().storeUcsServerLogin(loginForm.getLogin());
+            settings().storeUploadServerLogin(loginForm.getDlbLogin());
+
             final SessionController sessionController =
                     new SessionController(settings().getHost(), settings().getPort(), loginForm.getLogin(), loginForm.getPassword());
 

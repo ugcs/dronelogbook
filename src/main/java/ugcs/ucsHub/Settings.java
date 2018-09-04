@@ -1,31 +1,34 @@
 package ugcs.ucsHub;
 
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
+import java.io.OutputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Properties;
 
 import static com.privatejgoodies.common.base.Strings.isEmpty;
 import static java.nio.file.Files.createDirectories;
+import static java.nio.file.Files.isRegularFile;
 import static java.util.Objects.isNull;
 
 public final class Settings {
     private final static String SETTINGS_FILE_NAME = "client.properties";
+    private final static String DATA_FOLDER = System.getProperty("user.home") + "/.dronelogbook";
 
     private final static String DEFAULT_HOST = "127.0.0.1";
     private final static String DEFAULT_PORT = "3334";
     private final static String DEFAULT_UCS_LOGIN = "undefined";
-    private final static String DEFAULT_UCS_PASSWORD = "undefined";
+    private final static String DEFAULT_UCS_PASSWORD = "";
 
     private final static String DEFAULT_UPLOAD_SERVER_URL = "https://www.dronelogbook.com/webservices/importFlight-ugcs.php";
     private final static String DEFAULT_UPLOAD_SERVER_LOGIN = "undefined";
-    private final static String DEFAULT_UPLOAD_SERVER_PASSWORD = "undefined";
+    private final static String DEFAULT_UPLOAD_SERVER_PASSWORD = "";
     private final static String DEFAULT_UPLOADED_FILE_FOLDER = "uploaded";
 
-    private final static String DEFAULT_DATA_FOLDER = System.getProperty("user.home") + "/.dronelogbook";
     private final static String DEFAULT_TELEMETRY_FOLDER = "telemetry";
 
     private static volatile Settings instance;
@@ -43,45 +46,55 @@ public final class Settings {
 
     private final String host;
     private final int port;
-    private final String ucsServerLogin;
+    private String ucsServerLogin;
     private final String ucsServerPassword;
     private final String uploadServerUrl;
-    private final String uploadServerLogin;
+    private String uploadServerLogin;
     private final String uploadServerPassword;
     private final String uploadedFileFolder;
-    private final String dataFolder;
     private final String telemetryFolder;
 
+    private final Properties globalSettings;
+    private final Properties localSettings;
+
     private Settings() {
-        final Properties properties = new Properties();
-        final Path pathToSettings = Paths.get(SETTINGS_FILE_NAME);
-        if (Files.isRegularFile(pathToSettings)) {
-            try (InputStream in = new FileInputStream(pathToSettings.toFile())) {
-                properties.load(in);
+        this.globalSettings = new Properties();
+        final Path pathToGlobalSettings = resolveOnDataFolder(SETTINGS_FILE_NAME);
+        if (isRegularFile(pathToGlobalSettings)) {
+            try (InputStream in = new FileInputStream(pathToGlobalSettings.toFile())) {
+                this.globalSettings.load(in);
             } catch (IOException ignored) {
             }
         } else {
             final ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
             try (InputStream in = classLoader.getResourceAsStream(SETTINGS_FILE_NAME)) {
                 if (in != null) {
-                    properties.load(in);
+                    this.globalSettings.load(in);
                 }
             } catch (IOException ignored) {
             }
         }
-        host = getProperty(properties, "server.host", DEFAULT_HOST);
-        port = Integer.parseInt(getProperty(properties, "server.port", DEFAULT_PORT));
-        ucsServerLogin = getProperty(properties, "server.login", DEFAULT_UCS_LOGIN);
-        ucsServerPassword=getProperty(properties, "server.password", DEFAULT_UCS_PASSWORD);
 
-        uploadServerUrl = getProperty(properties, "upload.server.url", DEFAULT_UPLOAD_SERVER_URL);
-        uploadServerLogin = getProperty(properties, "upload.server.login", DEFAULT_UPLOAD_SERVER_LOGIN);
-        uploadServerPassword = getProperty(properties, "upload.server.password", DEFAULT_UPLOAD_SERVER_PASSWORD);
+        this.localSettings = new Properties();
+        final Path pathToLocalSettings = Paths.get(SETTINGS_FILE_NAME);
+        if (isRegularFile(pathToLocalSettings)) {
+            try (InputStream in = new FileInputStream(pathToLocalSettings.toFile())) {
+                this.localSettings.load(in);
+            } catch (IOException ignored) {
+            }
+        }
 
-        uploadedFileFolder = getProperty(properties, "uploaded.file.folder", DEFAULT_UPLOADED_FILE_FOLDER);
+        host = getProperty("server.host", DEFAULT_HOST);
+        port = Integer.parseInt(getProperty("server.port", DEFAULT_PORT));
+        ucsServerLogin = getProperty("server.login", DEFAULT_UCS_LOGIN);
+        ucsServerPassword = getProperty("server.password", DEFAULT_UCS_PASSWORD);
 
-        dataFolder = getProperty(properties, "application.data.folder", DEFAULT_DATA_FOLDER);
-        telemetryFolder = getProperty(properties, "telemetry.file.folder", DEFAULT_TELEMETRY_FOLDER);
+        uploadServerUrl = getProperty("upload.server.url", DEFAULT_UPLOAD_SERVER_URL);
+        uploadServerLogin = getProperty("upload.server.login", DEFAULT_UPLOAD_SERVER_LOGIN);
+        uploadServerPassword = getProperty("upload.server.password", DEFAULT_UPLOAD_SERVER_PASSWORD);
+
+        uploadedFileFolder = getProperty("uploaded.file.folder", DEFAULT_UPLOADED_FILE_FOLDER);
+        telemetryFolder = getProperty("telemetry.file.folder", DEFAULT_TELEMETRY_FOLDER);
     }
 
     public String getHost() {
@@ -117,11 +130,21 @@ public final class Settings {
     }
 
     public String getDataFolder() {
-        return dataFolder;
+        return DATA_FOLDER;
     }
 
     public String getTelemetryFolder() {
         return telemetryFolder;
+    }
+
+    public void storeUcsServerLogin(String ucsServerLogin) {
+        storeLocalProperty("server.login", ucsServerLogin);
+        this.ucsServerLogin = ucsServerLogin;
+    }
+
+    public void storeUploadServerLogin(String uploadServerLogin) {
+        storeLocalProperty("upload.server.login", uploadServerLogin);
+        this.uploadServerLogin = uploadServerLogin;
     }
 
     public Path getTelemetryPath () {
@@ -148,11 +171,26 @@ public final class Settings {
         }
     }
 
-    private static String getProperty(Properties properties, String propertyName, String defaultValue) {
-        final Object propVal = properties.get(propertyName);
-        if (isNull(propVal) || isEmpty(propVal.toString())) {
+    private String getProperty(String propertyName, String defaultValue) {
+        final Object globalPropVal = globalSettings.get(propertyName);
+        final Object localPropVal = localSettings.get(propertyName);
+
+        if (!isNull(localPropVal) && !isEmpty(localPropVal.toString())) {
+            return localPropVal.toString();
+        }
+
+        if (isNull(globalPropVal) || isEmpty(globalPropVal.toString())) {
             return defaultValue;
         }
-        return propVal.toString();
+
+        return globalPropVal.toString();
+    }
+
+    private void storeLocalProperty(String propName, String propValue) {
+        localSettings.setProperty(propName, propValue);
+        try (OutputStream out = new FileOutputStream(new File(SETTINGS_FILE_NAME))) {
+            this.localSettings.store(out, "");
+        } catch (IOException ignored) {
+        }
     }
 }
