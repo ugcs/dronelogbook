@@ -1,4 +1,6 @@
-package ugcs.ucsHub.forms;
+package ugcs.ucsHub.ui;
+
+import ugcs.common.Action;
 
 import javax.swing.*;
 import java.awt.*;
@@ -11,11 +13,6 @@ import java.util.concurrent.Future;
 public class WaitForm extends JDialog {
 
     private final JLabel messageLabel;
-
-    @FunctionalInterface
-    public interface Action {
-        void run() throws Exception;
-    }
 
     private WaitForm() {
         super((JFrame) null, true);

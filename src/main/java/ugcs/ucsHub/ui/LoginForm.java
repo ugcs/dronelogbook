@@ -1,4 +1,4 @@
-package ugcs.ucsHub.forms;
+package ugcs.ucsHub.ui;
 
 import javax.swing.*;
 import java.awt.*;

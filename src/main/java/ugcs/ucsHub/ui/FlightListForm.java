@@ -1,4 +1,4 @@
-package ugcs.ucsHub.forms;
+package ugcs.ucsHub.ui;
 
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -14,6 +14,7 @@ import java.util.List;
 import static java.lang.Boolean.FALSE;
 import static java.util.stream.Collectors.toList;
 
+@Deprecated
 class FlightListForm extends JDialog {
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss");
     private final static String[] columnNames = {"Upload", "Flight start time", "Flight end time"};
@@ -110,7 +111,7 @@ class FlightListForm extends JDialog {
         pack();
     }
 
-    public List<FlightTelemetry> getSelectedFlights() {
+    List<FlightTelemetry> getSelectedFlights() {
         return flightsAndSelection.stream()
                 .filter(Pair::getRight)
                 .map(Pair::getLeft).collect(toList());

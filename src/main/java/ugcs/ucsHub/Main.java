@@ -2,8 +2,8 @@ package ugcs.ucsHub;
 
 import ugcs.exceptions.ExpectedException;
 import ugcs.net.SessionController;
-import ugcs.ucsHub.forms.LoginForm;
-import ugcs.ucsHub.forms.VehicleListForm;
+import ugcs.ucsHub.ui.LoginForm;
+import ugcs.ucsHub.ui.VehicleListForm;
 import ugcs.upload.logbook.LogBookUploader;
 
 import javax.swing.*;
@@ -11,7 +11,7 @@ import java.awt.*;
 
 import static java.util.Objects.isNull;
 import static ugcs.ucsHub.Settings.settings;
-import static ugcs.ucsHub.forms.WaitForm.waitForm;
+import static ugcs.ucsHub.ui.WaitForm.waitForm;
 
 public class Main {
     public static void main(String[] args) {
