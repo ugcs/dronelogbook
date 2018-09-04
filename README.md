@@ -24,10 +24,10 @@ mvn clean package
 * after successful build you'll find executable `ucsHub-1.0.jar` application in `distr` directory
 
 
-## Connection with UGCS
-ucsHub is developed for [UgCS](www.ugcs.com) version 3.0.
+## Connection with UgCS
+Application is developed for [UgCS](www.ugcs.com) version 3.0.
 
-Default localhost ugcs admin account is set up at `client.properties` file. Please update it if you use different account:
+Default localhost admin account is set up at `client.properties` file. Please update it if you use different account:
 ```properties
 server.host=location_of_ugcs_host
 server.port=ugcs_server_port
@@ -46,7 +46,7 @@ upload.server.login=dronelogbook_login
 upload.server.password=dronelogbook_password_or_md5_hash
 ```
 
-Uploading process of acquired telemetry starts if you check `Upload flights` checkbox and click on `Get telemetry` button.
+Uploading process of acquired telemetry starts if you click on `Upload` button.
 
 Acquired telemetry data will be saved as `.csv` file to `<application data folder>\telemetry` directory by default. You can change telemetry storing directory in `client.properties`:
 ```properties

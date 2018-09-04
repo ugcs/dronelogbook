@@ -69,16 +69,11 @@ public class VehicleListForm extends JPanel {
 
         JPanel bottomPanel = new JPanel(new BorderLayout());
 
-        final JPanel bottomRightPanel = new JPanel(new GridLayout(2, 1));
 
-        final JCheckBox uploadFlightCheckBox = new JCheckBox("Upload flights", true);
-        bottomRightPanel.add(new JPanel().add(uploadFlightCheckBox).getParent());
-
-        final JButton getTelemetryButton = new JButton("Get Telemetry");
-        getTelemetryButton.setEnabled(false);
-        bottomRightPanel.add(new JPanel().add(getTelemetryButton).getParent());
-        bottomPanel.add(BorderLayout.EAST, bottomRightPanel);
-        getTelemetryButton.addActionListener(event -> getSelectedVehicle().ifPresent(vehicle -> {
+        final JButton uploadTelemetryButton = new JButton("Upload");
+        uploadTelemetryButton.setEnabled(false);
+        bottomPanel.add(BorderLayout.EAST, new JPanel(new GridBagLayout()).add(uploadTelemetryButton).getParent());
+        uploadTelemetryButton.addActionListener(event -> getSelectedVehicle().ifPresent(vehicle -> {
             final long startTimeEpochMilli = getTimeAsEpochMilli(startDateTimePicker);
             final long endTimeEpochMilli = getTimeAsEpochMilli(endDateTimePicker);
 
@@ -97,41 +92,39 @@ public class VehicleListForm extends JPanel {
                             telemetryProcessor.getProcessedTelemetry(),
                             telemetryProcessor.getAllFieldCodes()), this);
 
-            if (uploadFlightCheckBox.isSelected()) {
-                final List<FlightTelemetry> flights = telemetryProcessor.getFlightTelemetries();
+            final List<FlightTelemetry> flights = telemetryProcessor.getFlightTelemetries();
 
-                if (flights.size() == 0) {
+            if (flights.size() == 0) {
+                JOptionPane.showMessageDialog(this,
+                        "There are no flights to upload in acquired telemetry...",
+                        "Telemetry uploading is skipped", INFORMATION_MESSAGE);
+            } else {
+                final FlightListForm flightListForm = new FlightListForm(flights, vehicle.getName());
+                flightListForm.setLocationRelativeTo(this);
+                flightListForm.setVisible(true);
+
+                final List<FlightTelemetry> selectedFlights = flightListForm.getSelectedFlights();
+
+                if (selectedFlights.size() > 0) {
+                    final List<Pair<FlightTelemetry, File>> flightsAndUploadedFiles =
+                            waitForm().waitOnCallable("Uploading flights to LogBook..."
+                                    , () -> uploader.uploadFlights(selectedFlights, vehicle.getName())
+                                    , this
+                            );
+
+                    final Path uploadPath = settings().getUploadedFlightsPath();
+                    moveUploadedFiles(flightsAndUploadedFiles, uploadPath,
+                            (flight, fileSuffix) -> generateFileName(vehicle.getName(),
+                                    flight.getFlightStartEpochMilli(),
+                                    flight.getFlightEndEpochMilli(),
+                                    fileSuffix));
+
                     JOptionPane.showMessageDialog(this,
-                            "There are no flights to upload in acquired telemetry...",
-                            "Telemetry uploading is skipped", INFORMATION_MESSAGE);
-                } else {
-                    final FlightListForm flightListForm = new FlightListForm(flights, vehicle.getName());
-                    flightListForm.setLocationRelativeTo(this);
-                    flightListForm.setVisible(true);
-
-                    final List<FlightTelemetry> selectedFlights = flightListForm.getSelectedFlights();
-
-                    if (selectedFlights.size() > 0) {
-                        final List<Pair<FlightTelemetry, File>> flightsAndUploadedFiles =
-                                waitForm().waitOnCallable("Uploading flights to LogBook..."
-                                        , () -> uploader.uploadFlights(selectedFlights, vehicle.getName())
-                                        , this
-                                );
-
-                        final Path uploadPath = settings().getUploadedFlightsPath();
-                        moveUploadedFiles(flightsAndUploadedFiles, uploadPath,
-                                (flight, fileSuffix) -> generateFileName(vehicle.getName(),
-                                        flight.getFlightStartEpochMilli(),
-                                        flight.getFlightEndEpochMilli(),
-                                        fileSuffix));
-
-                        JOptionPane.showMessageDialog(this,
-                                "Telemetry data of the flight is saved to:\n" + uploadPath.toString(),
-                                "Server Upload Successful", INFORMATION_MESSAGE);
-                    }
+                            "Telemetry data of the flight is saved to:\n" + uploadPath.toString(),
+                            "Server Upload Successful", INFORMATION_MESSAGE);
                 }
-
             }
+
         }));
         this.add(BorderLayout.SOUTH, bottomPanel);
 
@@ -155,7 +148,7 @@ public class VehicleListForm extends JPanel {
         vehicleJList.addListSelectionListener(event ->
                 getSelectedVehicle().ifPresent(vehicle -> {
                     infoPane.setText(vehicle.toString());
-                    getTelemetryButton.setEnabled(true);
+                    uploadTelemetryButton.setEnabled(true);
                 }));
     }
 
