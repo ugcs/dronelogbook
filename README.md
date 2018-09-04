@@ -8,7 +8,7 @@ This is a tool to import telemetry data from [UgCS](www.ugcs.com) to [DroneLogbo
 
 3. Run `ucsHub-1.0.jar` in the result folder (in Linux you may have to add execution permissions on jar-file).
 
-4. All configurations are available through `client.properties` file located in the distribution folder.
+4. All configurations are available through `client.properties` file located in `<user_home>/.dronelogbook` _application data folder_ (e. g. for Windows it is `C:\Users\<user_name>\.dronelogbook`).
 
 > **Note**: To enable telemetry logging for emulators add the following line to the `<path to UgCS installation>\server\ucs\ucs.properties` file:
 > ```properties
@@ -21,7 +21,7 @@ This is a tool to import telemetry data from [UgCS](www.ugcs.com) to [DroneLogbo
 ```bash
 mvn clean package
 ```
-* after successful build you'll find executable `ucsHub-1.0.jar` application and `client.properties` configuration file in `distr` directory
+* after successful build you'll find executable `ucsHub-1.0.jar` application in `distr` directory
 
 
 ## Connection with UGCS
@@ -48,12 +48,12 @@ upload.server.password=dronelogbook_password_or_md5_hash
 
 Uploading process of acquired telemetry starts if you check `Upload flights` checkbox and click on `Get telemetry` button.
 
-Acquired telemetry data will be saved as `.csv` file to `<application.data.folder>\telemetry` directory by default. You can change telemetry storing directory in `client.properties`:
+Acquired telemetry data will be saved as `.csv` file to `<application data folder>\telemetry` directory by default. You can change telemetry storing directory in `client.properties`:
 ```properties
  telemetry.file.folder=path_to_telemetry_folder
  ```
 
-Successfully uploaded flight's telemetry will be saved to `uploaded` directory by default which is resolved relative to `application.data.folder` unless it is absolute. For each flight separate file is created. You can change target directory of uploaded files in `client.properties`:
+Successfully uploaded flight's telemetry will be saved to `uploaded` directory by default which is resolved relative to `application data folder` unless it is absolute. For each flight separate file is created. You can change target directory of uploaded files in `client.properties`:
  ```properties
  uploaded.file.folder=path_to_upload_folder
  ```
