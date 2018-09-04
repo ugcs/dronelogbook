@@ -1,8 +1,9 @@
-package ugcs.telemetry;
+package ugcs.processing.telemetry;
 
 import com.ugcs.ucs.proto.DomainProto.Telemetry;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
+import ugcs.processing.AbstractProcessor;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -17,54 +18,38 @@ import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toMap;
 
-public class TelemetryProcessor {
+public class TelemetryProcessor extends AbstractProcessor {
     private final List<Telemetry> telemetryList;
-    private SortedMap<Long, Map<String, Telemetry>> processedTelemetry = null;
-    private Set<String> allFieldCodes = null;
-    private List<FlightTelemetry> flightTelemetries = null;
 
     public TelemetryProcessor(List<Telemetry> telemetryList) {
         this.telemetryList = telemetryList;
     }
 
     public SortedMap<Long, Map<String, Telemetry>> getProcessedTelemetry() {
-        if (processedTelemetry == null) {
-            synchronized (this) {
-                if (processedTelemetry == null) {
-                    processedTelemetry = telemetryList.stream()
-                            .sorted(comparing(Telemetry::getTime))
-                            .collect(groupingBy(Telemetry::getTime, TreeMap::new,
-                                    toMap(t -> t.getTelemetryField().getCode(), t -> t, (t1, t2) -> {
-                                        System.err.println("*** Merge fail:");
-                                        System.err.println(t1);
-                                        System.err.println(t2);
-                                        return t1;
-                                    })));
-                }
-            }
-        }
-        return processedTelemetry;
+        return evaluateField("processedTelemetry",
+                () -> telemetryList.stream()
+                        .sorted(comparing(Telemetry::getTime))
+                        .collect(groupingBy(Telemetry::getTime, TreeMap::new,
+                                toMap(t -> t.getTelemetryField().getCode(), t -> t, (t1, t2) -> {
+                                    System.err.println("*** Merge fail:");
+                                    System.err.println(t1);
+                                    System.err.println(t2);
+                                    return t1;
+                                }))));
     }
 
     public Set<String> getAllFieldCodes() {
-        if (allFieldCodes == null) {
-            synchronized (this) {
-                if (allFieldCodes == null) {
-                    allFieldCodes = getProcessedTelemetry().values().stream()
-                            .flatMap(m -> m.values().stream())
-                            .map(t -> t.getTelemetryField().getCode())
-                            .collect(Collectors.toSet());
-                }
-            }
-        }
-        return allFieldCodes;
+        return evaluateField("allFieldCodes",
+                () -> getProcessedTelemetry().values().stream()
+                        .flatMap(m -> m.values().stream())
+                        .map(t -> t.getTelemetryField().getCode())
+                        .collect(Collectors.toSet()));
     }
 
     public List<FlightTelemetry> getFlightTelemetries() {
-        if (flightTelemetries == null) {
-            synchronized (this) {
-                if (flightTelemetries == null) {
-                    flightTelemetries = new ArrayList<>();
+        return evaluateField("flightTelemetries",
+                () -> {
+                    final List<FlightTelemetry> flightTelemetries = new ArrayList<>();
 
                     final SortedMap<Long, Map<String, Telemetry>> allTelemetry = getProcessedTelemetry();
 
@@ -86,7 +71,7 @@ public class TelemetryProcessor {
                         if (currentFlightTelemetry.isEmpty()) {
                             currentFlightTelemetry.add(telemetryRecord);
                         } else {
-                            if (telemetryWithTimeDiff.getLeft() < 10000) {
+                            if (telemetryWithTimeDiff.getLeft() < 15000) {
                                 currentFlightTelemetry.add(telemetryRecord);
                             } else {
                                 if (currentFlightTelemetry.size() > 1) {
@@ -101,9 +86,8 @@ public class TelemetryProcessor {
                     if (currentFlightTelemetry.size() > 1) {
                         flightTelemetries.add(new FlightTelemetry(currentFlightTelemetry));
                     }
-                }
-            }
-        }
-        return flightTelemetries;
+
+                    return flightTelemetries;
+                });
     }
 }

@@ -1,4 +1,4 @@
-package ugcs.telemetry;
+package ugcs.processing.telemetry;
 
 import com.ugcs.ucs.proto.DomainProto.Telemetry;
 import org.apache.commons.lang3.tuple.Pair;

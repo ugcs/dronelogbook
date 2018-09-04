@@ -6,7 +6,7 @@ import com.ugcs.ucs.proto.DomainProto.Value;
 import org.apache.commons.lang3.tuple.Pair;
 import ugcs.csv.CsvWriter;
 import ugcs.exceptions.ExpectedException;
-import ugcs.telemetry.FlightTelemetry;
+import ugcs.processing.telemetry.FlightTelemetry;
 
 import java.io.File;
 import java.io.FileOutputStream;

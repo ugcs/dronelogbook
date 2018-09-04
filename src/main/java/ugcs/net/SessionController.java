@@ -1,6 +1,7 @@
 package ugcs.net;
 
 import com.ugcs.ucs.client.Client;
+import com.ugcs.ucs.proto.DomainProto;
 import com.ugcs.ucs.proto.DomainProto.DomainObjectWrapper;
 import com.ugcs.ucs.proto.DomainProto.Vehicle;
 import com.ugcs.ucs.proto.MessagesProto;
@@ -62,11 +63,28 @@ public class SessionController implements AutoCloseable {
                             .setFromTime(startTimeEpochMilli)
                             .setToTime(endTimeEpochMilli)
                             .setVehicle(vehicle)
-                            .setClientId(session.getClientId())
+                            .setClientId(getClientId())
                             .setLimit(0)
                             .build();
 
             return client.execute(getTelemetryRequest);
+        } catch (Exception toRethrow) {
+            throw new RuntimeException(toRethrow);
+        }
+    }
+
+    public MessagesProto.GetVehicleLogByTimeRangeResponse getVehicleLog(Vehicle vehicle, long startTimeEpochMilli, long endTimeEpochMilli) {
+        try {
+            final MessagesProto.GetVehicleLogByTimeRangeRequest getVehicleLogByTimeRangeRequest =
+                    MessagesProto.GetVehicleLogByTimeRangeRequest.newBuilder()
+                            .setFromTime(startTimeEpochMilli)
+                            .setToTime(endTimeEpochMilli)
+                            .setClientId(getClientId())
+                            .setLevel(DomainProto.SeverityLevel.SL_DEBUG)
+                            .addVehicles(vehicle)
+                            .build();
+
+            return client.execute(getVehicleLogByTimeRangeRequest);
         } catch (Exception toRethrow) {
             throw new RuntimeException(toRethrow);
         }
@@ -81,5 +99,9 @@ public class SessionController implements AutoCloseable {
         } catch (Exception toRethrow) {
             throw new RuntimeException(toRethrow);
         }
+    }
+
+    private int getClientId() {
+        return session.getClientId();
     }
 }

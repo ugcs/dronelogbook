@@ -2,7 +2,7 @@ package ugcs.ucsHub.forms;
 
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
-import ugcs.telemetry.FlightTelemetry;
+import ugcs.processing.telemetry.FlightTelemetry;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
