@@ -4,6 +4,7 @@ import com.ugcs.ucs.proto.DomainProto.Semantic;
 import com.ugcs.ucs.proto.DomainProto.Telemetry;
 import com.ugcs.ucs.proto.DomainProto.Value;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import ugcs.csv.CsvWriter;
 import ugcs.exceptions.ExpectedException;
 import ugcs.processing.telemetry.FlightTelemetry;
@@ -36,6 +37,7 @@ import static java.lang.Math.toDegrees;
 import static java.util.Objects.isNull;
 import static javax.xml.bind.DatatypeConverter.printHexBinary;
 import static ugcs.upload.logbook.FieldCodeToCsvColumnNameMapper.mapper;
+import static ugcs.upload.logbook.UploadResponse.fromList;
 
 public class LogBookUploader {
     private static final Predicate<String> MD5_HASH_PREDICATE = Pattern.compile("^[a-fA-F0-9]{32}$").asPredicate();
@@ -80,7 +82,7 @@ public class LogBookUploader {
         }
     }
 
-    public List<Pair<FlightTelemetry, File>> uploadFlights(List<FlightTelemetry> flights, String vehicleName) {
+    public Set<FlightUploadResponse> uploadFlights(List<FlightTelemetry> flights, String vehicleName) {
         final List<Pair<FlightTelemetry, File>> flightsAndCsvFiles = flights.stream().map(flight -> {
             try {
                 final File csvFile = File.createTempFile(vehicleName, "");
@@ -97,20 +99,26 @@ public class LogBookUploader {
             }
         }).collect(Collectors.toList());
 
+
+        return flightsAndCsvFiles.stream()
+                .map(pair -> Triple.of(pair.getLeft(), pair.getRight(), fromList(uploadFile(pair.getRight()))))
+                .map(triple -> new FlightUploadResponse(triple.getLeft(), triple.getMiddle(), triple.getRight()))
+                .collect(Collectors.toSet());
+    }
+
+    private List<String> uploadFile(File file) {
         try {
-            for (Pair<FlightTelemetry, File> pair : flightsAndCsvFiles) {
-                MultipartUtility multipart = new MultipartUtility(serverUrl, CSV_FILE_CHARSET.displayName());
+            MultipartUtility multipart = new MultipartUtility(serverUrl, CSV_FILE_CHARSET.displayName());
 
-                multipart.addFormField("login", login);
-                multipart.addFormField("password", passwordAsMd5Hash);
-                multipart.addFilePart("data", pair.getRight());
+            multipart.addFormField("login", login);
+            multipart.addFormField("password", passwordAsMd5Hash);
+            multipart.addFilePart("data", file);
 
-                multipart.finish();
-            }
-            return flightsAndCsvFiles;
+            return multipart.finish();
         } catch (IOException connectException) {
             throw new ExpectedException("LogBook service unavailable.", connectException);
         }
+
     }
 
     private static void printCsvRecord(CsvWriter csvWriter, long timeEpochMilli, Map<String, Telemetry> telemetryRecord) {

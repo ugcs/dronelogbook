@@ -3,28 +3,30 @@ package ugcs.ucsHub.ui;
 import com.github.lgooddatepicker.components.DateTimePicker;
 import com.ugcs.ucs.proto.DomainProto;
 import com.ugcs.ucs.proto.DomainProto.Vehicle;
-import org.apache.commons.lang3.tuple.Pair;
+import ugcs.exceptions.ExpectedException;
 import ugcs.net.SessionController;
 import ugcs.processing.logs.FlightLog;
 import ugcs.processing.logs.LogsProcessor;
 import ugcs.processing.telemetry.FlightTelemetry;
 import ugcs.processing.telemetry.TelemetryProcessor;
+import ugcs.upload.logbook.FlightUploadResponse;
 import ugcs.upload.logbook.LogBookUploader;
+import ugcs.upload.logbook.UploadResponse;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
 import static java.nio.file.Files.exists;
@@ -32,6 +34,7 @@ import static java.nio.file.Files.isDirectory;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static javax.swing.JOptionPane.INFORMATION_MESSAGE;
+import static javax.swing.JOptionPane.WARNING_MESSAGE;
 import static javax.swing.ListSelectionModel.SINGLE_SELECTION;
 import static ugcs.ucsHub.Settings.settings;
 import static ugcs.ucsHub.ui.WaitForm.waitForm;
@@ -105,22 +108,15 @@ public class VehicleListForm extends JPanel {
 
             final List<FlightTelemetry> flights = telemetryProcessor.getFlightTelemetries();
             if (flights.size() > 0) {
-                final List<Pair<FlightTelemetry, File>> flightsAndUploadedFiles =
+                final Collection<FlightUploadResponse> uploadResponses =
                         waitForm().waitOnCallable("Uploading flights to LogBook..."
                                 , () -> uploader.uploadFlights(flights, vehicle.getName())
                                 , this
                         );
 
-                final Path uploadPath = settings().getUploadedFlightsPath();
-                moveUploadedFiles(flightsAndUploadedFiles, uploadPath,
-                        (flight, fileSuffix) -> generateFileName(vehicle.getName(),
-                                flight.getFlightStartEpochMilli(),
-                                flight.getFlightEndEpochMilli(),
-                                fileSuffix));
+                storeUploadedFlights(uploadResponses, vehicle.getName());
 
-                JOptionPane.showMessageDialog(this,
-                        "Telemetry data of the flight is saved to:\n" + uploadPath.toString(),
-                        "Server Upload Successful", INFORMATION_MESSAGE);
+                showUploadResponseMessage(uploadResponses);
             }
 
         }));
@@ -188,32 +184,62 @@ public class VehicleListForm extends JPanel {
         return dateTimePicker.getDateTimePermissive().atZone(ZoneId.systemDefault()).toInstant().getEpochSecond() * 1000L;
     }
 
-    private String generateFileName(String vehicleName, long startTimeEpochMilli, long endTimeEpochMilli,
-                                    String fileSuffix) {
+    private static String generateFileName(String vehicleName, long startTimeEpochMilli, long endTimeEpochMilli,
+                                           String fileSuffix) {
         return (vehicleName + "-" + FILE_DATE_FORMAT.format(new Date(startTimeEpochMilli)) +
                 "-" + FILE_DATE_FORMAT.format(new Date(endTimeEpochMilli)) + fileSuffix + ".csv")
                 .replaceAll("[*/\\\\!|:?<>]", "_")
                 .replaceAll("(%22)", "_");
     }
 
-    private static void moveUploadedFiles(List<Pair<FlightTelemetry, File>> flightsAndUploadedFiles, Path targetFolder,
-                                          BiFunction<FlightTelemetry, String, String> flightToFileName) {
+    private static Path generateUniqueFileName(Path targetFolder, String vehicleName, FlightUploadResponse flightResponse) {
+        final long flightStartEpochMilli = flightResponse.getFlightTelemetry().getFlightStartEpochMilli();
+        final long flightEndEpochMilli = flightResponse.getFlightTelemetry().getFlightEndEpochMilli();
+        Path uniqueFilePath = targetFolder.resolve(
+                generateFileName(vehicleName, flightStartEpochMilli, flightEndEpochMilli, "")
+        );
+
+        int numberOfTries = 1;
+        while (exists(uniqueFilePath) && numberOfTries < 1000) {
+            uniqueFilePath = targetFolder.resolve(
+                    generateFileName(vehicleName, flightStartEpochMilli, flightEndEpochMilli, "-" + numberOfTries)
+            );
+            ++numberOfTries;
+        }
+
+        return uniqueFilePath;
+    }
+
+    private static void storeUploadedFlights(Collection<FlightUploadResponse> responses, String vehicleName) {
         try {
+            Path targetFolder = settings().getUploadedFlightsPath();
+
             if (!isDirectory(targetFolder)) {
                 Files.createDirectory(targetFolder);
             }
 
-            for (Pair<FlightTelemetry, File> pair : flightsAndUploadedFiles) {
-                Path targetFilePath = targetFolder.resolve(flightToFileName.apply(pair.getLeft(), ""));
-                int numberOfTries = 1;
-                while (exists(targetFilePath) && numberOfTries < 1000) {
-                    targetFilePath = targetFolder.resolve(flightToFileName.apply(pair.getLeft(), "-" + numberOfTries));
-                    ++numberOfTries;
-                }
-                Files.move(pair.getRight().toPath(), targetFilePath);
+            for (FlightUploadResponse response : responses) {
+                final Path targetFilePath = generateUniqueFileName(targetFolder, vehicleName, response);
+                response.storeFlightTelemetry(targetFilePath);
             }
-        } catch (Exception toRethrow) {
+        } catch (IOException toRethrow) {
             throw new RuntimeException(toRethrow);
         }
+    }
+
+    private void showUploadResponseMessage(Collection<FlightUploadResponse> uploadResponses) {
+        final UploadResponse uploadResponse = uploadResponses.stream()
+                .findAny()
+                .map(FlightUploadResponse::getUploadResponse)
+                .orElseThrow(() -> new ExpectedException("No flights were uploaded."));
+
+
+        JPanel panel = new JPanel();
+
+        panel.add(new JLabel(uploadResponse.getDescription().orElse("No description.")));
+        uploadResponse.getUrl().ifPresent(url -> panel.add(new JHyperlink(url, "click to view on LogBook")));
+
+        JOptionPane.showMessageDialog(this, panel, "LogBook response",
+                uploadResponse.isWarning() ? WARNING_MESSAGE : INFORMATION_MESSAGE);
     }
 }
