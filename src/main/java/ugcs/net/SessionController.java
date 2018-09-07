@@ -90,6 +90,23 @@ public class SessionController implements AutoCloseable {
         }
     }
 
+    public long countTelemetry(Vehicle vehicle, long startTimeEpochMilli, long endTimeEpochMilli) {
+        try {
+            final MessagesProto.CountTelemetryRequest countTelemetryRequest =
+                    MessagesProto.CountTelemetryRequest.newBuilder()
+                            .setClientId(getClientId())
+                            .setVehicle(vehicle)
+                            .setFromTime(startTimeEpochMilli)
+                            .setToTime(endTimeEpochMilli)
+                            .build();
+
+            final MessagesProto.CountTelemetryResponse countTelemetryResponse = client.execute(countTelemetryRequest);
+            return countTelemetryResponse.getCount();
+        } catch (Exception toRethrow) {
+            throw new RuntimeException(toRethrow);
+        }
+    }
+
     @Override
     public void close() {
         try {

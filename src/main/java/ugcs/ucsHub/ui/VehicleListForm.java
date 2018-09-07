@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -88,16 +89,16 @@ public class VehicleListForm extends JPanel {
             final List<FlightTelemetry> flightTelemetries = waitForm().waitOnCallable(
                     "Acquiring data from UgCS..."
                     , () -> selectedFlights.stream()
-                    .flatMap(flight -> flight instanceof FlightTelemetry
-                            ? Stream.of((FlightTelemetry)flight)
-                            : new TelemetryProcessor(
+                            .flatMap(flight -> flight instanceof FlightTelemetry
+                                    ? Stream.of((FlightTelemetry) flight)
+                                    : new TelemetryProcessor(
                                     controller.getTelemetry(
                                             vehicle,
                                             flight.getFlightStartEpochMilli(),
                                             flight.getFlightEndEpochMilli()
                                     ).getTelemetryList())
-                            .getFlightTelemetries().stream())
-                    .collect(toList())
+                                    .getFlightTelemetries().stream())
+                            .collect(toList())
                     , this
             );
 
@@ -156,12 +157,22 @@ public class VehicleListForm extends JPanel {
 
     private void updateFlightsTable(SessionController controller, long startTimeEpochMilli,
                                     long endTimeEpochMilli, FlightTablePanel flightTable, Vehicle vehicle) {
-        final List<DomainProto.Telemetry> telemetryList =
-                controller.getTelemetry(vehicle, startTimeEpochMilli, endTimeEpochMilli).getTelemetryList();
-        final TelemetryProcessor telemetryProcessor = new TelemetryProcessor(telemetryList);
-        final List<FlightTelemetry> flightTelemetries = telemetryProcessor.getFlightTelemetries();
 
-        flightTable.updateModel(flightTelemetries);
+        try {
+            final long telemetryCount = controller.countTelemetry(vehicle, startTimeEpochMilli, endTimeEpochMilli);
+
+            final Callable<List<DomainProto.Telemetry>> getTelemetryCallable =
+                    () -> controller.getTelemetry(vehicle, startTimeEpochMilli, endTimeEpochMilli).getTelemetryList();
+            final List<DomainProto.Telemetry> telemetryList = telemetryCount > 10000
+                    ? waitForm().waitOnCallable("Acquiring data from UgCS...", getTelemetryCallable, this)
+                    : getTelemetryCallable.call();
+            final TelemetryProcessor telemetryProcessor = new TelemetryProcessor(telemetryList);
+            final List<FlightTelemetry> flightTelemetries = telemetryProcessor.getFlightTelemetries();
+
+            flightTable.updateModel(flightTelemetries);
+        } catch (Exception toRethrow) {
+            throw new RuntimeException(toRethrow);
+        }
     }
 
     private Path getPathToTelemetryFile(Vehicle vehicle, long startTimeEpochMilli, long endTimeEpochMilli) {
