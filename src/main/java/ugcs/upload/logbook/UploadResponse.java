@@ -44,7 +44,7 @@ public class UploadResponse {
     }
 
     public boolean isWarning() {
-        return getUrl().isPresent();
+        return !getUrl().isPresent();
     }
 
 }

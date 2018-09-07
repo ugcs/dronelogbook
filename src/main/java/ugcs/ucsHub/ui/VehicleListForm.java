@@ -1,13 +1,15 @@
 package ugcs.ucsHub.ui;
 
+import com.github.lgooddatepicker.components.DatePicker;
+import com.github.lgooddatepicker.components.DatePickerSettings;
 import com.github.lgooddatepicker.components.DateTimePicker;
 import com.ugcs.ucs.proto.DomainProto;
 import com.ugcs.ucs.proto.DomainProto.Vehicle;
 import ugcs.exceptions.ExpectedException;
 import ugcs.net.SessionController;
-import ugcs.processing.logs.FlightLog;
-import ugcs.processing.logs.LogsProcessor;
+import ugcs.processing.Flight;
 import ugcs.processing.telemetry.FlightTelemetry;
+import ugcs.processing.telemetry.FlightTelemetryProcessor;
 import ugcs.processing.telemetry.TelemetryProcessor;
 import ugcs.upload.logbook.FlightUploadResponse;
 import ugcs.upload.logbook.LogBookUploader;
@@ -19,8 +21,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.time.LocalTime;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -28,9 +31,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import static java.nio.file.Files.exists;
 import static java.nio.file.Files.isDirectory;
+import static java.time.ZoneId.systemDefault;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static javax.swing.JOptionPane.INFORMATION_MESSAGE;
@@ -45,11 +50,10 @@ public class VehicleListForm extends JPanel {
     private final Map<String, Vehicle> vehicleMap;
     private final JList<String> vehicleJList;
 
+    private final DatePicker datePicker;
+
     public VehicleListForm(SessionController controller, LogBookUploader uploader) {
         super(new BorderLayout());
-
-        final DateTimePicker startDateTimePicker = new DateTimePicker();
-        final DateTimePicker endDateTimePicker = new DateTimePicker();
 
         vehicleMap = controller.getVehicles().stream()
                 .collect(toMap(Vehicle::getName, v -> v));
@@ -76,41 +80,44 @@ public class VehicleListForm extends JPanel {
         uploadTelemetryButton.setEnabled(false);
         bottomPanel.add(BorderLayout.EAST, new JPanel(new GridBagLayout()).add(uploadTelemetryButton).getParent());
         uploadTelemetryButton.addActionListener(event -> getSelectedVehicle().ifPresent(vehicle -> {
-            final Set<FlightLog> selectedFlightLogs = flightTable.getSelectedFlights();
-            if (selectedFlightLogs.isEmpty()) {
+            final Set<? extends Flight> selectedFlights = flightTable.getSelectedFlights();
+            if (selectedFlights.isEmpty()) {
                 return;
             }
 
-            final List<DomainProto.Telemetry> telemetry = waitForm().waitOnCallable(
+            final List<FlightTelemetry> flightTelemetries = waitForm().waitOnCallable(
                     "Acquiring data from UgCS..."
-                    , () -> selectedFlightLogs.stream()
-                            .flatMap(flightLog -> controller
-                                    .getTelemetry(vehicle, flightLog.getFlightStartEpochMilli(), flightLog.getFlightEndEpochMilli())
-                                    .getTelemetryList()
-                                    .stream())
-                            .collect(toList())
+                    , () -> selectedFlights.stream()
+                    .flatMap(flight -> flight instanceof FlightTelemetry
+                            ? Stream.of((FlightTelemetry)flight)
+                            : new TelemetryProcessor(
+                                    controller.getTelemetry(
+                                            vehicle,
+                                            flight.getFlightStartEpochMilli(),
+                                            flight.getFlightEndEpochMilli()
+                                    ).getTelemetryList())
+                            .getFlightTelemetries().stream())
+                    .collect(toList())
                     , this
             );
 
-            final TelemetryProcessor telemetryProcessor = new TelemetryProcessor(telemetry);
-
-            final long startTimeEpochMilli = selectedFlightLogs.stream()
-                    .mapToLong(FlightLog::getFlightStartEpochMilli)
+            final long startTimeEpochMilli = selectedFlights.stream()
+                    .mapToLong(Flight::getFlightStartEpochMilli)
                     .min().orElse(0);
-            final long endTimeEpochMilli = selectedFlightLogs.stream()
-                    .mapToLong(FlightLog::getFlightEndEpochMilli)
+            final long endTimeEpochMilli = selectedFlights.stream()
+                    .mapToLong(Flight::getFlightEndEpochMilli)
                     .max().orElse(0);
             final Path pathToTelemetryFile = getPathToTelemetryFile(vehicle, startTimeEpochMilli, endTimeEpochMilli);
+            final FlightTelemetryProcessor flightTelemetryProcessor = new FlightTelemetryProcessor(flightTelemetries);
             waitForm().waitOnAction("Saving telemetry data...",
                     () -> uploader.saveTelemetryDataToCsvFile(pathToTelemetryFile,
-                            telemetryProcessor.getProcessedTelemetry(),
-                            telemetryProcessor.getAllFieldCodes()), this);
+                            flightTelemetryProcessor.getProcessedTelemetry(),
+                            flightTelemetryProcessor.getAllFieldCodes()), this);
 
-            final List<FlightTelemetry> flights = telemetryProcessor.getFlightTelemetries();
-            if (flights.size() > 0) {
+            if (flightTelemetries.size() > 0) {
                 final Collection<FlightUploadResponse> uploadResponses =
                         waitForm().waitOnCallable("Uploading flights to LogBook..."
-                                , () -> uploader.uploadFlights(flights, vehicle.getName())
+                                , () -> uploader.uploadFlights(flightTelemetries, vehicle.getName())
                                 , this
                         );
 
@@ -127,40 +134,34 @@ public class VehicleListForm extends JPanel {
 
         final JPanel timePickersPanel = new JPanel();
         timePickersPanel.setLayout(new BoxLayout(timePickersPanel, BoxLayout.Y_AXIS));
-        startDateTimePicker.setDateTimePermissive(LocalDateTime.now().minusHours(24));
-        endDateTimePicker.setDateTimePermissive(LocalDateTime.now());
 
-        final JPanel startTimePickerPanel = new JPanel();
-        startTimePickerPanel.setBorder(BorderFactory.createTitledBorder("Start Date/Time"));
-        startTimePickerPanel.add(startDateTimePicker);
-        timePickersPanel.add(startTimePickerPanel);
-
-        final JPanel endTimePickerPanel = new JPanel();
-        endTimePickerPanel.setBorder(BorderFactory.createTitledBorder("End Date/Time"));
-        endTimePickerPanel.add(endDateTimePicker);
-        timePickersPanel.add(endTimePickerPanel);
+        final JPanel datePickerPanel = new JPanel();
+        datePickerPanel.setBorder(BorderFactory.createTitledBorder("Pick the date"));
+        final DatePickerSettings datePickerSettings = new DatePickerSettings();
+        datePickerSettings.setAllowEmptyDates(false);
+        datePicker = new DatePicker(datePickerSettings);
+        datePickerPanel.add(datePicker);
+        timePickersPanel.add(datePickerPanel);
 
         bottomPanel.add(BorderLayout.CENTER, timePickersPanel);
 
         Consumer<Vehicle> updateFlightsTableForVehicle = vehicle ->
-                updateFlightsTable(controller, getTimeAsEpochMilli(startDateTimePicker),
-                        getTimeAsEpochMilli(endDateTimePicker), flightTable, vehicle);
+                updateFlightsTable(controller, getSelectedStartTimeAsEpochMilli(),
+                        getSelectedEndTimeAsEpochMilli(), flightTable, vehicle);
 
         vehicleJList.addListSelectionListener(event -> getSelectedVehicle().ifPresent(updateFlightsTableForVehicle));
 
-        startDateTimePicker.addDateTimeChangeListener(event -> getSelectedVehicle().ifPresent(updateFlightsTableForVehicle));
-        endDateTimePicker.addDateTimeChangeListener(event -> getSelectedVehicle().ifPresent(updateFlightsTableForVehicle));
+        datePicker.addDateChangeListener(event -> getSelectedVehicle().ifPresent(updateFlightsTableForVehicle));
     }
 
     private void updateFlightsTable(SessionController controller, long startTimeEpochMilli,
                                     long endTimeEpochMilli, FlightTablePanel flightTable, Vehicle vehicle) {
-        final List<DomainProto.VehicleLogEntry> vehicleLogEntriesList =
-                controller.getVehicleLog(vehicle, startTimeEpochMilli, endTimeEpochMilli).getVehicleLogEntriesList();
+        final List<DomainProto.Telemetry> telemetryList =
+                controller.getTelemetry(vehicle, startTimeEpochMilli, endTimeEpochMilli).getTelemetryList();
+        final TelemetryProcessor telemetryProcessor = new TelemetryProcessor(telemetryList);
+        final List<FlightTelemetry> flightTelemetries = telemetryProcessor.getFlightTelemetries();
 
-        final LogsProcessor logsProcessor = new LogsProcessor(vehicleLogEntriesList);
-        final List<FlightLog> flightLogs = logsProcessor.getFlightLogs();
-
-        flightTable.updateModel(flightLogs);
+        flightTable.updateModel(flightTelemetries);
     }
 
     private Path getPathToTelemetryFile(Vehicle vehicle, long startTimeEpochMilli, long endTimeEpochMilli) {
@@ -180,8 +181,20 @@ public class VehicleListForm extends JPanel {
         return Optional.ofNullable(vehicleMap.get(vehicleJList.getSelectedValue()));
     }
 
+    private long getSelectedStartTimeAsEpochMilli() {
+        return getTimeAsEpochMilli(datePicker.getDate(), LocalTime.of(0, 0));
+    }
+
+    private long getSelectedEndTimeAsEpochMilli() {
+        return getTimeAsEpochMilli(datePicker.getDate().plusDays(1), LocalTime.of(0, 0));
+    }
+
+    private static long getTimeAsEpochMilli(LocalDate date, LocalTime time) {
+        return LocalDateTime.of(date, time).atZone(systemDefault()).toEpochSecond() * 1000L;
+    }
+
     private static long getTimeAsEpochMilli(DateTimePicker dateTimePicker) {
-        return dateTimePicker.getDateTimePermissive().atZone(ZoneId.systemDefault()).toInstant().getEpochSecond() * 1000L;
+        return dateTimePicker.getDateTimePermissive().atZone(systemDefault()).toInstant().getEpochSecond() * 1000L;
     }
 
     private static String generateFileName(String vehicleName, long startTimeEpochMilli, long endTimeEpochMilli,

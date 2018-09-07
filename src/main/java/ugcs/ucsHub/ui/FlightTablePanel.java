@@ -3,7 +3,7 @@ package ugcs.ucsHub.ui;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import ugcs.common.Action;
-import ugcs.processing.logs.FlightLog;
+import ugcs.processing.Flight;
 
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
@@ -34,10 +34,10 @@ class FlightTablePanel extends JPanel {
     private final List<Action> tableChangeListeners = new CopyOnWriteArrayList<>();
 
     private class FlightTableModel extends AbstractTableModel {
-        private final List<MutablePair<FlightLog, Boolean>> flightsAndSelection;
+        private final List<MutablePair<? extends Flight, Boolean>> flightsAndSelection;
 
-        FlightTableModel(List<FlightLog> flightLogs) {
-            this.flightsAndSelection = flightLogs.stream()
+        FlightTableModel(List<? extends Flight> flights) {
+            this.flightsAndSelection = flights.stream()
                     .map(flight -> MutablePair.of(flight, FALSE))
                     .collect(toList());
         }
@@ -97,7 +97,7 @@ class FlightTablePanel extends JPanel {
             flightsAndSelection.forEach(pair -> pair.setValue(false));
         }
 
-        Set<FlightLog> getSelectedFlights() {
+        Set<Flight> getSelectedFlights() {
             return flightsAndSelection.stream()
                     .filter(Pair::getRight)
                     .map(Pair::getLeft)
@@ -120,14 +120,14 @@ class FlightTablePanel extends JPanel {
         return DATE_FORMAT.format(new Date(epochMilli));
     }
 
-    void updateModel(List<FlightLog> flightLogs) {
-        if (flightLogs.isEmpty()) {
-            noFlightsLabel.setText("No flights found for the selected period...");
+    void updateModel(List<? extends Flight> flights) {
+        if (flights.isEmpty()) {
+            noFlightsLabel.setText("No flights found for the selected date...");
             flightTablePane.setVisible(false);
             noFlightsLabelPane.setVisible(true);
             flightTable.setModel(new FlightTableModel(emptyList()));
         } else {
-            flightTable.setModel(new FlightTableModel(flightLogs));
+            flightTable.setModel(new FlightTableModel(flights));
             flightTablePane.setVisible(true);
             noFlightsLabelPane.setVisible(false);
             flightTable.getModel().addTableModelListener(this::tableChanged);
@@ -139,7 +139,7 @@ class FlightTablePanel extends JPanel {
         tableChangeListeners.add(action);
     }
 
-    Set<FlightLog> getSelectedFlights() {
+    Set<Flight> getSelectedFlights() {
         return flightTable.getModel() instanceof FlightTableModel
                 ? ((FlightTableModel) flightTable.getModel()).getSelectedFlights()
                 : emptySet();

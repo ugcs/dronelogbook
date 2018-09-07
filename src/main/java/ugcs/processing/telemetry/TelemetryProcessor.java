@@ -19,6 +19,8 @@ import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toMap;
 
 public class TelemetryProcessor extends AbstractProcessor {
+    private static final int FLIGHT_SEPARATION_THRESHOLD_MS = 15000;
+
     private final List<Telemetry> telemetryList;
 
     public TelemetryProcessor(List<Telemetry> telemetryList) {
@@ -66,19 +68,19 @@ public class TelemetryProcessor extends AbstractProcessor {
 
                     List<Pair<Long, Map<String, Telemetry>>> currentFlightTelemetry = new LinkedList<>();
                     for (Triple<Long, Long, Map<String, Telemetry>> telemetryWithTimeDiff : telemetryByTimeDiff) {
-                        final Pair<Long, Map<String, Telemetry>> telemetryRecord =
+                        final Pair<Long, Map<String, Telemetry>> telemetryRecordPair =
                                 Pair.of(telemetryWithTimeDiff.getMiddle(), telemetryWithTimeDiff.getRight());
                         if (currentFlightTelemetry.isEmpty()) {
-                            currentFlightTelemetry.add(telemetryRecord);
+                            addFlightRecord(currentFlightTelemetry, telemetryRecordPair);
                         } else {
-                            if (telemetryWithTimeDiff.getLeft() < 15000) {
-                                currentFlightTelemetry.add(telemetryRecord);
+                            if (telemetryWithTimeDiff.getLeft() < FLIGHT_SEPARATION_THRESHOLD_MS) {
+                                addFlightRecord(currentFlightTelemetry, telemetryRecordPair);
                             } else {
                                 if (currentFlightTelemetry.size() > 1) {
                                     flightTelemetries.add(new FlightTelemetry(currentFlightTelemetry));
                                 }
                                 currentFlightTelemetry = new LinkedList<>();
-                                currentFlightTelemetry.add(telemetryRecord);
+                                addFlightRecord(currentFlightTelemetry, telemetryRecordPair);
                             }
                         }
                     }
@@ -89,5 +91,21 @@ public class TelemetryProcessor extends AbstractProcessor {
 
                     return flightTelemetries;
                 });
+    }
+
+    private static boolean isFlightRecord(Map<String, Telemetry> telemetryRecord) {
+        if (telemetryRecord.containsKey("latitude") && telemetryRecord.containsKey("longitude")) {
+            final double latitude = telemetryRecord.get("latitude").getValue().getDoubleValue();
+            final double longitude = telemetryRecord.get("longitude").getValue().getDoubleValue();
+            return latitude != 0.0 && longitude != 0.0;
+        }
+        return false;
+    }
+
+    private static void addFlightRecord(List<Pair<Long, Map<String, Telemetry>>> flightTelemetry,
+                                        Pair<Long, Map<String, Telemetry>> telemetryRecordPair) {
+        if (isFlightRecord(telemetryRecordPair.getRight())) {
+            flightTelemetry.add(telemetryRecordPair);
+        }
     }
 }
