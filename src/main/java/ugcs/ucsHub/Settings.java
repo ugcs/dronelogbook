@@ -1,10 +1,12 @@
 package ugcs.ucsHub;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -71,7 +73,7 @@ public final class Settings {
             try (InputStream in = classLoader.getResourceAsStream(SETTINGS_FILE_NAME)) {
                 if (in != null) {
                     this.globalSettings.load(in);
-                    try (final OutputStream out = Files.newOutputStream(pathToGlobalSettings)){
+                    try (final OutputStream out = Files.newOutputStream(pathToGlobalSettings)) {
                         this.globalSettings.store(out, "");
                     }
                 }
@@ -151,12 +153,22 @@ public final class Settings {
         this.uploadServerLogin = uploadServerLogin;
     }
 
-    public Path getTelemetryPath () {
+    public Path getTelemetryPath() {
         return createFolderIfNotPresent(resolveOnDataFolder(getTelemetryFolder()));
     }
 
     public Path getUploadedFlightsPath() {
         return createFolderIfNotPresent(resolveOnDataFolder(getUploadedFileFolder()));
+    }
+
+    String getProductVersion() {
+        try (
+                BufferedReader reader = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream("/settings/version.info")))
+        ) {
+            return reader.readLine();
+        } catch (IOException toRethrow) {
+            throw new RuntimeException(toRethrow);
+        }
     }
 
     private Path resolveOnDataFolder(String folderToResolve) {

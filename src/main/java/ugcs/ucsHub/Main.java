@@ -15,7 +15,7 @@ import static ugcs.ucsHub.ui.WaitForm.waitForm;
 
 public class Main {
     public static void main(String[] args) {
-        JFrame frame = new JFrame("UCS Hub " + Main.class.getPackage().getImplementationVersion());
+        JFrame frame = new JFrame("UCS Hub " + settings().getProductVersion());
 
         final Container contentPane = frame.getContentPane();
 

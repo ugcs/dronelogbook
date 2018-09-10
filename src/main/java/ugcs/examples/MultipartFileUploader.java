@@ -1,3 +1,5 @@
+package ugcs.examples;
+
 import ugcs.upload.logbook.MultipartUtility;
 
 import java.io.File;

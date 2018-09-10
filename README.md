@@ -4,7 +4,7 @@ This is a tool to import telemetry data from [UgCS](www.ugcs.com) to [DroneLogbo
 ## Getting pre-built release distribution
 1. Download the [latest](https://github.com/ugcs/dronelogbook/releases/download/v1.1/ucsHub-1.1.jar) release distribution as executable jar-file (or go to the [release page](https://github.com/ugcs/dronelogbook/releases) if you want a different one).
 
-2. Run `ucsHub-1.1.jar` in the result folder (in Linux you may have to add execution permissions on jar-file).
+2. Run `ucsHub-1.1.jar` (in Linux you may have to add execution permissions on jar-file).
 
 3. All configurations are available through `client.properties` file located in `<user_home>/.dronelogbook` _application data folder_ (e. g. for Windows it is `C:\Users\<user_name>\.dronelogbook`).
 
@@ -15,7 +15,7 @@ This is a tool to import telemetry data from [UgCS](www.ugcs.com) to [DroneLogbo
 
 ## Building application from sources
 * Download sources from the repository
-* Change to the directory where `pom.xml` is located and run the command:
+* Change to the directory where `pom.xml` is located and run the command (JDK version 9.0 or higher is required):
 ```bash
 mvnw clean package
 ```
