@@ -14,10 +14,10 @@ This is a tool to import telemetry data from [UgCS](www.ugcs.com) to [DroneLogbo
 > ```
 
 ## Building application from sources
-* Install [Maven](https://maven.apache.org/) tool (version 3.3.9 or higher)
+* Download sources from the repository
 * Change to the directory where `pom.xml` is located and run the command:
 ```bash
-mvn clean package
+mvnw clean package
 ```
 * after successful build you'll find executable `ucsHub-1.1.jar` application in `distr` directory
 
