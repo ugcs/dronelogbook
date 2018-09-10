@@ -2,13 +2,11 @@
 This is a tool to import telemetry data from [UgCS](www.ugcs.com) to [DroneLogbook](www.dronelogbook.com) site.
 
 ## Getting pre-built release distribution
-1. Download the [latest](https://github.com/ugcs/dronelogbook/releases/download/v1.0/ucsHub-1.0.zip) release distribution as zip-archive (or go to the [release page](https://github.com/ugcs/dronelogbook/releases) if you want a different one).
+1. Download the [latest](https://github.com/ugcs/dronelogbook/releases/download/v1.1/ucsHub-1.1.jar) release distribution as executable jar-file (or go to the [release page](https://github.com/ugcs/dronelogbook/releases) if you want a different one).
 
-2. Unpack downloaded archive to any place in your local filesystem.
+2. Run `ucsHub-1.1.jar` in the result folder (in Linux you may have to add execution permissions on jar-file).
 
-3. Run `ucsHub-1.0.jar` in the result folder (in Linux you may have to add execution permissions on jar-file).
-
-4. All configurations are available through `client.properties` file located in `<user_home>/.dronelogbook` _application data folder_ (e. g. for Windows it is `C:\Users\<user_name>\.dronelogbook`).
+3. All configurations are available through `client.properties` file located in `<user_home>/.dronelogbook` _application data folder_ (e. g. for Windows it is `C:\Users\<user_name>\.dronelogbook`).
 
 > **Note**: To enable telemetry logging for emulators add the following line to the `<path to UgCS installation>\server\ucs\ucs.properties` file:
 > ```properties
@@ -21,7 +19,7 @@ This is a tool to import telemetry data from [UgCS](www.ugcs.com) to [DroneLogbo
 ```bash
 mvn clean package
 ```
-* after successful build you'll find executable `ucsHub-1.0.jar` application in `distr` directory
+* after successful build you'll find executable `ucsHub-1.1.jar` application in `distr` directory
 
 
 ## Connection with UgCS
