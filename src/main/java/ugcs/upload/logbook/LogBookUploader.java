@@ -17,9 +17,10 @@ import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -34,6 +35,12 @@ import java.util.stream.Collectors;
 import static com.ugcs.ucs.proto.DomainProto.Semantic.S_LATITUDE;
 import static com.ugcs.ucs.proto.DomainProto.Semantic.S_LONGITUDE;
 import static java.lang.Math.toDegrees;
+import static java.time.Instant.ofEpochMilli;
+import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE;
+import static java.time.temporal.ChronoField.HOUR_OF_DAY;
+import static java.time.temporal.ChronoField.MINUTE_OF_HOUR;
+import static java.time.temporal.ChronoField.NANO_OF_SECOND;
+import static java.time.temporal.ChronoField.SECOND_OF_MINUTE;
 import static java.util.Objects.isNull;
 import static javax.xml.bind.DatatypeConverter.printHexBinary;
 import static ugcs.upload.logbook.FieldCodeToCsvColumnNameMapper.mapper;
@@ -42,6 +49,17 @@ import static ugcs.upload.logbook.UploadResponse.fromList;
 public class LogBookUploader {
     private static final Predicate<String> MD5_HASH_PREDICATE = Pattern.compile("^[a-fA-F0-9]{32}$").asPredicate();
     private static final Charset CSV_FILE_CHARSET = Charset.forName("UTF-8");
+
+    private static final DateTimeFormatter DATE_TIME_FORMATTER = new DateTimeFormatterBuilder()
+            .append(ISO_LOCAL_DATE)
+            .appendLiteral("T")
+            .appendValue(HOUR_OF_DAY, 2)
+            .appendLiteral(':')
+            .appendValue(MINUTE_OF_HOUR, 2)
+            .appendLiteral(':')
+            .appendValue(SECOND_OF_MINUTE, 2)
+            .appendFraction(NANO_OF_SECOND, 3, 3, true)
+            .toFormatter();
 
     private static final List<String> FILED_CODES = Arrays.asList(
             "Time",
@@ -135,7 +153,8 @@ public class LogBookUploader {
     }
 
     private static String convertDateTime(long epochMilli) {
-        return LocalDateTime.ofInstant(Instant.ofEpochMilli(epochMilli), ZoneId.systemDefault()).toString();
+        final LocalDateTime localDateTime = LocalDateTime.ofInstant(ofEpochMilli(epochMilli), ZoneId.systemDefault());
+        return localDateTime.format(DATE_TIME_FORMATTER);
     }
 
     private static String valueToCsvString(Value value, Semantic semantic) {
