@@ -15,12 +15,12 @@ This is a tool to import telemetry data from [UgCS](www.ugcs.com) to [DroneLogbo
 
 ## Building application from sources
 * Download sources from the repository
-* Change to the directory where `pom.xml` is located and run the command (JDK version 9.0 or higher is required):
+* Change to the directory where `pom.xml` is located and run the command (JDK version 8 or higher is required):
 ```bash
 mvnw clean package
 ```
-* after successful build you'll find executable `ucsHub-1.1.jar` application in `distr` directory
-
+* after successful build you'll find executable `ucsHub-1.1.jar` application in `distr/multi-platform` directory
+* for Windows you may use `ditr/windows-executable/ucsHub.exe`
 
 ## Connection with UgCS
 Application is developed for [UgCS](www.ugcs.com) version 3.0.

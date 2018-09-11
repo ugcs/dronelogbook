@@ -11,7 +11,14 @@
         <jdk.version>1.8</jdk.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <fully.qualified.main.class>ugcs.ucsHub.Main</fully.qualified.main.class>
+
         <project.distribution.directory>${project.basedir}/distr</project.distribution.directory>
+        <executable.jar.distribution.directory>${project.distribution.directory}/multi-platform</executable.jar.distribution.directory>
+        <executable.jar.artifact.name>${project.artifactId}-${project.version}</executable.jar.artifact.name>
+        <executable.jar.path>${executable.jar.distribution.directory}/${executable.jar.artifact.name}.jar</executable.jar.path>
+
+        <windows.exe.distribution.directory>${project.distribution.directory}/windows-executable</windows.exe.distribution.directory>
+        <windows.exe.name>ucsHub</windows.exe.name>
     </properties>
 
     <dependencies>
@@ -66,19 +73,6 @@
 
         <plugins>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-                        </manifest>
-                    </archive>
-                </configuration>
-            </plugin>
-
-            <plugin>
                 <artifactId>maven-clean-plugin</artifactId>
                 <version>3.1.0</version>
                 <configuration>
@@ -93,12 +87,43 @@
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>2.3.2</version>
                 <configuration>
                     <source>${jdk.version}</source>
                     <target>${jdk.version}</target>
                 </configuration>
+            </plugin>
+
+            <plugin>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>generate-sources</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <tasks>
+                                <mkdir dir="${windows.exe.distribution.directory}"/>
+                            </tasks>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
 
             <plugin>
@@ -112,8 +137,8 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
-                            <finalName>${project.artifactId}-${project.version}</finalName>
-                            <outputDirectory>${project.distribution.directory}</outputDirectory>
+                            <finalName>${executable.jar.artifact.name}</finalName>
+                            <outputDirectory>${executable.jar.distribution.directory}</outputDirectory>
                             <shadedArtifactAttached>true</shadedArtifactAttached>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
@@ -126,82 +151,40 @@
             </plugin>
 
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-install-plugin</artifactId>
-                <version>2.5.1</version>
+                <groupId>com.akathist.maven.plugins.launch4j</groupId>
+                <artifactId>launch4j-maven-plugin</artifactId>
+                <version>1.7.23</version>
                 <executions>
                     <execution>
-                        <id>install-jar-lib</id>
-                        <goals>
-                            <goal>install-file</goal>
-                        </goals>
-                        <phase>package</phase>
-                        <configuration>
-                            <groupId>com.github.UgCS.dronelogbook</groupId>
-                            <artifactId>ucs-hub</artifactId>
-                            <version>1.1</version>
-                            <packaging>jar</packaging>
-                            <file>${project.distribution.directory}/${project.artifactId}-${project.version}.jar</file>
-                            <generatePom>true</generatePom>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
-
-            <plugin>
-                <groupId>org.moditect</groupId>
-                <artifactId>moditect-maven-plugin</artifactId>
-                <version>1.0.0.Beta1</version>
-                <executions>
-                    <execution>
-                        <id>add-module-infos</id>
+                        <id>build-windows-exe</id>
                         <phase>package</phase>
                         <goals>
-                            <goal>add-module-info</goal>
+                            <goal>launch4j</goal>
                         </goals>
                         <configuration>
-                            <outputDirectory>${project.build.directory}/modules</outputDirectory>
-                            <overwriteExistingFiles>true</overwriteExistingFiles>
-                            <modules>
-                                <module>
-                                    <artifact>
-                                        <groupId>com.github.UgCS.dronelogbook</groupId>
-                                        <artifactId>ucs-hub</artifactId>
-                                        <version>${project.version}</version>
-                                    </artifact>
-                                    <moduleInfoSource>
-                                        module ucs.hub {
-                                            requires java.desktop;
-                                            requires java.xml.bind;
-
-                                            exports ugcs.ucsHub;
-                                        }
-                                    </moduleInfoSource>
-                                </module>
-                            </modules>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>create-runtime-image</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>create-runtime-image</goal>
-                        </goals>
-                        <configuration>
-                            <modulePath>
-                                <path>${project.build.directory}/modules</path>
-                            </modulePath>
-                            <modules>
-                                <module>ucs.hub</module>
-                            </modules>
-                            <launcher>
-                                <name>ucsHub</name>
-                                <module>ucs.hub/ugcs.ucsHub.Main</module>
-                            </launcher>
-                            <outputDirectory>
-                                ${project.build.directory}/jlink-image
-                            </outputDirectory>
+                            <headerType>gui</headerType>
+                            <outfile>${windows.exe.distribution.directory}/${windows.exe.name}.exe</outfile>
+                            <jar>${executable.jar.path}</jar>
+                            <classPath>
+                                <mainClass>${fully.qualified.main.class}</mainClass>
+                                <addDependencies>true</addDependencies>
+                                <preCp>anything</preCp>
+                            </classPath>
+                            <jre>
+                                <minVersion>${jdk.version}.0</minVersion>
+                            </jre>
+                            <versionInfo>
+                                <fileVersion>${project.version}.0.0</fileVersion>
+                                <txtFileVersion>${project.version}</txtFileVersion>
+                                <companyName>-</companyName>
+                                <fileDescription>DroneLogBook telemetry uploader</fileDescription>
+                                <copyright>Copyright © 2018</copyright>
+                                <productVersion>${project.version}.0.0</productVersion>
+                                <txtProductVersion>${project.version}</txtProductVersion>
+                                <productName>DroneLogBook uploader</productName>
+                                <internalName>${windows.exe.name}</internalName>
+                                <originalFilename>${windows.exe.name}.exe</originalFilename>
+                            </versionInfo>
                         </configuration>
                     </execution>
                 </executions>
@@ -209,4 +192,117 @@
         </plugins>
     </build>
 
+    <profiles>
+        <profile>
+            <id>standalone-distribution</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-install-plugin</artifactId>
+                        <version>2.5.1</version>
+                        <executions>
+                            <execution>
+                                <id>install-jar-lib</id>
+                                <goals>
+                                    <goal>install-file</goal>
+                                </goals>
+                                <phase>package</phase>
+                                <configuration>
+                                    <groupId>com.github.UgCS.dronelogbook</groupId>
+                                    <artifactId>ucs-hub</artifactId>
+                                    <version>${project.version}</version>
+                                    <packaging>jar</packaging>
+                                    <file>${executable.jar.path}</file>
+                                    <generatePom>true</generatePom>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <plugin>
+                        <groupId>org.moditect</groupId>
+                        <artifactId>moditect-maven-plugin</artifactId>
+                        <version>1.0.0.Beta1</version>
+                        <executions>
+                            <execution>
+                                <id>add-module-infos</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>add-module-info</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>${project.build.directory}/modules</outputDirectory>
+                                    <overwriteExistingFiles>true</overwriteExistingFiles>
+                                    <modules>
+                                        <module>
+                                            <artifact>
+                                                <groupId>com.github.UgCS.dronelogbook</groupId>
+                                                <artifactId>ucs-hub</artifactId>
+                                                <version>${project.version}</version>
+                                            </artifact>
+                                            <moduleInfoSource>
+                                                module ucs.hub {
+                                                requires java.desktop;
+                                                requires java.xml.bind;
+
+                                                exports ugcs.ucsHub;
+                                                }
+                                            </moduleInfoSource>
+                                        </module>
+                                    </modules>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>create-runtime-image</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>create-runtime-image</goal>
+                                </goals>
+                                <configuration>
+                                    <modulePath>
+                                        <path>${project.build.directory}/modules</path>
+                                    </modulePath>
+                                    <modules>
+                                        <module>ucs.hub</module>
+                                    </modules>
+                                    <launcher>
+                                        <name>ucsHub</name>
+                                        <module>ucs.hub/ugcs.ucsHub.Main</module>
+                                    </launcher>
+                                    <outputDirectory>${project.build.directory}/jlink-image</outputDirectory>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <plugin>
+                        <artifactId>maven-resources-plugin</artifactId>
+                        <version>3.1.0</version>
+                        <executions>
+                            <execution>
+                                <id>copy-resources</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>copy-resources</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>${project.distribution.directory}/${os.name}-standalone</outputDirectory>
+                                    <resources>
+                                        <resource>
+                                            <directory>${project.build.directory}/jlink-image</directory>
+                                            <filtering>false</filtering>
+                                        </resource>
+                                    </resources>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
