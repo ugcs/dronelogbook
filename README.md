@@ -2,7 +2,7 @@
 This is a tool to import telemetry data from [UgCS](www.ugcs.com) to [DroneLogbook](www.dronelogbook.com) site.
 
 ## Getting pre-built release distribution
-1. Download the [latest](https://github.com/ugcs/dronelogbook/releases/download/v1.1/ucsHub-1.1.jar) release distribution as executable jar-file (or go to the [release page](https://github.com/ugcs/dronelogbook/releases) if you want a different one).
+1. Download the [latest](https://github.com/ugcs/dronelogbook/releases/latest) release distribution as executable jar-file (or go to the [release page](https://github.com/ugcs/dronelogbook/releases) if you want a different one).
 
 2. Run `ucsHub-1.1.jar` (in Linux you may have to add execution permissions on jar-file).
 
