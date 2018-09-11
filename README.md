@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/ugcs/dronelogbook.svg?branch=master)](https://travis-ci.org/ugcs/dronelogbook)
+
 # ucsHub
 This is a tool to import telemetry data from [UgCS](www.ugcs.com) to [DroneLogbook](www.dronelogbook.com) site.
 
