@@ -81,9 +81,9 @@
 
     <scm>
         <connection>scm:git:https://github.com</connection>
-        <developerConnection>scm:git:${url}</developerConnection>
+        <developerConnection>scm:git:${project.url}</developerConnection>
         <tag>HEAD</tag>
-        <url>${url}</url>
+        <url>${project.url}</url>
     </scm>
 
     <build>

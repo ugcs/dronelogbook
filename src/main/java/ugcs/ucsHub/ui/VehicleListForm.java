@@ -165,13 +165,16 @@ public class VehicleListForm extends JPanel {
         try {
             final long telemetryCount = controller.countTelemetry(vehicle, startTimeEpochMilli, endTimeEpochMilli);
 
-            final Callable<List<DomainProto.Telemetry>> getTelemetryCallable =
-                    () -> controller.getTelemetry(vehicle, startTimeEpochMilli, endTimeEpochMilli).getTelemetryList();
-            final List<DomainProto.Telemetry> telemetryList = telemetryCount > 10000
-                    ? waitForm().waitOnCallable("Acquiring data from UgCS...", getTelemetryCallable, this)
-                    : getTelemetryCallable.call();
-            final TelemetryProcessor telemetryProcessor = new TelemetryProcessor(telemetryList);
-            final List<FlightTelemetry> flightTelemetries = telemetryProcessor.getFlightTelemetries();
+            final Callable<List<FlightTelemetry>> getFlightListCallable = () -> {
+                final List<DomainProto.Telemetry> telemetryList =
+                        controller.getTelemetry(vehicle, startTimeEpochMilli, endTimeEpochMilli).getTelemetryList();
+                final TelemetryProcessor telemetryProcessor = new TelemetryProcessor(telemetryList);
+                return telemetryProcessor.getFlightTelemetries();
+            };
+
+            final List<FlightTelemetry> flightTelemetries = telemetryCount > 10000
+                    ? waitForm().waitOnCallable("Acquiring data from UgCS...", getFlightListCallable, this)
+                    : getFlightListCallable.call();
 
             flightTable.updateModel(flightTelemetries);
         } catch (Exception toRethrow) {
