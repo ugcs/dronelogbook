@@ -1,12 +1,10 @@
 package ugcs.ucsHub;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -14,6 +12,7 @@ import java.nio.file.Paths;
 import java.util.Properties;
 
 import static com.privatejgoodies.common.base.Strings.isEmpty;
+import static java.lang.String.format;
 import static java.nio.file.Files.createDirectories;
 import static java.nio.file.Files.isRegularFile;
 import static java.util.Objects.isNull;
@@ -162,10 +161,13 @@ public final class Settings {
     }
 
     String getProductVersion() {
-        try (
-                BufferedReader reader = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream("/settings/version.info")))
-        ) {
-            return reader.readLine();
+        try (final InputStream in = getClass().getResourceAsStream("/settings/version.properties")) {
+            final Properties versionProperties = new Properties();
+            versionProperties.load(in);
+            final String version = versionProperties.getProperty("project.version");
+            final String buildNumber = versionProperties.getProperty("build.number");
+            final boolean isReleaseBuild = "true".equals(versionProperties.getProperty("project.release", ""));
+            return version + (isReleaseBuild ? "" : format(", build %s", buildNumber));
         } catch (IOException toRethrow) {
             throw new RuntimeException(toRethrow);
         }
