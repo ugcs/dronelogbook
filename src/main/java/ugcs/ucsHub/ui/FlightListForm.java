@@ -81,9 +81,9 @@ class FlightListForm extends JDialog {
                     case 0:
                         return flightsAndSelection.get(rowIndex).getRight();
                     case 1:
-                        return epochToString(flightsAndSelection.get(rowIndex).getLeft().getFlightStartEpochMilli());
+                        return epochToString(flightsAndSelection.get(rowIndex).getLeft().getStartEpochMilli());
                     case 2:
-                        return epochToString(flightsAndSelection.get(rowIndex).getLeft().getFlightEndEpochMilli());
+                        return epochToString(flightsAndSelection.get(rowIndex).getLeft().getEndEpochMilli());
                 }
                 return null;
             }

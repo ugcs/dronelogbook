@@ -61,7 +61,8 @@ public class Main {
             final VehicleListForm vehicleForm = new VehicleListForm(sessionController, logBookUploader);
             contentPane.remove(loginForm);
             contentPane.add(vehicleForm);
-            frame.setSize(600, 500);
+            frame.setSize(750, 600);
+            frame.setLocationRelativeTo(null);
         });
 
     }

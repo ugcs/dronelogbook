@@ -30,12 +30,12 @@ public class FlightTelemetry implements Flight {
     }
 
     @Override
-    public long getFlightStartEpochMilli() {
+    public long getStartEpochMilli() {
         return flightStartEpochMilli;
     }
 
     @Override
-    public long getFlightEndEpochMilli() {
+    public long getEndEpochMilli() {
         return flightEndEpochMilli;
     }
 }

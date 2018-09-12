@@ -95,8 +95,8 @@ public class VehicleListForm extends JPanel {
                                     : new TelemetryProcessor(
                                     controller.getTelemetry(
                                             vehicle,
-                                            flight.getFlightStartEpochMilli(),
-                                            flight.getFlightEndEpochMilli()
+                                            flight.getStartEpochMilli(),
+                                            flight.getEndEpochMilli()
                                     ).getTelemetryList())
                                     .getFlightTelemetries().stream())
                             .collect(toList())
@@ -104,10 +104,10 @@ public class VehicleListForm extends JPanel {
             );
 
             final long startTimeEpochMilli = selectedFlights.stream()
-                    .mapToLong(Flight::getFlightStartEpochMilli)
+                    .mapToLong(Flight::getStartEpochMilli)
                     .min().orElse(0);
             final long endTimeEpochMilli = selectedFlights.stream()
-                    .mapToLong(Flight::getFlightEndEpochMilli)
+                    .mapToLong(Flight::getEndEpochMilli)
                     .max().orElse(0);
             final Path pathToTelemetryFile = getPathToTelemetryFile(vehicle, startTimeEpochMilli, endTimeEpochMilli);
             final FlightTelemetryProcessor flightTelemetryProcessor = new FlightTelemetryProcessor(flightTelemetries);
@@ -224,8 +224,8 @@ public class VehicleListForm extends JPanel {
     }
 
     private static Path generateUniqueFileName(Path targetFolder, String vehicleName, FlightUploadResponse flightResponse) {
-        final long flightStartEpochMilli = flightResponse.getFlightTelemetry().getFlightStartEpochMilli();
-        final long flightEndEpochMilli = flightResponse.getFlightTelemetry().getFlightEndEpochMilli();
+        final long flightStartEpochMilli = flightResponse.getFlightTelemetry().getStartEpochMilli();
+        final long flightEndEpochMilli = flightResponse.getFlightTelemetry().getEndEpochMilli();
         Path uniqueFilePath = targetFolder.resolve(
                 generateFileName(vehicleName, flightStartEpochMilli, flightEndEpochMilli, "")
         );

@@ -2,6 +2,11 @@ package ugcs.ucsHub.ui;
 
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.ocpsoft.prettytime.Duration;
+import org.ocpsoft.prettytime.PrettyTime;
+import org.ocpsoft.prettytime.TimeUnit;
+import org.ocpsoft.prettytime.units.JustNow;
+import org.ocpsoft.prettytime.units.Minute;
 import ugcs.common.Action;
 import ugcs.processing.Flight;
 
@@ -18,12 +23,15 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import static java.lang.Boolean.FALSE;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
+import static java.util.Locale.ENGLISH;
+import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 
 class FlightTablePanel extends JPanel {
-    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss");
-    private final static String[] columnNames = {"Upload", "Flight start time", "Flight end time"};
+    private static final SimpleDateFormat DATE_TIME_FORMAT = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss");
+    private static final SimpleDateFormat TIME_FORMAT = new SimpleDateFormat("HH:mm:ss");
+    private final static String[] columnNames = {"Upload", "Flight start time", "Flight end time", "Flight duration"};
 
     private final JTable flightTable = new JTable();
     private final Component flightTablePane;
@@ -33,13 +41,25 @@ class FlightTablePanel extends JPanel {
 
     private final List<Action> tableChangeListeners = new CopyOnWriteArrayList<>();
 
-    private class FlightTableModel extends AbstractTableModel {
+    private static class FlightTableModel extends AbstractTableModel {
+        private static final long MILLIS_IN_DAY = 1000L * 60 * 60 * 24;
         private final List<MutablePair<? extends Flight, Boolean>> flightsAndSelection;
+        private final boolean hideDate;
 
         FlightTableModel(List<? extends Flight> flights) {
             this.flightsAndSelection = flights.stream()
                     .map(flight -> MutablePair.of(flight, FALSE))
                     .collect(toList());
+
+            hideDate = flights.stream().findAny()
+                    .map(Flight::getStartEpochMilli)
+                    .map(FlightTableModel::epochMilliToEpochDay)
+                    .map(epochDay -> flights.stream()
+                            .map(Flight::getStartEpochMilli)
+                            .map(FlightTableModel::epochMilliToEpochDay)
+                            .allMatch(epochDay::equals)
+                    )
+                    .orElse(FALSE);
         }
 
         @Override
@@ -73,9 +93,11 @@ class FlightTablePanel extends JPanel {
                 case 0:
                     return flightsAndSelection.get(rowIndex).getRight();
                 case 1:
-                    return epochToString(flightsAndSelection.get(rowIndex).getLeft().getFlightStartEpochMilli());
+                    return flightEpochToString(getFlight(rowIndex).getStartEpochMilli());
                 case 2:
-                    return epochToString(flightsAndSelection.get(rowIndex).getLeft().getFlightEndEpochMilli());
+                    return flightEpochToString(getFlight(rowIndex).getEndEpochMilli());
+                case 3:
+                    return formatFlightDuration(getFlight(rowIndex));
             }
             return null;
         }
@@ -103,6 +125,44 @@ class FlightTablePanel extends JPanel {
                     .map(Pair::getLeft)
                     .collect(toSet());
         }
+
+        private String flightEpochToString(long epochMilli) {
+            final Date flightDate = new Date(epochMilli);
+            return hideDate ? TIME_FORMAT.format(flightDate) : DATE_TIME_FORMAT.format(flightDate);
+        }
+
+        private Flight getFlight(int rowIndex) {
+            return flightsAndSelection.get(rowIndex).getLeft();
+        }
+
+        private static long epochMilliToEpochDay(long epochMilli) {
+            return epochMilli / MILLIS_IN_DAY;
+        }
+
+        private static String formatFlightDuration(Flight flight) {
+            final PrettyTime prettyTime = new PrettyTime(flight.getStartDate(), ENGLISH);
+            final List<Duration> durations = prettyTime.calculatePreciseDuration(flight.getEndDate());
+            return durations.stream()
+                    .map(FlightTableModel::formatDuration)
+                    .collect(joining(" "));
+        }
+
+        private static String formatDuration(Duration duration) {
+            final Class<? extends TimeUnit> timeUnitClass = duration.getUnit().getClass();
+            if (Minute.class.equals(timeUnitClass)) {
+                return new PrettyTime(ENGLISH).formatDuration(duration) + " " + formatMillis(duration.getDelta());
+            }
+
+            if (JustNow.class.equals(timeUnitClass)) {
+                return formatMillis(duration.getQuantity());
+            }
+
+            return new PrettyTime(ENGLISH).formatDuration(duration);
+        }
+
+        private static String formatMillis(long millis) {
+            return millis / 1000L + " s";
+        }
     }
 
     FlightTablePanel() {
@@ -114,10 +174,6 @@ class FlightTablePanel extends JPanel {
 
         noFlightsLabelPane = new JPanel(new GridBagLayout()).add(noFlightsLabel).getParent();
         add(noFlightsLabelPane, BorderLayout.NORTH);
-    }
-
-    private static String epochToString(long epochMilli) {
-        return DATE_FORMAT.format(new Date(epochMilli));
     }
 
     void updateModel(List<? extends Flight> flights) {
