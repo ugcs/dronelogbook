@@ -42,6 +42,7 @@ import static java.util.stream.Collectors.toMap;
 import static javax.swing.JOptionPane.INFORMATION_MESSAGE;
 import static javax.swing.JOptionPane.WARNING_MESSAGE;
 import static javax.swing.ListSelectionModel.SINGLE_SELECTION;
+import static javax.swing.SwingUtilities.invokeLater;
 import static ugcs.ucsHub.Settings.settings;
 import static ugcs.ucsHub.ui.WaitForm.waitForm;
 
@@ -150,9 +151,12 @@ public class VehicleListForm extends JPanel {
                 updateFlightsTable(controller, getSelectedStartTimeAsEpochMilli(),
                         getSelectedEndTimeAsEpochMilli(), flightTable, vehicle);
 
-        vehicleJList.addListSelectionListener(event -> getSelectedVehicle().ifPresent(updateFlightsTableForVehicle));
+        vehicleJList.addListSelectionListener(event ->
+                invokeLater(() -> getSelectedVehicle().ifPresent(updateFlightsTableForVehicle)));
 
-        datePicker.addDateChangeListener(event -> getSelectedVehicle().ifPresent(updateFlightsTableForVehicle));
+        datePicker.addDateChangeListener(event ->
+                invokeLater(() -> getSelectedVehicle().ifPresent(updateFlightsTableForVehicle))
+        );
     }
 
     private void updateFlightsTable(SessionController controller, long startTimeEpochMilli,
