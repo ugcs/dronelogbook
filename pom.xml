@@ -23,7 +23,9 @@
         <windows.exe.distribution.directory>${project.distribution.directory}/windows-executable
         </windows.exe.distribution.directory>
         <windows.exe.name>${project.artifactId}-${project.version}</windows.exe.name>
+        <windows.exe.path>${windows.exe.distribution.directory}/${windows.exe.name}.exe</windows.exe.path>
 
+        <github.pages.directory>${project.build.directory}/github-pages</github.pages.directory>
 
         <buildNumber/>
         <project.isRelease>false</project.isRelease>
@@ -162,25 +164,6 @@
             </plugin>
 
             <plugin>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <version>1.8</version>
-                <executions>
-                    <execution>
-                        <id>generate-sources</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                        <configuration>
-                            <tasks>
-                                <mkdir dir="${windows.exe.distribution.directory}"/>
-                            </tasks>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
                 <version>2.1</version>
@@ -224,7 +207,7 @@
                         </goals>
                         <configuration>
                             <headerType>gui</headerType>
-                            <outfile>${windows.exe.distribution.directory}/${windows.exe.name}.exe</outfile>
+                            <outfile>${windows.exe.path}</outfile>
                             <jar>${executable.jar.path}</jar>
                             <classPath>
                                 <mainClass>${fully.qualified.main.class}</mainClass>
@@ -246,6 +229,67 @@
                                 <internalName>${windows.exe.name}</internalName>
                                 <originalFilename>${windows.exe.name}.exe</originalFilename>
                             </versionInfo>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>2.7</version>
+                <executions>
+                    <execution>
+                        <id>copy-resource-one</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${github.pages.directory}</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>src/main/resources/github-pages</directory>
+                                </resource>
+                                <resource>
+                                    <directory>${basedir}</directory>
+                                    <includes>
+                                        <include>README.md</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.8</version>
+                <executions>
+                    <execution>
+                        <id>generate-sources</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <tasks>
+                                <mkdir dir="${windows.exe.distribution.directory}"/>
+                            </tasks>
+                        </configuration>
+                    </execution>
+
+                    <execution>
+                        <id>copy-artifacts-to-github-pages</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <tasks>
+                                <copy file="${executable.jar.path}" tofile="${github.pages.directory}/ucsHub.jar"/>
+                                <copy file="${windows.exe.path}" tofile="${github.pages.directory}/ucsHub.exe"/>
+                            </tasks>
                         </configuration>
                     </execution>
                 </executions>
