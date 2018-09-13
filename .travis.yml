@@ -1,11 +1,21 @@
 language: java
 
 deploy:
-  provider: pages
-  skip-cleanup: true
-  github-token: $GITHUB_TOKEN
-  keep-history: true
-  local-dir: target/github-pages
-  verbose: true
-  on:
-    branch: master
+  - provider: pages
+    skip-cleanup: true
+    github-token: $GITHUB_TOKEN
+    keep-history: true
+    local-dir: target/github-pages
+    verbose: true
+    on:
+      branch: master
+  - provider: releases
+    api_key:
+      secure: jeWczi1laxAuDUhO7qjBr6uBNN63BU9BGq1LbdllI3xhXSjoAX2liRVBabGM67vIqJH3/kUeK/JYBfnRNo28NWlXCW5c/YSTJGSLByeYa/WCbwPv8/RqwjcyCfBeexidT1ebRv/D2uFYHFzGmw/QxV9GQz4NWPyMCcwY+A1zgUZb1lTdGXuzkRkn7Bfs9gXfp2dsbbUswul6YxPhOzIZnI8viJULmI/gzzMdLhelC5P/gGaCd6cWK9qWOrNHHluoG2/M+o6NDZG4z5U7ifiZIWPq/EVF0e/z31qqeBV7tjYPCfrD4Dw0jPdEkHIs3fQ1t8z/S/VNcDljpHsP9yOFAaF5VLu4bBjMC6lQlFQ3A2T0liQ1DmEkq2lY4q/7rvb9xdktATT+3BfTNtKEiRdktKu6CjhIqu1KWiLHH2lIbpFxtHU9NRhvTRzYHyzakwMMZ68VpcsIWfXPxtJgcTkialLOm5sqrmcs23qcDg17vQTGo1A74yZ9bLIJYLhLDez0k3wOfeX8E1JTCQb5f6k2noGG+PoDIZch5au0ar8L5MVMnHFuMAANrSgpweVLDfB5Lbb8gelALVh8CnJdaEhHQOoz87wQUNrn+wQV9HVVPPcFXM72YlwTbvz13NyFn2+8HTS6gfUQvilMtdTTlnLmjeaSTYi/H8tsB93YR1k/dm4=
+    file_glob: true
+    file: distr/**/*
+    skip_cleanup: true
+    verbose: true
+    on:
+      repo: ugcs/dronelogbook
+      tags: true
