@@ -4,7 +4,7 @@
     <groupId>UgCS.ucs.hub</groupId>
     <artifactId>ucsHub</artifactId>
     <packaging>jar</packaging>
-    <version>1.1</version>
+    <version>1.2</version>
     <name>ucsHub</name>
     <url>https://github.com/ugcs/dronelogbook.git</url>
 
@@ -28,7 +28,7 @@
         <github.pages.directory>${project.build.directory}/github-pages</github.pages.directory>
 
         <buildNumber/>
-        <project.isRelease>false</project.isRelease>
+        <project.isRelease>true</project.isRelease>
     </properties>
 
     <dependencies>
