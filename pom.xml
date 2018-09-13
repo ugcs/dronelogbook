@@ -28,7 +28,7 @@
         <github.pages.directory>${project.build.directory}/github-pages</github.pages.directory>
 
         <buildNumber/>
-        <project.isRelease>true</project.isRelease>
+        <project.isRelease>false</project.isRelease>
     </properties>
 
     <dependencies>
