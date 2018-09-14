@@ -1,9 +1,10 @@
 package ugcs.processing.telemetry;
 
 import com.ugcs.ucs.proto.DomainProto.Telemetry;
+import com.ugcs.ucs.proto.DomainProto.Vehicle;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
-import ugcs.processing.AbstractProcessor;
+import ugcs.common.LazyFieldEvaluator;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -18,13 +19,15 @@ import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toMap;
 
-public class TelemetryProcessor extends AbstractProcessor {
+public class TelemetryProcessor extends LazyFieldEvaluator {
     private static final int FLIGHT_SEPARATION_THRESHOLD_MS = 15000;
 
     private final List<Telemetry> telemetryList;
+    private final Vehicle vehicle;
 
-    public TelemetryProcessor(List<Telemetry> telemetryList) {
+    public TelemetryProcessor(List<Telemetry> telemetryList, Vehicle vehicle) {
         this.telemetryList = telemetryList;
+        this.vehicle = vehicle;
     }
 
     public SortedMap<Long, Map<String, Telemetry>> getProcessedTelemetry() {
@@ -77,7 +80,7 @@ public class TelemetryProcessor extends AbstractProcessor {
                                 addFlightRecord(currentFlightTelemetry, telemetryRecordPair);
                             } else {
                                 if (currentFlightTelemetry.size() > 1) {
-                                    flightTelemetries.add(new FlightTelemetry(currentFlightTelemetry));
+                                    flightTelemetries.add(new FlightTelemetry(currentFlightTelemetry, vehicle));
                                 }
                                 currentFlightTelemetry = new LinkedList<>();
                                 addFlightRecord(currentFlightTelemetry, telemetryRecordPair);
@@ -86,7 +89,7 @@ public class TelemetryProcessor extends AbstractProcessor {
                     }
 
                     if (currentFlightTelemetry.size() > 1) {
-                        flightTelemetries.add(new FlightTelemetry(currentFlightTelemetry));
+                        flightTelemetries.add(new FlightTelemetry(currentFlightTelemetry, vehicle));
                     }
 
                     return flightTelemetries;

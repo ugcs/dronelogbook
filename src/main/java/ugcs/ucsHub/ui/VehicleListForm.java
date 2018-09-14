@@ -2,11 +2,12 @@ package ugcs.ucsHub.ui;
 
 import com.github.lgooddatepicker.components.DatePicker;
 import com.github.lgooddatepicker.components.DatePickerSettings;
-import com.github.lgooddatepicker.components.DateTimePicker;
 import com.ugcs.ucs.proto.DomainProto;
 import com.ugcs.ucs.proto.DomainProto.Vehicle;
 import lombok.SneakyThrows;
-import ugcs.exceptions.ExpectedException;
+import ugcs.common.operation.FutureWrapper;
+import ugcs.common.operation.Operation;
+import ugcs.common.operation.OperationPerformer;
 import ugcs.net.SessionController;
 import ugcs.processing.Flight;
 import ugcs.processing.telemetry.FlightTelemetry;
@@ -14,7 +15,6 @@ import ugcs.processing.telemetry.FlightTelemetryProcessor;
 import ugcs.processing.telemetry.TelemetryProcessor;
 import ugcs.upload.logbook.FlightUploadResponse;
 import ugcs.upload.logbook.LogBookUploader;
-import ugcs.upload.logbook.UploadResponse;
 
 import javax.swing.*;
 import java.awt.*;
@@ -39,12 +39,12 @@ import static java.nio.file.Files.isDirectory;
 import static java.time.ZoneId.systemDefault;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
-import static javax.swing.JOptionPane.INFORMATION_MESSAGE;
-import static javax.swing.JOptionPane.WARNING_MESSAGE;
+import static java.util.stream.Collectors.toSet;
 import static javax.swing.ListSelectionModel.SINGLE_SELECTION;
 import static javax.swing.SwingUtilities.invokeLater;
 import static ugcs.ucsHub.Settings.settings;
 import static ugcs.ucsHub.ui.WaitForm.waitForm;
+import static ugcs.upload.logbook.FlightUploadPerformerFactory.performerFactory;
 
 public class VehicleListForm extends JPanel {
     private static final SimpleDateFormat FILE_DATE_FORMAT = new SimpleDateFormat("yyyyMMdd_HHmmss");
@@ -97,7 +97,7 @@ public class VehicleListForm extends JPanel {
                                             vehicle,
                                             flight.getStartEpochMilli(),
                                             flight.getEndEpochMilli()
-                                    ).getTelemetryList())
+                                    ).getTelemetryList(), vehicle)
                                     .getFlightTelemetries().stream())
                             .collect(toList())
                     , this
@@ -110,22 +110,14 @@ public class VehicleListForm extends JPanel {
                     .mapToLong(Flight::getEndEpochMilli)
                     .max().orElse(0);
             final Path pathToTelemetryFile = getPathToTelemetryFile(vehicle, startTimeEpochMilli, endTimeEpochMilli);
-            final FlightTelemetryProcessor flightTelemetryProcessor = new FlightTelemetryProcessor(flightTelemetries);
+            final FlightTelemetryProcessor flightTelemetryProcessor = new FlightTelemetryProcessor(flightTelemetries, vehicle);
             waitForm().waitOnAction("Saving telemetry data...",
                     () -> uploader.saveTelemetryDataToCsvFile(pathToTelemetryFile,
                             flightTelemetryProcessor.getProcessedTelemetry(),
                             flightTelemetryProcessor.getAllFieldCodes()), this);
 
             if (flightTelemetries.size() > 0) {
-                final Collection<FlightUploadResponse> uploadResponses =
-                        waitForm().waitOnCallable("Uploading flights to LogBook..."
-                                , () -> uploader.uploadFlights(flightTelemetries, vehicle.getName())
-                                , this
-                        );
-
-                storeUploadedFlights(uploadResponses, vehicle.getName());
-
-                showUploadResponseMessage(uploadResponses);
+                uploadFlightTelemetry(uploader, vehicle, flightTelemetries);
             }
 
         }));
@@ -167,15 +159,15 @@ public class VehicleListForm extends JPanel {
         final Callable<List<FlightTelemetry>> getFlightListCallable = () -> {
             final List<DomainProto.Telemetry> telemetryList =
                     controller.getTelemetry(vehicle, startTimeEpochMilli, endTimeEpochMilli).getTelemetryList();
-            final TelemetryProcessor telemetryProcessor = new TelemetryProcessor(telemetryList);
+            final TelemetryProcessor telemetryProcessor = new TelemetryProcessor(telemetryList, vehicle);
             return telemetryProcessor.getFlightTelemetries();
         };
 
-        final List<FlightTelemetry> flightTelemetries = telemetryCount > 10000
+        final List<FlightTelemetry> flights = telemetryCount > 10000
                 ? waitForm().waitOnCallable("Acquiring data from UgCS...", getFlightListCallable, this)
                 : getFlightListCallable.call();
 
-        flightTable.updateModel(flightTelemetries);
+        flightTable.updateModel(flights);
     }
 
     private Path getPathToTelemetryFile(Vehicle vehicle, long startTimeEpochMilli, long endTimeEpochMilli) {
@@ -205,10 +197,6 @@ public class VehicleListForm extends JPanel {
 
     private static long getTimeAsEpochMilli(LocalDate date, LocalTime time) {
         return LocalDateTime.of(date, time).atZone(systemDefault()).toEpochSecond() * 1000L;
-    }
-
-    private static long getTimeAsEpochMilli(DateTimePicker dateTimePicker) {
-        return dateTimePicker.getDateTimePermissive().atZone(systemDefault()).toInstant().getEpochSecond() * 1000L;
     }
 
     private static String generateFileName(String vehicleName, long startTimeEpochMilli, long endTimeEpochMilli,
@@ -251,19 +239,22 @@ public class VehicleListForm extends JPanel {
         }
     }
 
-    private void showUploadResponseMessage(Collection<FlightUploadResponse> uploadResponses) {
-        final UploadResponse uploadResponse = uploadResponses.stream()
-                .findAny()
-                .map(FlightUploadResponse::getUploadResponse)
-                .orElseThrow(() -> new ExpectedException("No flights were uploaded."));
+    private void uploadFlightTelemetry(LogBookUploader uploader, Vehicle vehicle, List<FlightTelemetry> flightTelemetries) {
+        final OperationPerformer<Flight, FlightUploadResponse> performer = performerFactory().getPerformer();
+        final List<Operation<Flight, FlightUploadResponse>> operationResults =
+                waitForm().waitOnCallable("Uploading flights to LogBook...",
+                        () -> flightTelemetries.stream()
+                                .map(flight -> performer.submit(flight, () -> uploader.uploadFlight(flight)))
+                                .map(FutureWrapper::of)
+                                .map(FutureWrapper::get)
+                                .collect(toList()),
+                        this);
 
+        final Collection<FlightUploadResponse> performedResponses = operationResults.stream()
+                .flatMap(Operation::getResultAsStream)
+                .collect(toSet());
+        storeUploadedFlights(performedResponses, vehicle.getName());
 
-        JPanel panel = new JPanel();
-
-        panel.add(new JLabel(uploadResponse.getDescription().orElse("No description.")));
-        uploadResponse.getUrl().ifPresent(url -> panel.add(new JHyperlink(url, "click to view on LogBook")));
-
-        JOptionPane.showMessageDialog(this, panel, "LogBook response",
-                uploadResponse.isWarning() ? WARNING_MESSAGE : INFORMATION_MESSAGE);
+        UploadReportForm.showReport(this, operationResults);
     }
 }

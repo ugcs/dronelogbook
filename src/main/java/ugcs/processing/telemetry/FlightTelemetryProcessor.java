@@ -1,6 +1,7 @@
 package ugcs.processing.telemetry;
 
 import com.ugcs.ucs.proto.DomainProto;
+import com.ugcs.ucs.proto.DomainProto.Vehicle;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.List;
@@ -13,8 +14,8 @@ import static java.util.stream.Collectors.toMap;
 public class FlightTelemetryProcessor extends TelemetryProcessor {
     private final List<FlightTelemetry> flightTelemetries;
 
-    public FlightTelemetryProcessor(List<FlightTelemetry> flightTelemetries) {
-        super(null);
+    public FlightTelemetryProcessor(List<FlightTelemetry> flightTelemetries, Vehicle vehicle) {
+        super(null, vehicle);
 
         this.flightTelemetries = flightTelemetries;
     }

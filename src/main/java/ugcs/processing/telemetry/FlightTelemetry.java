@@ -1,41 +1,24 @@
 package ugcs.processing.telemetry;
 
 import com.ugcs.ucs.proto.DomainProto.Telemetry;
+import com.ugcs.ucs.proto.DomainProto.Vehicle;
 import org.apache.commons.lang3.tuple.Pair;
-import ugcs.processing.Flight;
+import ugcs.processing.AbstractFlight;
 
 import java.util.List;
 import java.util.Map;
 
 import static java.util.Collections.unmodifiableList;
 
-public class FlightTelemetry implements Flight {
+public class FlightTelemetry extends AbstractFlight {
     private final List<Pair<Long, Map<String, Telemetry>>> telemetry;
-    private final long flightStartEpochMilli;
-    private final long flightEndEpochMilli;
 
-    FlightTelemetry(List<Pair<Long, Map<String, Telemetry>>> telemetryRecords) throws IllegalArgumentException {
-        final int recordsCount = telemetryRecords.size();
-        if (recordsCount < 2) {
-            throw new IllegalArgumentException("Flight should have more than one telemetry record");
-        }
-
+    FlightTelemetry(List<Pair<Long, Map<String, Telemetry>>> telemetryRecords, Vehicle vehicle) throws IllegalArgumentException {
+        super(telemetryRecords.get(0).getLeft(), telemetryRecords.get(telemetryRecords.size() - 1).getLeft(), vehicle);
         this.telemetry = unmodifiableList(telemetryRecords);
-        this.flightStartEpochMilli = telemetryRecords.get(0).getLeft();
-        this.flightEndEpochMilli = telemetryRecords.get(recordsCount - 1).getLeft();
     }
 
     public List<Pair<Long, Map<String, Telemetry>>> getTelemetry() {
         return telemetry;
-    }
-
-    @Override
-    public long getStartEpochMilli() {
-        return flightStartEpochMilli;
-    }
-
-    @Override
-    public long getEndEpochMilli() {
-        return flightEndEpochMilli;
     }
 }

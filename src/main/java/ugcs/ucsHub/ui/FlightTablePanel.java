@@ -2,11 +2,6 @@ package ugcs.ucsHub.ui;
 
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
-import org.ocpsoft.prettytime.Duration;
-import org.ocpsoft.prettytime.PrettyTime;
-import org.ocpsoft.prettytime.TimeUnit;
-import org.ocpsoft.prettytime.units.JustNow;
-import org.ocpsoft.prettytime.units.Minute;
 import ugcs.common.Action;
 import ugcs.processing.Flight;
 
@@ -19,14 +14,14 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.IntStream;
 
 import static java.lang.Boolean.FALSE;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
-import static java.util.Locale.ENGLISH;
-import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
+import static ugcs.ucsHub.ui.util.PresentationUtil.periodToString;
 
 class FlightTablePanel extends JPanel {
     private static final SimpleDateFormat DATE_TIME_FORMAT = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss");
@@ -105,11 +100,7 @@ class FlightTablePanel extends JPanel {
         @Override
         public void setValueAt(Object boolValue, int rowIndex, int columnIndex) {
             if (boolValue instanceof Boolean) {
-                final Boolean isSelected = (Boolean) boolValue;
-                if (isSelected) {
-                    clearSelection();
-                }
-                flightsAndSelection.get(rowIndex).setValue(isSelected);
+                flightsAndSelection.get(rowIndex).setValue((Boolean) boolValue);
 
                 fireTableDataChanged();
             }
@@ -140,28 +131,7 @@ class FlightTablePanel extends JPanel {
         }
 
         private static String formatFlightDuration(Flight flight) {
-            final PrettyTime prettyTime = new PrettyTime(flight.getStartDate(), ENGLISH);
-            final List<Duration> durations = prettyTime.calculatePreciseDuration(flight.getEndDate());
-            return durations.stream()
-                    .map(FlightTableModel::formatDuration)
-                    .collect(joining(" "));
-        }
-
-        private static String formatDuration(Duration duration) {
-            final Class<? extends TimeUnit> timeUnitClass = duration.getUnit().getClass();
-            if (Minute.class.equals(timeUnitClass)) {
-                return new PrettyTime(ENGLISH).formatDuration(duration) + " " + formatMillis(duration.getDelta());
-            }
-
-            if (JustNow.class.equals(timeUnitClass)) {
-                return formatMillis(duration.getQuantity());
-            }
-
-            return new PrettyTime(ENGLISH).formatDuration(duration);
-        }
-
-        private static String formatMillis(long millis) {
-            return millis / 1000L + " s";
+            return periodToString(flight.getStartDate(), flight.getEndDate());
         }
     }
 

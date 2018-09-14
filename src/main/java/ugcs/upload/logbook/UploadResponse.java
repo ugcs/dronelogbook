@@ -47,4 +47,7 @@ public class UploadResponse {
         return !getUrl().isPresent();
     }
 
+    public boolean isSuccess() {
+        return getUrl().isPresent();
+    }
 }

@@ -12,6 +12,7 @@ import java.awt.*;
 import static java.util.Objects.isNull;
 import static ugcs.ucsHub.Settings.settings;
 import static ugcs.ucsHub.ui.WaitForm.waitForm;
+import static ugcs.upload.logbook.FlightUploadPerformerFactory.performerFactory;
 
 public class Main {
     public static void main(String[] args) {
@@ -51,12 +52,15 @@ public class Main {
             final SessionController sessionController =
                     new SessionController(settings().getHost(), settings().getPort(), loginForm.getLogin(), loginForm.getPassword());
 
+            frame.addWindowListener(new ActionOnCloseWindowAdapter(() -> {
+                sessionController.close();
+                performerFactory().getPerformer().shutDown();
+            }));
+
             waitForm().waitOnAction("Connecting to UgCS...", sessionController::connect, loginForm);
 
             final LogBookUploader logBookUploader =
                     new LogBookUploader(settings().getUploadServerUrl(), loginForm.getDlbLogin(), loginForm.getDlbPassword());
-
-            frame.addWindowListener(new ActionOnCloseWindowAdapter(sessionController::close));
 
             final VehicleListForm vehicleForm = new VehicleListForm(sessionController, logBookUploader);
             contentPane.remove(loginForm);

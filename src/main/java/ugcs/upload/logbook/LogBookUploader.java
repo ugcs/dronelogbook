@@ -4,7 +4,6 @@ import com.ugcs.ucs.proto.DomainProto.Semantic;
 import com.ugcs.ucs.proto.DomainProto.Telemetry;
 import com.ugcs.ucs.proto.DomainProto.Value;
 import lombok.SneakyThrows;
-import org.apache.commons.lang3.tuple.Pair;
 import ugcs.csv.CsvWriter;
 import ugcs.exceptions.ExpectedException;
 import ugcs.processing.telemetry.FlightTelemetry;
@@ -30,7 +29,6 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import static com.ugcs.ucs.proto.DomainProto.Semantic.S_LATITUDE;
 import static com.ugcs.ucs.proto.DomainProto.Semantic.S_LONGITUDE;
@@ -99,27 +97,18 @@ public class LogBookUploader {
         }
     }
 
-    public Set<FlightUploadResponse> uploadFlights(List<FlightTelemetry> flights, String vehicleName) {
-        final List<Pair<FlightTelemetry, File>> flightsAndCsvFiles = flights.stream().map(flight -> {
-            try {
-                final File csvFile = File.createTempFile(vehicleName, "");
-                try (final OutputStream out = new FileOutputStream(csvFile)) {
-                    final CsvWriter csvWriter = new CsvWriter(FILED_CODES, out, CSV_FILE_CHARSET);
-                    csvWriter.printHeader(fieldCode -> mapper().convert(fieldCode));
-                    flight.getTelemetry().forEach(timeAndTelemetry ->
-                            printCsvRecord(csvWriter, timeAndTelemetry.getLeft(), timeAndTelemetry.getRight())
-                    );
-                }
-                return Pair.of(flight, csvFile);
-            } catch (IOException io) {
-                throw new RuntimeException(io);
-            }
-        }).collect(Collectors.toList());
+    @SneakyThrows
+    public FlightUploadResponse uploadFlight(FlightTelemetry flight) {
+        final File csvFile = File.createTempFile(flight.getVehicle().getName(), "");
+        try (final OutputStream out = new FileOutputStream(csvFile)) {
+            final CsvWriter csvWriter = new CsvWriter(FILED_CODES, out, CSV_FILE_CHARSET);
+            csvWriter.printHeader(fieldCode -> mapper().convert(fieldCode));
+            flight.getTelemetry().forEach(timeAndTelemetry ->
+                    printCsvRecord(csvWriter, timeAndTelemetry.getLeft(), timeAndTelemetry.getRight())
+            );
+        }
 
-
-        return flightsAndCsvFiles.stream()
-                .map(pair -> new FlightUploadResponse(pair.getLeft(), pair.getRight(), fromList(uploadFile(pair.getRight()))))
-                .collect(Collectors.toSet());
+        return new FlightUploadResponse(flight, csvFile, fromList(uploadFile(csvFile)));
     }
 
     private List<String> uploadFile(File file) {

@@ -1,7 +1,8 @@
 package ugcs.processing.logs;
 
+import com.ugcs.ucs.proto.DomainProto.Vehicle;
 import com.ugcs.ucs.proto.DomainProto.VehicleLogEntry;
-import ugcs.processing.AbstractProcessor;
+import ugcs.common.LazyFieldEvaluator;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -10,15 +11,18 @@ import static com.ugcs.ucs.proto.DomainProto.ProcessStage.PS_SUCCESS;
 import static java.util.Collections.unmodifiableList;
 import static java.util.stream.Collectors.toList;
 
-public class LogsProcessor extends AbstractProcessor {
+public class LogsProcessor extends LazyFieldEvaluator {
     private final static long UNDEFINED = Long.MIN_VALUE;
 
     private final List<VehicleLogEntry> sortedByTimeLogEntryList;
+    private final Vehicle vehicle;
 
-    public LogsProcessor(List<VehicleLogEntry> logEntryList) {
+    public LogsProcessor(List<VehicleLogEntry> logEntryList, Vehicle vehicle) {
         this.sortedByTimeLogEntryList = logEntryList.stream()
                 .sorted((e1, e2) -> (int) (e1.getTime() - e2.getTime()))
                 .collect(toList());
+
+        this.vehicle = vehicle;
     }
 
     public List<FlightLog> getFlightLogs() {
@@ -32,7 +36,7 @@ public class LogsProcessor extends AbstractProcessor {
                             armTime = logEntry.getTime();
                         } else if (armTime != UNDEFINED && checkLogEntry(logEntry, "disarm")) {
                             final long disarmTime = logEntry.getTime();
-                            flightLogs.add(new FlightLog(armTime, disarmTime));
+                            flightLogs.add(new FlightLog(armTime, disarmTime, vehicle));
                             armTime = UNDEFINED;
                         }
                     }

@@ -2,14 +2,14 @@ package ugcs.processing.telemetry.frames;
 
 import com.ugcs.ucs.proto.DomainProto.Vehicle;
 import ugcs.net.SessionController;
-import ugcs.processing.AbstractProcessor;
+import ugcs.common.LazyFieldEvaluator;
 
 import java.time.ZonedDateTime;
 import java.util.List;
 
 import static java.time.Duration.between;
 
-public class TelemetryFramesProcessor extends AbstractProcessor {
+public class TelemetryFramesProcessor extends LazyFieldEvaluator {
     private final static double DEFAULT_INTERVAL_SEC = 30.0;
 
     private final SessionController controller;

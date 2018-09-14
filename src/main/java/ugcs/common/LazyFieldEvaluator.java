@@ -1,10 +1,10 @@
-package ugcs.processing;
+package ugcs.common;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Supplier;
 
-public abstract class AbstractProcessor {
+public abstract class LazyFieldEvaluator {
     private final ConcurrentMap<String, Object> evaluatedFields = new ConcurrentHashMap<>();
 
     @SuppressWarnings("unchecked")
