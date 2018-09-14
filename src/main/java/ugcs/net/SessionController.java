@@ -107,6 +107,23 @@ public class SessionController implements AutoCloseable {
         }
     }
 
+    public MessagesProto.TraceTelemetryFramesResponse traceTelemetryFrames(Vehicle vehicle, long originTimeEpochMilli, double intervalSec, int number) {
+        try {
+            final MessagesProto.TraceTelemetryFramesRequest traceTelemetryFramesRequest =
+                    MessagesProto.TraceTelemetryFramesRequest.newBuilder()
+                            .setClientId(getClientId())
+                            .setVehicle(vehicle)
+                            .setInterval(intervalSec)
+                            .setOriginTime(originTimeEpochMilli)
+                            .setNumber(number)
+                            .build();
+
+            return client.execute(traceTelemetryFramesRequest);
+        } catch (Exception toRethrow) {
+            throw new RuntimeException(toRethrow);
+        }
+    }
+
     @Override
     public void close() {
         try {
