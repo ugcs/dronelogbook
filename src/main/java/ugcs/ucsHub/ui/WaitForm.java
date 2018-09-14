@@ -1,11 +1,11 @@
 package ugcs.ucsHub.ui;
 
+import lombok.SneakyThrows;
 import ugcs.common.Action;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -48,6 +48,7 @@ public class WaitForm extends JDialog {
         );
     }
 
+    @SneakyThrows
     public <T> T waitOnCallable(String message, Callable<T> callable, Component parentOrNull) {
         final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
@@ -59,8 +60,6 @@ public class WaitForm extends JDialog {
                     setLocationRelativeTo(parentOrNull);
                 });
                 return callable.call();
-            } catch (Exception toRethrow) {
-                throw new RuntimeException(toRethrow);
             } finally {
                 SwingUtilities.invokeLater(() -> setVisible(false));
             }
@@ -69,8 +68,6 @@ public class WaitForm extends JDialog {
         setVisible(true);
         try {
             return resultFuture.get();
-        } catch (InterruptedException | ExecutionException toRethrow) {
-            throw new RuntimeException(toRethrow);
         } finally {
             executorService.shutdown();
         }

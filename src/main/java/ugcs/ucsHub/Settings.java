@@ -1,5 +1,7 @@
 package ugcs.ucsHub;
 
+import lombok.SneakyThrows;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -160,6 +162,7 @@ public final class Settings {
         return createFolderIfNotPresent(resolveOnDataFolder(getUploadedFileFolder()));
     }
 
+    @SneakyThrows
     String getProductVersion() {
         try (final InputStream in = getClass().getResourceAsStream("/settings/version.properties")) {
             final Properties versionProperties = new Properties();
@@ -168,8 +171,6 @@ public final class Settings {
             final String buildNumber = versionProperties.getProperty("build.number");
             final boolean isReleaseBuild = "true".equals(versionProperties.getProperty("project.release", ""));
             return version + (isReleaseBuild ? "" : format(", build %s", buildNumber));
-        } catch (IOException toRethrow) {
-            throw new RuntimeException(toRethrow);
         }
     }
 
@@ -181,12 +182,9 @@ public final class Settings {
         return Paths.get(getDataFolder()).resolve(folderPath);
     }
 
+    @SneakyThrows
     private Path createFolderIfNotPresent(Path pathToFolder) {
-        try {
-            return createDirectories(pathToFolder);
-        } catch (IOException toRethrow) {
-            throw new RuntimeException(toRethrow);
-        }
+        return createDirectories(pathToFolder);
     }
 
     private String getProperty(String propertyName, String defaultValue) {

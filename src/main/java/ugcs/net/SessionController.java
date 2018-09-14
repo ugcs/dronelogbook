@@ -5,6 +5,7 @@ import com.ugcs.ucs.proto.DomainProto;
 import com.ugcs.ucs.proto.DomainProto.DomainObjectWrapper;
 import com.ugcs.ucs.proto.DomainProto.Vehicle;
 import com.ugcs.ucs.proto.MessagesProto;
+import lombok.SneakyThrows;
 import ugcs.exceptions.ExpectedException;
 
 import java.io.IOException;
@@ -46,92 +47,74 @@ public class SessionController implements AutoCloseable {
         }
     }
 
+    @SneakyThrows
     public List<Vehicle> getVehicles() {
-        try {
-            return session.getObjectList(Vehicle.class).stream()
-                    .map(DomainObjectWrapper::getVehicle)
-                    .collect(Collectors.toList());
-        } catch (Exception toRethrow) {
-            throw new RuntimeException(toRethrow);
-        }
+        return session.getObjectList(Vehicle.class).stream()
+                .map(DomainObjectWrapper::getVehicle)
+                .collect(Collectors.toList());
     }
 
+    @SneakyThrows
     public MessagesProto.GetTelemetryResponse getTelemetry(Vehicle vehicle, long startTimeEpochMilli, long endTimeEpochMilli) {
-        try {
-            final MessagesProto.GetTelemetryRequest getTelemetryRequest =
-                    MessagesProto.GetTelemetryRequest.newBuilder()
-                            .setFromTime(startTimeEpochMilli)
-                            .setToTime(endTimeEpochMilli)
-                            .setVehicle(vehicle)
-                            .setClientId(getClientId())
-                            .setLimit(0)
-                            .build();
+        final MessagesProto.GetTelemetryRequest getTelemetryRequest =
+                MessagesProto.GetTelemetryRequest.newBuilder()
+                        .setFromTime(startTimeEpochMilli)
+                        .setToTime(endTimeEpochMilli)
+                        .setVehicle(vehicle)
+                        .setClientId(getClientId())
+                        .setLimit(0)
+                        .build();
 
-            return client.execute(getTelemetryRequest);
-        } catch (Exception toRethrow) {
-            throw new RuntimeException(toRethrow);
-        }
+        return client.execute(getTelemetryRequest);
     }
 
+    @SneakyThrows
     public MessagesProto.GetVehicleLogByTimeRangeResponse getVehicleLog(Vehicle vehicle, long startTimeEpochMilli, long endTimeEpochMilli) {
-        try {
-            final MessagesProto.GetVehicleLogByTimeRangeRequest getVehicleLogByTimeRangeRequest =
-                    MessagesProto.GetVehicleLogByTimeRangeRequest.newBuilder()
-                            .setFromTime(startTimeEpochMilli)
-                            .setToTime(endTimeEpochMilli)
-                            .setClientId(getClientId())
-                            .setLevel(DomainProto.SeverityLevel.SL_DEBUG)
-                            .addVehicles(vehicle)
-                            .build();
+        final MessagesProto.GetVehicleLogByTimeRangeRequest getVehicleLogByTimeRangeRequest =
+                MessagesProto.GetVehicleLogByTimeRangeRequest.newBuilder()
+                        .setFromTime(startTimeEpochMilli)
+                        .setToTime(endTimeEpochMilli)
+                        .setClientId(getClientId())
+                        .setLevel(DomainProto.SeverityLevel.SL_DEBUG)
+                        .addVehicles(vehicle)
+                        .build();
 
-            return client.execute(getVehicleLogByTimeRangeRequest);
-        } catch (Exception toRethrow) {
-            throw new RuntimeException(toRethrow);
-        }
+        return client.execute(getVehicleLogByTimeRangeRequest);
     }
 
+    @SneakyThrows
     public long countTelemetry(Vehicle vehicle, long startTimeEpochMilli, long endTimeEpochMilli) {
-        try {
-            final MessagesProto.CountTelemetryRequest countTelemetryRequest =
-                    MessagesProto.CountTelemetryRequest.newBuilder()
-                            .setClientId(getClientId())
-                            .setVehicle(vehicle)
-                            .setFromTime(startTimeEpochMilli)
-                            .setToTime(endTimeEpochMilli)
-                            .build();
+        final MessagesProto.CountTelemetryRequest countTelemetryRequest =
+                MessagesProto.CountTelemetryRequest.newBuilder()
+                        .setClientId(getClientId())
+                        .setVehicle(vehicle)
+                        .setFromTime(startTimeEpochMilli)
+                        .setToTime(endTimeEpochMilli)
+                        .build();
 
-            final MessagesProto.CountTelemetryResponse countTelemetryResponse = client.execute(countTelemetryRequest);
-            return countTelemetryResponse.getCount();
-        } catch (Exception toRethrow) {
-            throw new RuntimeException(toRethrow);
-        }
+        final MessagesProto.CountTelemetryResponse countTelemetryResponse = client.execute(countTelemetryRequest);
+        return countTelemetryResponse.getCount();
     }
 
+    @SneakyThrows
     public MessagesProto.TraceTelemetryFramesResponse traceTelemetryFrames(Vehicle vehicle, long originTimeEpochMilli, double intervalSec, int number) {
-        try {
-            final MessagesProto.TraceTelemetryFramesRequest traceTelemetryFramesRequest =
-                    MessagesProto.TraceTelemetryFramesRequest.newBuilder()
-                            .setClientId(getClientId())
-                            .setVehicle(vehicle)
-                            .setInterval(intervalSec)
-                            .setOriginTime(originTimeEpochMilli)
-                            .setNumber(number)
-                            .build();
+        final MessagesProto.TraceTelemetryFramesRequest traceTelemetryFramesRequest =
+                MessagesProto.TraceTelemetryFramesRequest.newBuilder()
+                        .setClientId(getClientId())
+                        .setVehicle(vehicle)
+                        .setInterval(intervalSec)
+                        .setOriginTime(originTimeEpochMilli)
+                        .setNumber(number)
+                        .build();
 
-            return client.execute(traceTelemetryFramesRequest);
-        } catch (Exception toRethrow) {
-            throw new RuntimeException(toRethrow);
-        }
+        return client.execute(traceTelemetryFramesRequest);
     }
 
     @Override
+    @SneakyThrows
     public void close() {
-        try {
-            if (client != null) {
-                client.close();
-            }
-        } catch (Exception toRethrow) {
-            throw new RuntimeException(toRethrow);
+        if (client != null) {
+            client.close();
         }
     }
 

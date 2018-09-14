@@ -3,8 +3,8 @@ package ugcs.upload.logbook;
 import com.ugcs.ucs.proto.DomainProto.Semantic;
 import com.ugcs.ucs.proto.DomainProto.Telemetry;
 import com.ugcs.ucs.proto.DomainProto.Value;
+import lombok.SneakyThrows;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.commons.lang3.tuple.Triple;
 import ugcs.csv.CsvWriter;
 import ugcs.exceptions.ExpectedException;
 import ugcs.processing.telemetry.FlightTelemetry;
@@ -83,6 +83,7 @@ public class LogBookUploader {
                 .orElseGet(() -> calculateMd5Hash(rawPasswordOrMd5Hash.getBytes()));
     }
 
+    @SneakyThrows
     public void saveTelemetryDataToCsvFile(Path pathToFile,
                                            SortedMap<Long, Map<String, Telemetry>> telemetryData,
                                            Set<String> fieldCodes) {
@@ -95,8 +96,6 @@ public class LogBookUploader {
             csvWriter.printHeader(fieldCode -> mapper().convert(fieldCode));
             telemetryData.forEach((epochMilli, telemetryRecord) ->
                     printCsvRecord(csvWriter, epochMilli, telemetryRecord));
-        } catch (IOException toRethrow) {
-            throw new RuntimeException(toRethrow);
         }
     }
 
@@ -119,8 +118,7 @@ public class LogBookUploader {
 
 
         return flightsAndCsvFiles.stream()
-                .map(pair -> Triple.of(pair.getLeft(), pair.getRight(), fromList(uploadFile(pair.getRight()))))
-                .map(triple -> new FlightUploadResponse(triple.getLeft(), triple.getMiddle(), triple.getRight()))
+                .map(pair -> new FlightUploadResponse(pair.getLeft(), pair.getRight(), fromList(uploadFile(pair.getRight()))))
                 .collect(Collectors.toSet());
     }
 
@@ -136,7 +134,6 @@ public class LogBookUploader {
         } catch (IOException connectException) {
             throw new ExpectedException("LogBook service unavailable.", connectException);
         }
-
     }
 
     private static void printCsvRecord(CsvWriter csvWriter, long timeEpochMilli, Map<String, Telemetry> telemetryRecord) {

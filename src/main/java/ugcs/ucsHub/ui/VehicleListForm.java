@@ -5,6 +5,7 @@ import com.github.lgooddatepicker.components.DatePickerSettings;
 import com.github.lgooddatepicker.components.DateTimePicker;
 import com.ugcs.ucs.proto.DomainProto;
 import com.ugcs.ucs.proto.DomainProto.Vehicle;
+import lombok.SneakyThrows;
 import ugcs.exceptions.ExpectedException;
 import ugcs.net.SessionController;
 import ugcs.processing.Flight;
@@ -17,7 +18,6 @@ import ugcs.upload.logbook.UploadResponse;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
@@ -159,27 +159,23 @@ public class VehicleListForm extends JPanel {
         );
     }
 
+    @SneakyThrows
     private void updateFlightsTable(SessionController controller, long startTimeEpochMilli,
                                     long endTimeEpochMilli, FlightTablePanel flightTable, Vehicle vehicle) {
+        final long telemetryCount = controller.countTelemetry(vehicle, startTimeEpochMilli, endTimeEpochMilli);
 
-        try {
-            final long telemetryCount = controller.countTelemetry(vehicle, startTimeEpochMilli, endTimeEpochMilli);
+        final Callable<List<FlightTelemetry>> getFlightListCallable = () -> {
+            final List<DomainProto.Telemetry> telemetryList =
+                    controller.getTelemetry(vehicle, startTimeEpochMilli, endTimeEpochMilli).getTelemetryList();
+            final TelemetryProcessor telemetryProcessor = new TelemetryProcessor(telemetryList);
+            return telemetryProcessor.getFlightTelemetries();
+        };
 
-            final Callable<List<FlightTelemetry>> getFlightListCallable = () -> {
-                final List<DomainProto.Telemetry> telemetryList =
-                        controller.getTelemetry(vehicle, startTimeEpochMilli, endTimeEpochMilli).getTelemetryList();
-                final TelemetryProcessor telemetryProcessor = new TelemetryProcessor(telemetryList);
-                return telemetryProcessor.getFlightTelemetries();
-            };
+        final List<FlightTelemetry> flightTelemetries = telemetryCount > 10000
+                ? waitForm().waitOnCallable("Acquiring data from UgCS...", getFlightListCallable, this)
+                : getFlightListCallable.call();
 
-            final List<FlightTelemetry> flightTelemetries = telemetryCount > 10000
-                    ? waitForm().waitOnCallable("Acquiring data from UgCS...", getFlightListCallable, this)
-                    : getFlightListCallable.call();
-
-            flightTable.updateModel(flightTelemetries);
-        } catch (Exception toRethrow) {
-            throw new RuntimeException(toRethrow);
-        }
+        flightTable.updateModel(flightTelemetries);
     }
 
     private Path getPathToTelemetryFile(Vehicle vehicle, long startTimeEpochMilli, long endTimeEpochMilli) {
@@ -241,20 +237,17 @@ public class VehicleListForm extends JPanel {
         return uniqueFilePath;
     }
 
+    @SneakyThrows
     private static void storeUploadedFlights(Collection<FlightUploadResponse> responses, String vehicleName) {
-        try {
-            Path targetFolder = settings().getUploadedFlightsPath();
+        Path targetFolder = settings().getUploadedFlightsPath();
 
-            if (!isDirectory(targetFolder)) {
-                Files.createDirectory(targetFolder);
-            }
+        if (!isDirectory(targetFolder)) {
+            Files.createDirectory(targetFolder);
+        }
 
-            for (FlightUploadResponse response : responses) {
-                final Path targetFilePath = generateUniqueFileName(targetFolder, vehicleName, response);
-                response.storeFlightTelemetry(targetFilePath);
-            }
-        } catch (IOException toRethrow) {
-            throw new RuntimeException(toRethrow);
+        for (FlightUploadResponse response : responses) {
+            final Path targetFilePath = generateUniqueFileName(targetFolder, vehicleName, response);
+            response.storeFlightTelemetry(targetFilePath);
         }
     }
 

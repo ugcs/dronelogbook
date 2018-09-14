@@ -1,9 +1,9 @@
 package ugcs.upload.logbook;
 
+import lombok.SneakyThrows;
 import ugcs.processing.telemetry.FlightTelemetry;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -26,11 +26,8 @@ public class FlightUploadResponse {
         return uploadResponse;
     }
 
+    @SneakyThrows
     public void storeFlightTelemetry(Path targetPath) {
-        try {
-            Files.move(flightFile.toPath(), targetPath);
-        } catch (IOException toRethrow) {
-            throw new RuntimeException(toRethrow);
-        }
+        Files.move(flightFile.toPath(), targetPath);
     }
 }

@@ -1,5 +1,7 @@
 package ugcs.ucsHub;
 
+import lombok.SneakyThrows;
+
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
@@ -17,20 +19,14 @@ public class ActionOnCloseWindowAdapter extends WindowAdapter {
     }
 
     @Override
+    @SneakyThrows
     public void windowClosing(WindowEvent e) {
-        try {
-            closeAction.doAction();
-        } catch (Exception toRethrow) {
-            throw new RuntimeException(toRethrow);
-        }
+        closeAction.doAction();
     }
 
     @Override
+    @SneakyThrows
     public void windowClosed(WindowEvent e) {
-        try {
-            closeAction.doAction();
-        } catch (Exception toRethrow) {
-            throw new RuntimeException(toRethrow);
-        }
+        closeAction.doAction();
     }
 }

@@ -77,6 +77,11 @@
             <artifactId>prettytime</artifactId>
             <version>4.0.2.Final</version>
         </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.2</version>
+        </dependency>
     </dependencies>
 
     <repositories>
