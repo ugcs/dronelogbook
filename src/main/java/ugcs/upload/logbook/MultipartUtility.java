@@ -1,6 +1,7 @@
 package ugcs.upload.logbook;
 
 import ugcs.exceptions.ExpectedException;
+import ugcs.exceptions.logbook.LogBookAuthorizationFailed;
 
 import java.io.BufferedReader;
 
@@ -115,7 +116,7 @@ public class MultipartUtility {
                 httpConn.disconnect();
                 break;
             case HTTP_UNAUTHORIZED:
-                throw new ExpectedException("LogBook login failed.");
+                throw new LogBookAuthorizationFailed();
             default:
                 throw new ExpectedException("Uploading data to LogBook failed.");
         }

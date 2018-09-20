@@ -17,7 +17,7 @@ import static com.ugcs.common.util.Strings.isNullOrEmpty;
 import static java.util.Collections.unmodifiableList;
 import static java.util.stream.Collectors.joining;
 
-public final class CsvWriter {
+public class CsvWriter {
     private final static String CSV_SEPARATOR = ",";
 
     private final PrintWriter writer;
@@ -38,7 +38,7 @@ public final class CsvWriter {
         );
     }
 
-    public void printRecord(Function<String, String> columnNameToValueFunction) {
+    protected void printRecord(Function<String, String> columnNameToValueFunction) {
         columnNames.stream()
                 .map(colName -> Pair.of(colName, columnNameToValueFunction.apply(colName)))
                 .forEach(pair -> {

@@ -1,26 +1,26 @@
-package ugcs.upload.logbook;
+package ugcs.csv.telemetry;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-final class FieldCodeToCsvColumnNameMapper {
+final class TelemetryFieldCodeToCsvColumnNameMapper {
     private final Map<String, String> filedCodeToCsvColumnName;
 
-    private static volatile FieldCodeToCsvColumnNameMapper instance;
+    private static volatile TelemetryFieldCodeToCsvColumnNameMapper instance;
 
-    static FieldCodeToCsvColumnNameMapper mapper() {
+    static TelemetryFieldCodeToCsvColumnNameMapper mapper() {
         if (instance == null) {
-            synchronized (FieldCodeToCsvColumnNameMapper.class) {
+            synchronized (TelemetryFieldCodeToCsvColumnNameMapper.class) {
                 if (instance == null) {
-                    instance = new FieldCodeToCsvColumnNameMapper();
+                    instance = new TelemetryFieldCodeToCsvColumnNameMapper();
                 }
             }
         }
         return instance;
     }
 
-    private FieldCodeToCsvColumnNameMapper() {
+    private TelemetryFieldCodeToCsvColumnNameMapper() {
         Map<String, String> filedCodeToCsvColumnName = new HashMap<>();
         filedCodeToCsvColumnName.put("latitude", "fc:latitude");
         filedCodeToCsvColumnName.put("longitude", "fc:longitude");

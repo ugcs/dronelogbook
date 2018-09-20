@@ -4,7 +4,6 @@ import ugcs.exceptions.ExpectedException;
 import ugcs.net.SessionController;
 import ugcs.ucsHub.ui.LoginForm;
 import ugcs.ucsHub.ui.VehicleListForm;
-import ugcs.upload.logbook.LogBookUploader;
 
 import javax.swing.*;
 import java.awt.*;
@@ -60,10 +59,7 @@ public class Main {
 
             waitForm().waitOnAction("Connecting to UgCS...", sessionController::connect, loginForm);
 
-            final LogBookUploader logBookUploader =
-                    new LogBookUploader(settings().getUploadServerUrl(), loginForm.getDlbLogin(), loginForm.getDlbPassword());
-
-            final VehicleListForm vehicleForm = new VehicleListForm(sessionController, logBookUploader);
+            final VehicleListForm vehicleForm = new VehicleListForm(sessionController);
             contentPane.remove(loginForm);
             contentPane.add(vehicleForm);
             frame.setSize(750, 600);

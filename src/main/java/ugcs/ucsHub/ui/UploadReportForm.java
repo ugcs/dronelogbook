@@ -1,61 +1,155 @@
 package ugcs.ucsHub.ui;
 
-import org.apache.commons.lang3.tuple.Pair;
 import ugcs.common.operation.Operation;
+import ugcs.exceptions.logbook.LogBookAuthorizationFailed;
 import ugcs.processing.Flight;
 import ugcs.upload.logbook.FlightUploadResponse;
 import ugcs.upload.logbook.UploadResponse;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.text.SimpleDateFormat;
+import java.util.Collection;
 import java.util.List;
-import java.util.stream.IntStream;
+import java.util.Optional;
 
 import static java.lang.String.format;
+import static javax.swing.JOptionPane.ERROR_MESSAGE;
 import static javax.swing.JOptionPane.INFORMATION_MESSAGE;
-import static ugcs.ucsHub.ui.util.PresentationUtil.periodToString;
+import static javax.swing.JOptionPane.OK_CANCEL_OPTION;
+import static javax.swing.JOptionPane.OK_OPTION;
+import static javax.swing.JOptionPane.WARNING_MESSAGE;
+import static javax.swing.JOptionPane.showConfirmDialog;
+import static javax.swing.JOptionPane.showMessageDialog;
+import static ugcs.ucsHub.Settings.settings;
 
 final class UploadReportForm extends JPanel {
     private static Color SUCCESS_COLOR = Color.getHSBColor(0.269f, 0.1f, 1.0f);
     private static Color WARNING_COLOR = Color.getHSBColor(0.147f, 0.14f, 1.0f);
-    private static Color ERROR_COLOR = Color.PINK;
+
+    private static SimpleDateFormat FLIGHT_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+    private final Collection<Operation<Flight, FlightUploadResponse>> uploadResponses;
 
     static void showReport(Component parentComponent, List<Operation<Flight, FlightUploadResponse>> uploadResponses) {
         final UploadReportForm reportForm = new UploadReportForm(uploadResponses);
-        JOptionPane.showMessageDialog(parentComponent, reportForm, "Upload result", INFORMATION_MESSAGE);
+        showMessageDialog(parentComponent, reportForm, "Upload result", reportForm.getMessageType());
     }
 
-    private UploadReportForm(List<Operation<Flight, FlightUploadResponse>> uploadResponses) {
+    private UploadReportForm(Collection<Operation<Flight, FlightUploadResponse>> uploadResponses) {
+        this.uploadResponses = uploadResponses;
+
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
-        IntStream.range(0, uploadResponses.size())
-                .mapToObj(i -> Pair.of(i, uploadResponses.get(i)))
-                .forEach(pair -> {
-                    final Operation<Flight, FlightUploadResponse> operationResult = pair.getValue();
+        if (isLogBookAuthorizationError()) {
+            formAuthorizationFailedReport();
+        } else {
+            formReport();
+        }
+    }
 
-                    final JPanel reportRow = new JPanel();
+    private boolean isLogBookAuthorizationError() {
+        final long authorizationErrorCount = uploadResponses.stream()
+                .map(Operation::getError)
+                .filter(Optional::isPresent)
+                .filter(error -> error.get() instanceof LogBookAuthorizationFailed)
+                .count();
 
-                    final Flight flight = operationResult.getParam();
-                    final String flightDurationString = periodToString(flight.getStartDate(), flight.getEndDate());
-                    final String statusString = operationStatusString(operationResult);
-                    reportRow.add(new JLabel(format("%s flight, %s:", flightDurationString, statusString)));
+        return authorizationErrorCount > 0;
+    }
 
-                    operationResult.getResult().ifPresent(flightUploadResponse -> {
-                        final UploadResponse uploadResponse = flightUploadResponse.getUploadResponse();
-                        final String description = uploadResponse.getDescription().orElse("No description.");
-                        reportRow.add(new JLabel(description));
-                        uploadResponse.getUrl().ifPresent(url -> reportRow.add(new JHyperlink(url, "click to view on LogBook")));
-                        reportRow.setBackground(getResponseColor(uploadResponse));
-                    });
+    private int getMessageType() {
+        final long errorsCount = uploadResponses.stream()
+                .map(Operation::getError)
+                .filter(Optional::isPresent)
+                .count();
 
-                    operationResult.getError().ifPresent(error -> {
-                        reportRow.add(new JLabel(error.getMessage()));
-                        reportRow.setBackground(ERROR_COLOR);
-                    });
+        final long warningCount = uploadResponses.stream()
+                .map(Operation::getResult)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .map(FlightUploadResponse::getUploadResponse)
+                .filter(UploadResponse::isWarning)
+                .count();
 
-                    this.add(reportRow);
+        if (errorsCount > 0) {
+            return ERROR_MESSAGE;
+        }
 
-                });
+        if (warningCount > 0) {
+            return WARNING_MESSAGE;
+        }
+
+        return INFORMATION_MESSAGE;
+    }
+
+    private void formAuthorizationFailedReport() {
+        final JPanel reportRow = new JPanel();
+
+        reportRow.add(new JLabel("LogBook authorization failed."));
+
+        final JLabel changeCredentialsLabel =
+                new JLabel(format("<html><a href=\\\"_\\\">%s</a></html>", "click to change credentials"));
+        changeCredentialsLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        changeCredentialsLabel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                showLogBookAuthorizationForm();
+            }
+        });
+        reportRow.add(changeCredentialsLabel);
+
+        this.add(reportRow);
+    }
+
+    private void showLogBookAuthorizationForm() {
+        final JPanel mainPanel = new JPanel(new GridLayout(0,1));
+
+        final JTextField loginDlbField = new JTextField(settings().getUploadServerLogin(), 25);
+        mainPanel.add(new JLabel("LogBook login:"));
+        mainPanel.add(new JPanel().add(loginDlbField).getParent());
+
+        final JTextField passwordDlbField = new JPasswordField(settings().getUploadServerPassword(), 25);
+        mainPanel.add(new JLabel("LogBook password:"));
+        mainPanel.add(new JPanel().add(passwordDlbField).getParent());
+
+        final int dialogResult = showConfirmDialog(this, mainPanel, "LogBook credentials", OK_CANCEL_OPTION);
+        if (dialogResult == OK_OPTION) {
+            settings().storeUploadServerLogin(loginDlbField.getText());
+            settings().storeUploadServerPassword(passwordDlbField.getText());
+        }
+    }
+
+    private void formReport() {
+        uploadResponses.forEach(operationResult -> {
+            final JPanel reportRow = new JPanel();
+
+            final Flight flight = operationResult.getParam();
+            final String flightStartString = FLIGHT_DATE_FORMAT.format(flight.getStartDate());
+            final String statusString = operationStatusString(operationResult);
+            reportRow.add(new JLabel(format("Flight at %s - %s:", flightStartString, statusString)));
+
+            operationResult.getResult()
+                    .map(FlightUploadResponse::getUploadResponse)
+                    .ifPresent(uploadResponse -> formReportRow(uploadResponse, reportRow));
+
+            operationResult.getError().ifPresent(error -> formReportRow(error, reportRow));
+
+            this.add(reportRow);
+        });
+    }
+
+    private void formReportRow(UploadResponse uploadResponse, JPanel rowContainer) {
+        final String description = uploadResponse.getDescription().orElse("No description.");
+        rowContainer.add(new JLabel(description));
+        uploadResponse.getUrl().ifPresent(url -> rowContainer.add(new JHyperlink(url, "click to view on LogBook")));
+        rowContainer.setBackground(getResponseColor(uploadResponse));
+    }
+
+    private void formReportRow(Throwable error, JPanel rowContainer) {
+        rowContainer.add(new JLabel(error.getMessage()));
     }
 
     private Color getResponseColor(UploadResponse uploadResponse) {

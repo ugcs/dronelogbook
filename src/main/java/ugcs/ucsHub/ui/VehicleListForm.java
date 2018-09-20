@@ -42,6 +42,7 @@ import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 import static javax.swing.ListSelectionModel.SINGLE_SELECTION;
 import static javax.swing.SwingUtilities.invokeLater;
+import static ugcs.csv.telemetry.TelemetryDataSaver.saveTelemetryDataToCsvFile;
 import static ugcs.ucsHub.Settings.settings;
 import static ugcs.ucsHub.ui.WaitForm.waitForm;
 import static ugcs.upload.logbook.FlightUploadPerformerFactory.performerFactory;
@@ -54,7 +55,7 @@ public class VehicleListForm extends JPanel {
 
     private final DatePicker datePicker;
 
-    public VehicleListForm(SessionController controller, LogBookUploader uploader) {
+    public VehicleListForm(SessionController controller) {
         super(new BorderLayout());
 
         vehicleMap = controller.getVehicles().stream()
@@ -112,12 +113,12 @@ public class VehicleListForm extends JPanel {
             final Path pathToTelemetryFile = getPathToTelemetryFile(vehicle, startTimeEpochMilli, endTimeEpochMilli);
             final FlightTelemetryProcessor flightTelemetryProcessor = new FlightTelemetryProcessor(flightTelemetries, vehicle);
             waitForm().waitOnAction("Saving telemetry data...",
-                    () -> uploader.saveTelemetryDataToCsvFile(pathToTelemetryFile,
+                    () -> saveTelemetryDataToCsvFile(pathToTelemetryFile,
                             flightTelemetryProcessor.getProcessedTelemetry(),
                             flightTelemetryProcessor.getAllFieldCodes()), this);
 
             if (flightTelemetries.size() > 0) {
-                uploadFlightTelemetry(uploader, vehicle, flightTelemetries);
+                uploadFlightTelemetry(vehicle, flightTelemetries);
             }
 
         }));
@@ -239,7 +240,12 @@ public class VehicleListForm extends JPanel {
         }
     }
 
-    private void uploadFlightTelemetry(LogBookUploader uploader, Vehicle vehicle, List<FlightTelemetry> flightTelemetries) {
+    private void uploadFlightTelemetry(Vehicle vehicle, List<FlightTelemetry> flightTelemetries) {
+        LogBookUploader uploader =
+                new LogBookUploader(settings().getUploadServerUrl(),
+                        settings().getUploadServerLogin(),
+                        settings().getUploadServerPassword());
+
         final OperationPerformer<Flight, FlightUploadResponse> performer = performerFactory().getPerformer();
         final List<Operation<Flight, FlightUploadResponse>> operationResults =
                 waitForm().waitOnCallable("Uploading flights to LogBook...",
