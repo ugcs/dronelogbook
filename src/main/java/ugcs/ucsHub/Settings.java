@@ -1,6 +1,7 @@
 package ugcs.ucsHub;
 
 import lombok.SneakyThrows;
+import ugcs.common.security.MD5HashCalculator;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -54,7 +55,7 @@ public final class Settings {
     private final String ucsServerPassword;
     private final String uploadServerUrl;
     private String uploadServerLogin;
-    private final String uploadServerPassword;
+    private String uploadServerPassword;
     private final String uploadedFileFolder;
     private final String telemetryFolder;
 
@@ -132,26 +133,38 @@ public final class Settings {
         return uploadServerPassword;
     }
 
-    public String getUploadedFileFolder() {
+    private String getUploadedFileFolder() {
         return uploadedFileFolder;
     }
 
-    public String getDataFolder() {
+    private String getDataFolder() {
         return DATA_FOLDER;
     }
 
-    public String getTelemetryFolder() {
+    private String getTelemetryFolder() {
         return telemetryFolder;
     }
 
     public void storeUcsServerLogin(String ucsServerLogin) {
-        storeLocalProperty("server.login", ucsServerLogin);
-        this.ucsServerLogin = ucsServerLogin;
+        if (!this.ucsServerLogin.equals(ucsServerLogin)) {
+            storePropertyLocal("server.login", ucsServerLogin);
+            this.ucsServerLogin = ucsServerLogin;
+        }
     }
 
     public void storeUploadServerLogin(String uploadServerLogin) {
-        storeLocalProperty("upload.server.login", uploadServerLogin);
-        this.uploadServerLogin = uploadServerLogin;
+        if (!this.uploadServerLogin.equals(uploadServerLogin)) {
+            storePropertyLocal("upload.server.login", uploadServerLogin);
+            this.uploadServerLogin = uploadServerLogin;
+        }
+    }
+
+    public void storeUploadServerPassword(String uploadServerPassword) {
+        if (!this.uploadServerPassword.equals(uploadServerPassword)) {
+            final String passwordHash = MD5HashCalculator.of(uploadServerPassword).hash();
+            storePropertyLocal("upload.server.password", passwordHash);
+            this.uploadServerPassword = passwordHash;
+        }
     }
 
     public Path getTelemetryPath() {
@@ -202,7 +215,7 @@ public final class Settings {
         return globalPropVal.toString();
     }
 
-    private void storeLocalProperty(String propName, String propValue) {
+    private void storePropertyLocal(String propName, String propValue) {
         localSettings.setProperty(propName, propValue);
         try (OutputStream out = new FileOutputStream(new File(SETTINGS_FILE_NAME))) {
             this.localSettings.store(out, "");

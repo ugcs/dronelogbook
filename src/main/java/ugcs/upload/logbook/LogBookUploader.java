@@ -4,6 +4,7 @@ import com.ugcs.ucs.proto.DomainProto.Semantic;
 import com.ugcs.ucs.proto.DomainProto.Telemetry;
 import com.ugcs.ucs.proto.DomainProto.Value;
 import lombok.SneakyThrows;
+import ugcs.common.security.MD5HashCalculator;
 import ugcs.csv.CsvWriter;
 import ugcs.exceptions.ExpectedException;
 import ugcs.processing.telemetry.FlightTelemetry;
@@ -14,8 +15,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -24,11 +23,8 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.SortedMap;
-import java.util.function.Predicate;
-import java.util.regex.Pattern;
 
 import static com.ugcs.ucs.proto.DomainProto.Semantic.S_LATITUDE;
 import static com.ugcs.ucs.proto.DomainProto.Semantic.S_LONGITUDE;
@@ -40,12 +36,10 @@ import static java.time.temporal.ChronoField.MINUTE_OF_HOUR;
 import static java.time.temporal.ChronoField.NANO_OF_SECOND;
 import static java.time.temporal.ChronoField.SECOND_OF_MINUTE;
 import static java.util.Objects.isNull;
-import static javax.xml.bind.DatatypeConverter.printHexBinary;
 import static ugcs.upload.logbook.FieldCodeToCsvColumnNameMapper.mapper;
 import static ugcs.upload.logbook.UploadResponse.fromList;
 
 public class LogBookUploader {
-    private static final Predicate<String> MD5_HASH_PREDICATE = Pattern.compile("^[a-fA-F0-9]{32}$").asPredicate();
     private static final Charset CSV_FILE_CHARSET = Charset.forName("UTF-8");
 
     private static final DateTimeFormatter DATE_TIME_FORMATTER = new DateTimeFormatterBuilder()
@@ -76,9 +70,7 @@ public class LogBookUploader {
     public LogBookUploader(String serverUrl, String login, String rawPasswordOrMd5Hash) {
         this.serverUrl = serverUrl;
         this.login = login;
-        this.passwordAsMd5Hash = Optional.of(rawPasswordOrMd5Hash)
-                .filter(MD5_HASH_PREDICATE)
-                .orElseGet(() -> calculateMd5Hash(rawPasswordOrMd5Hash.getBytes()));
+        this.passwordAsMd5Hash = MD5HashCalculator.of(rawPasswordOrMd5Hash).hash();
     }
 
     @SneakyThrows
@@ -164,16 +156,5 @@ public class LogBookUploader {
             return String.valueOf(value.getBoolValue());
         }
         return value.getStringValue();
-    }
-
-    private static String calculateMd5Hash(byte[] rawData) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("MD5");
-            md.update(rawData);
-            final byte[] digest = md.digest();
-            return printHexBinary(digest).toLowerCase();
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
     }
 }
