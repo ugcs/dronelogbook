@@ -9,12 +9,12 @@ import javax.swing.*;
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.stream.IntStream;
 
 import static java.lang.Boolean.FALSE;
 import static java.util.Collections.emptyList;
@@ -24,9 +24,9 @@ import static java.util.stream.Collectors.toSet;
 import static ugcs.ucsHub.ui.util.PresentationUtil.periodToString;
 
 class FlightTablePanel extends JPanel {
-    private static final SimpleDateFormat DATE_TIME_FORMAT = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss");
+    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
     private static final SimpleDateFormat TIME_FORMAT = new SimpleDateFormat("HH:mm:ss");
-    private final static String[] columnNames = {"Upload", "Flight start time", "Flight end time", "Flight duration"};
+    private final static String[] columnNames = {"Upload", "Date", "Start time", "End time", "Duration"};
 
     private final JTable flightTable = new JTable();
     private final Component flightTablePane;
@@ -37,24 +37,12 @@ class FlightTablePanel extends JPanel {
     private final List<Action> tableChangeListeners = new CopyOnWriteArrayList<>();
 
     private static class FlightTableModel extends AbstractTableModel {
-        private static final long MILLIS_IN_DAY = 1000L * 60 * 60 * 24;
         private final List<MutablePair<? extends Flight, Boolean>> flightsAndSelection;
-        private final boolean hideDate;
 
         FlightTableModel(List<? extends Flight> flights) {
             this.flightsAndSelection = flights.stream()
                     .map(flight -> MutablePair.of(flight, FALSE))
                     .collect(toList());
-
-            hideDate = flights.stream().findAny()
-                    .map(Flight::getStartEpochMilli)
-                    .map(FlightTableModel::epochMilliToEpochDay)
-                    .map(epochDay -> flights.stream()
-                            .map(Flight::getStartEpochMilli)
-                            .map(FlightTableModel::epochMilliToEpochDay)
-                            .allMatch(epochDay::equals)
-                    )
-                    .orElse(FALSE);
         }
 
         @Override
@@ -88,10 +76,12 @@ class FlightTablePanel extends JPanel {
                 case 0:
                     return flightsAndSelection.get(rowIndex).getRight();
                 case 1:
-                    return flightEpochToString(getFlight(rowIndex).getStartEpochMilli());
+                    return flightEpochToDateString(getFlight(rowIndex).getStartEpochMilli());
                 case 2:
-                    return flightEpochToString(getFlight(rowIndex).getEndEpochMilli());
+                    return flightEpochToTimeString(getFlight(rowIndex).getStartEpochMilli());
                 case 3:
+                    return flightEpochToTimeString(getFlight(rowIndex).getEndEpochMilli());
+                case 4:
                     return formatFlightDuration(getFlight(rowIndex));
             }
             return null;
@@ -117,17 +107,20 @@ class FlightTablePanel extends JPanel {
                     .collect(toSet());
         }
 
-        private String flightEpochToString(long epochMilli) {
-            final Date flightDate = new Date(epochMilli);
-            return hideDate ? TIME_FORMAT.format(flightDate) : DATE_TIME_FORMAT.format(flightDate);
+        private String flightEpochToTimeString(long epochMilli) {
+            return formatEpoch(epochMilli, TIME_FORMAT);
+        }
+
+        private String flightEpochToDateString(long epochMilli) {
+            return formatEpoch(epochMilli, DATE_FORMAT);
+        }
+
+        private static String formatEpoch(long epochMilli, DateFormat format) {
+            return format.format(new Date(epochMilli));
         }
 
         private Flight getFlight(int rowIndex) {
             return flightsAndSelection.get(rowIndex).getLeft();
-        }
-
-        private static long epochMilliToEpochDay(long epochMilli) {
-            return epochMilli / MILLIS_IN_DAY;
         }
 
         private static String formatFlightDuration(Flight flight) {
