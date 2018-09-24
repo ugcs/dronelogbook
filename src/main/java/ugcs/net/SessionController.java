@@ -8,6 +8,7 @@ import com.ugcs.ucs.proto.DomainProto.Vehicle;
 import com.ugcs.ucs.proto.MessagesProto;
 import lombok.SneakyThrows;
 import ugcs.exceptions.ExpectedException;
+import ugcs.exceptions.ugcs.UgcsDisconnectedException;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -35,12 +36,8 @@ public class SessionController implements AutoCloseable {
     public void connect() {
         final InetSocketAddress serverAddress = new InetSocketAddress(host, port);
 
-        try {
-            client = new ClientEx(serverAddress);
-            refreshSession();
-        } catch (Exception ugcsException) {
-            throw new ExpectedException("UgCS: " + ugcsException.getMessage(), ugcsException);
-        }
+        client = new ClientEx(serverAddress);
+        refreshSession();
     }
 
     @SneakyThrows
@@ -118,20 +115,22 @@ public class SessionController implements AutoCloseable {
         return client.execute(message);
     }
 
-    private void reconnectIfConnectionLost() throws Exception {
+    private void reconnectIfConnectionLost() {
         if (!client.isConnected()) {
             refreshSession();
         }
     }
 
-    private void refreshSession() throws Exception {
+    private void refreshSession() {
         try {
             client.connect();
             session = new ClientSessionEx(client);
             session.authorizeHci();
             session.login(login, new String(password));
         } catch (IOException connectException) {
-            throw new ExpectedException("Server not available. Check if UgCS is running.", connectException);
+            throw new UgcsDisconnectedException(connectException);
+        } catch (Exception ugcsException) {
+            throw new ExpectedException("UgCS: " + ugcsException.getMessage(), ugcsException);
         }
     }
 

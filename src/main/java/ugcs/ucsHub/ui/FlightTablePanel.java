@@ -3,6 +3,7 @@ package ugcs.ucsHub.ui;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import ugcs.common.Action;
+import ugcs.exceptions.ugcs.UgcsDisconnectedException;
 import ugcs.processing.Flight;
 
 import javax.swing.*;
@@ -21,6 +22,9 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
+import static javax.swing.SwingUtilities.invokeLater;
+import static ugcs.exceptions.ExceptionsHandler.handler;
+import static ugcs.ucsHub.ui.RefreshButton.refresher;
 import static ugcs.ucsHub.ui.util.PresentationUtil.periodToString;
 
 class FlightTablePanel extends JPanel {
@@ -31,10 +35,14 @@ class FlightTablePanel extends JPanel {
     private final JTable flightTable = new JTable();
     private final Component flightTablePane;
 
-    private final JLabel noFlightsLabel = new JLabel("Select vehicle...");
-    private final Component noFlightsLabelPane;
+    private final JLabel messageLabel = new JLabel();
+    private final JPanel messageLabelPane;
 
     private final List<Action> tableChangeListeners = new CopyOnWriteArrayList<>();
+
+    private final JLabel errorIconLabel = new JLabel((Icon) UIManager.get("OptionPane.errorIcon"));
+
+    private final JButton refreshButton;
 
     private static class FlightTableModel extends AbstractTableModel {
         private final List<MutablePair<? extends Flight, Boolean>> flightsAndSelection;
@@ -136,23 +144,51 @@ class FlightTablePanel extends JPanel {
         add(flightTablePane, BorderLayout.CENTER);
         flightTablePane.setVisible(true);
 
-        noFlightsLabelPane = new JPanel(new GridBagLayout()).add(noFlightsLabel).getParent();
-        add(noFlightsLabelPane, BorderLayout.NORTH);
+        refreshButton = refresher().createButton();
+        refreshButton.addActionListener(e -> updateMessageOnlyView("Updating flight's table..."));
+
+        messageLabelPane = new JPanel();
+        messageLabelPane.setLayout(new BoxLayout(messageLabelPane, BoxLayout.Y_AXIS));
+        messageLabelPane.add(new JPanel().add(errorIconLabel).getParent());
+        messageLabelPane.add(new JPanel().add(messageLabel).getParent());
+        messageLabelPane.add(new JPanel().add(refreshButton).getParent());
+        add(messageLabelPane, BorderLayout.NORTH);
+
+        handler().addExceptionListener(UgcsDisconnectedException.class,
+                ex -> invokeLater(() -> updateExceptionView(ex)));
+
+        updateMessageOnlyView("Select vehicle...");
     }
 
     void updateModel(List<? extends Flight> flights) {
         if (flights.isEmpty()) {
-            noFlightsLabel.setText("No flights found for the selected date...");
-            flightTablePane.setVisible(false);
-            noFlightsLabelPane.setVisible(true);
-            flightTable.setModel(new FlightTableModel(emptyList()));
+            updateMessageOnlyView("No flights found for the selected date...");
         } else {
             flightTable.setModel(new FlightTableModel(flights));
             flightTablePane.setVisible(true);
-            noFlightsLabelPane.setVisible(false);
+            messageLabelPane.setVisible(false);
             flightTable.getModel().addTableModelListener(this::tableChanged);
         }
         notifyAll(tableChangeListeners);
+    }
+
+    private void updateExceptionView(Throwable ex) {
+        errorIconLabel.setVisible(true);
+        refreshButton.setVisible(true);
+        updateMessageView(ex.getMessage());
+    }
+
+    private void updateMessageOnlyView(String messageText) {
+        errorIconLabel.setVisible(false);
+        refreshButton.setVisible(false);
+        updateMessageView(messageText);
+    }
+
+    private void updateMessageView(String messageText) {
+        messageLabel.setText(messageText);
+        flightTablePane.setVisible(false);
+        messageLabelPane.setVisible(true);
+        flightTable.setModel(new FlightTableModel(emptyList()));
     }
 
     void addTableChangeAction(Action action) {

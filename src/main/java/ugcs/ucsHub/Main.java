@@ -1,5 +1,6 @@
 package ugcs.ucsHub;
 
+import ugcs.exceptions.ExceptionsHandler;
 import ugcs.exceptions.ExpectedException;
 import ugcs.net.SessionController;
 import ugcs.ucsHub.ui.LoginForm;
@@ -8,7 +9,7 @@ import ugcs.ucsHub.ui.VehicleListForm;
 import javax.swing.*;
 import java.awt.*;
 
-import static java.util.Objects.isNull;
+import static javax.swing.JOptionPane.showMessageDialog;
 import static ugcs.ucsHub.Settings.settings;
 import static ugcs.ucsHub.ui.WaitForm.waitForm;
 import static ugcs.upload.logbook.FlightUploadPerformerFactory.performerFactory;
@@ -27,21 +28,8 @@ public class Main {
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.setVisible(true);
 
-        Thread.setDefaultUncaughtExceptionHandler((thread, ex) -> {
-            ex.printStackTrace();
-
-            Throwable rootException = getRootException(ex);
-
-            if (rootException instanceof ExpectedException) {
-                System.err.println("Cause of ExpectedException:");
-                final Throwable attachedCause = ((ExpectedException) rootException).getAttachedCause();
-                if (!isNull(attachedCause)) {
-                    attachedCause.printStackTrace();
-                }
-            }
-
-            JOptionPane.showMessageDialog(null, getExceptionMessage(rootException), "Error", JOptionPane.ERROR_MESSAGE);
-        });
+        ExceptionsHandler.handler().addUncaughtExceptionListener(rootException ->
+                showMessageDialog(null, getExceptionMessage(rootException), "Error", JOptionPane.ERROR_MESSAGE));
 
         loginForm.makeLoginButtonDefault();
         loginForm.addLoginButtonListener(event -> {
@@ -73,13 +61,5 @@ public class Main {
             return ex.getMessage();
         }
         return "Unknown error: " + ex.getMessage() + "\nTry to restart application.";
-    }
-
-    private static Throwable getRootException(Throwable ex) {
-        Throwable rootException = ex;
-        while (rootException.getCause() != null) {
-            rootException = rootException.getCause();
-        }
-        return rootException;
     }
 }

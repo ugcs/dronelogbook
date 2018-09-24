@@ -45,6 +45,7 @@ import static javax.swing.ListSelectionModel.SINGLE_SELECTION;
 import static javax.swing.SwingUtilities.invokeLater;
 import static ugcs.csv.telemetry.TelemetryDataSaver.saveTelemetryDataToCsvFile;
 import static ugcs.ucsHub.Settings.settings;
+import static ugcs.ucsHub.ui.RefreshButton.refresher;
 import static ugcs.ucsHub.ui.WaitForm.waitForm;
 import static ugcs.upload.logbook.FlightUploadPerformerFactory.performerFactory;
 
@@ -89,46 +90,8 @@ public class VehicleListForm extends JPanel {
         final JButton uploadTelemetryButton = new JButton("Upload");
         uploadTelemetryButton.setEnabled(false);
         bottomPanel.add(BorderLayout.EAST, new JPanel(new GridBagLayout()).add(uploadTelemetryButton).getParent());
-        uploadTelemetryButton.addActionListener(event -> getSelectedVehicle().ifPresent(vehicle -> {
-            final Set<? extends Flight> selectedFlights = flightTable.getSelectedFlights();
-            if (selectedFlights.isEmpty()) {
-                return;
-            }
-
-            final List<FlightTelemetry> flightTelemetries = waitForm().waitOnCallable(
-                    "Acquiring data from UgCS..."
-                    , () -> selectedFlights.stream()
-                            .flatMap(flight -> flight instanceof FlightTelemetry
-                                    ? Stream.of((FlightTelemetry) flight)
-                                    : new TelemetryProcessor(
-                                    controller.getTelemetry(
-                                            vehicle,
-                                            flight.getStartEpochMilli(),
-                                            flight.getEndEpochMilli()
-                                    ).getTelemetryList(), vehicle)
-                                    .getFlightTelemetries().stream())
-                            .collect(toList())
-                    , this
-            );
-
-            final long startTimeEpochMilli = selectedFlights.stream()
-                    .mapToLong(Flight::getStartEpochMilli)
-                    .min().orElse(0);
-            final long endTimeEpochMilli = selectedFlights.stream()
-                    .mapToLong(Flight::getEndEpochMilli)
-                    .max().orElse(0);
-            final Path pathToTelemetryFile = getPathToTelemetryFile(vehicle, startTimeEpochMilli, endTimeEpochMilli);
-            final FlightTelemetryProcessor flightTelemetryProcessor = new FlightTelemetryProcessor(flightTelemetries, vehicle);
-            waitForm().waitOnAction("Saving telemetry data...",
-                    () -> saveTelemetryDataToCsvFile(pathToTelemetryFile,
-                            flightTelemetryProcessor.getProcessedTelemetry(),
-                            flightTelemetryProcessor.getAllFieldCodes()), this);
-
-            if (flightTelemetries.size() > 0) {
-                uploadFlightTelemetry(vehicle, flightTelemetries);
-            }
-
-        }));
+        uploadTelemetryButton.addActionListener(
+                event -> getSelectedVehicle().ifPresent(this::uploadCurrentlySelectedFlights));
         this.add(BorderLayout.SOUTH, bottomPanel);
 
         flightTable.addTableChangeAction(
@@ -150,12 +113,11 @@ public class VehicleListForm extends JPanel {
         Consumer<Vehicle> updateFlightsTableForVehicle = vehicle ->
                 updateFlightsTable(getSelectedStartTimeAsEpochMilli(), getSelectedEndTimeAsEpochMilli(), vehicle);
 
-        vehicleJList.addListSelectionListener(event ->
-                invokeLater(() -> getSelectedVehicle().ifPresent(updateFlightsTableForVehicle)));
+        Runnable updateFlightsTableForCurrentVehicle = () -> getSelectedVehicle().ifPresent(updateFlightsTableForVehicle);
 
-        datePicker.addDateChangeListener(event ->
-                invokeLater(() -> getSelectedVehicle().ifPresent(updateFlightsTableForVehicle))
-        );
+        vehicleJList.addListSelectionListener(event -> invokeLater(updateFlightsTableForCurrentVehicle));
+        datePicker.addDateChangeListener(event -> invokeLater(updateFlightsTableForCurrentVehicle));
+        refresher().addRefreshListener(updateFlightsTableForCurrentVehicle::run);
     }
 
     @SneakyThrows
@@ -286,5 +248,45 @@ public class VehicleListForm extends JPanel {
         storeUploadedFlights(performedResponses, vehicle.getName());
 
         UploadReportForm.showReport(this, operationResults);
+    }
+
+    private void uploadCurrentlySelectedFlights(Vehicle vehicle) {
+        final Set<? extends Flight> selectedFlights = flightTable.getSelectedFlights();
+        if (selectedFlights.isEmpty()) {
+            return;
+        }
+
+        final List<FlightTelemetry> flightTelemetries = waitForm().waitOnCallable(
+                "Acquiring data from UgCS..."
+                , () -> selectedFlights.stream()
+                        .flatMap(flight -> flight instanceof FlightTelemetry
+                                ? Stream.of((FlightTelemetry) flight)
+                                : new TelemetryProcessor(
+                                controller.getTelemetry(
+                                        vehicle,
+                                        flight.getStartEpochMilli(),
+                                        flight.getEndEpochMilli()
+                                ).getTelemetryList(), vehicle)
+                                .getFlightTelemetries().stream())
+                        .collect(toList())
+                , this
+        );
+
+        final long startTimeEpochMilli = selectedFlights.stream()
+                .mapToLong(Flight::getStartEpochMilli)
+                .min().orElse(0);
+        final long endTimeEpochMilli = selectedFlights.stream()
+                .mapToLong(Flight::getEndEpochMilli)
+                .max().orElse(0);
+        final Path pathToTelemetryFile = getPathToTelemetryFile(vehicle, startTimeEpochMilli, endTimeEpochMilli);
+        final FlightTelemetryProcessor flightTelemetryProcessor = new FlightTelemetryProcessor(flightTelemetries, vehicle);
+        waitForm().waitOnAction("Saving telemetry data...",
+                () -> saveTelemetryDataToCsvFile(pathToTelemetryFile,
+                        flightTelemetryProcessor.getProcessedTelemetry(),
+                        flightTelemetryProcessor.getAllFieldCodes()), this);
+
+        if (flightTelemetries.size() > 0) {
+            uploadFlightTelemetry(vehicle, flightTelemetries);
+        }
     }
 }
