@@ -1,5 +1,6 @@
 package ugcs.net;
 
+import com.google.protobuf.Message;
 import com.ugcs.ucs.client.Client;
 import com.ugcs.ucs.proto.DomainProto;
 import com.ugcs.ucs.proto.DomainProto.DomainObjectWrapper;
@@ -35,13 +36,8 @@ public class SessionController implements AutoCloseable {
         final InetSocketAddress serverAddress = new InetSocketAddress(host, port);
 
         try {
-            client = new Client(serverAddress);
-            client.connect();
-            session = new ClientSessionEx(client);
-            session.authorizeHci();
-            session.login(login, new String(password));
-        } catch (IOException connectException) {
-            throw new ExpectedException("UgCS not available.", connectException);
+            client = new ClientEx(serverAddress);
+            refreshSession();
         } catch (Exception ugcsException) {
             throw new ExpectedException("UgCS: " + ugcsException.getMessage(), ugcsException);
         }
@@ -56,6 +52,8 @@ public class SessionController implements AutoCloseable {
 
     @SneakyThrows
     public MessagesProto.GetTelemetryResponse getTelemetry(Vehicle vehicle, long startTimeEpochMilli, long endTimeEpochMilli) {
+        reconnectIfConnectionLost();
+
         final MessagesProto.GetTelemetryRequest getTelemetryRequest =
                 MessagesProto.GetTelemetryRequest.newBuilder()
                         .setFromTime(startTimeEpochMilli)
@@ -65,11 +63,13 @@ public class SessionController implements AutoCloseable {
                         .setLimit(0)
                         .build();
 
-        return client.execute(getTelemetryRequest);
+        return execute(getTelemetryRequest);
     }
 
     @SneakyThrows
     public MessagesProto.GetVehicleLogByTimeRangeResponse getVehicleLog(Vehicle vehicle, long startTimeEpochMilli, long endTimeEpochMilli) {
+        reconnectIfConnectionLost();
+
         final MessagesProto.GetVehicleLogByTimeRangeRequest getVehicleLogByTimeRangeRequest =
                 MessagesProto.GetVehicleLogByTimeRangeRequest.newBuilder()
                         .setFromTime(startTimeEpochMilli)
@@ -79,11 +79,13 @@ public class SessionController implements AutoCloseable {
                         .addVehicles(vehicle)
                         .build();
 
-        return client.execute(getVehicleLogByTimeRangeRequest);
+        return execute(getVehicleLogByTimeRangeRequest);
     }
 
     @SneakyThrows
     public long countTelemetry(Vehicle vehicle, long startTimeEpochMilli, long endTimeEpochMilli) {
+        reconnectIfConnectionLost();
+
         final MessagesProto.CountTelemetryRequest countTelemetryRequest =
                 MessagesProto.CountTelemetryRequest.newBuilder()
                         .setClientId(getClientId())
@@ -92,12 +94,14 @@ public class SessionController implements AutoCloseable {
                         .setToTime(endTimeEpochMilli)
                         .build();
 
-        final MessagesProto.CountTelemetryResponse countTelemetryResponse = client.execute(countTelemetryRequest);
+        final MessagesProto.CountTelemetryResponse countTelemetryResponse = execute(countTelemetryRequest);
         return countTelemetryResponse.getCount();
     }
 
     @SneakyThrows
     public MessagesProto.TraceTelemetryFramesResponse traceTelemetryFrames(Vehicle vehicle, long originTimeEpochMilli, double intervalSec, int number) {
+        reconnectIfConnectionLost();
+
         final MessagesProto.TraceTelemetryFramesRequest traceTelemetryFramesRequest =
                 MessagesProto.TraceTelemetryFramesRequest.newBuilder()
                         .setClientId(getClientId())
@@ -107,7 +111,28 @@ public class SessionController implements AutoCloseable {
                         .setNumber(number)
                         .build();
 
-        return client.execute(traceTelemetryFramesRequest);
+        return execute(traceTelemetryFramesRequest);
+    }
+
+    private <T> T execute(Message message) throws Exception {
+        return client.execute(message);
+    }
+
+    private void reconnectIfConnectionLost() throws Exception {
+        if (!client.isConnected()) {
+            refreshSession();
+        }
+    }
+
+    private void refreshSession() throws Exception {
+        try {
+            client.connect();
+            session = new ClientSessionEx(client);
+            session.authorizeHci();
+            session.login(login, new String(password));
+        } catch (IOException connectException) {
+            throw new ExpectedException("Server not available. Check if UgCS is running.", connectException);
+        }
     }
 
     @Override

@@ -49,24 +49,23 @@ public class WaitForm extends JDialog {
     }
 
     @SneakyThrows
-    public <T> T waitOnCallable(String message, Callable<T> callable, Component parentOrNull) {
+    <T> T waitOnCallable(String message, Callable<T> callable, Component parentOrNull) {
         final ExecutorService executorService = Executors.newSingleThreadExecutor();
-
-        final Future<T> resultFuture = executorService.submit(() -> {
-            try {
-                SwingUtilities.invokeLater(() -> {
-                    messageLabel.setText(message);
-                    pack();
-                    setLocationRelativeTo(parentOrNull);
-                });
-                return callable.call();
-            } finally {
-                SwingUtilities.invokeLater(() -> setVisible(false));
-            }
-        });
-
-        setVisible(true);
         try {
+            final Future<T> resultFuture = executorService.submit(() -> {
+                try {
+                    SwingUtilities.invokeLater(() -> {
+                        messageLabel.setText(message);
+                        pack();
+                        setLocationRelativeTo(parentOrNull);
+                    });
+                    return callable.call();
+                } finally {
+                    SwingUtilities.invokeLater(() -> setVisible(false));
+                }
+            });
+
+            setVisible(true);
             return resultFuture.get();
         } finally {
             executorService.shutdown();
