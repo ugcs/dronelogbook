@@ -72,17 +72,18 @@ class FlightTablePanel extends JPanel {
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
+            final Flight flight = getFlight(rowIndex);
             switch (columnIndex) {
                 case 0:
                     return flightsAndSelection.get(rowIndex).getRight();
                 case 1:
-                    return flightEpochToDateString(getFlight(rowIndex).getStartEpochMilli());
+                    return flightEpochToDateString(flight.getStartEpochMilli());
                 case 2:
-                    return flightEpochToTimeString(getFlight(rowIndex).getStartEpochMilli());
+                    return flightEpochToTimeString(flight.getStartEpochMilli());
                 case 3:
-                    return flightEpochToTimeString(getFlight(rowIndex).getEndEpochMilli());
+                    return flightEpochToTimeString(flight.getEndEpochMilli());
                 case 4:
-                    return formatFlightDuration(getFlight(rowIndex));
+                    return formatFlightDuration(flight);
             }
             return null;
         }

@@ -13,6 +13,7 @@ import ugcs.processing.Flight;
 import ugcs.processing.telemetry.FlightTelemetry;
 import ugcs.processing.telemetry.FlightTelemetryProcessor;
 import ugcs.processing.telemetry.TelemetryProcessor;
+import ugcs.processing.telemetry.frames.TelemetryFramesProcessor;
 import ugcs.upload.logbook.FlightUploadResponse;
 import ugcs.upload.logbook.LogBookUploader;
 
@@ -53,10 +54,16 @@ public class VehicleListForm extends JPanel {
     private final Map<String, Vehicle> vehicleMap;
     private final JList<String> vehicleJList;
 
+    private final SessionController controller;
+
+    private final FlightTablePanel flightTable;
+
     private final DatePicker datePicker;
 
     public VehicleListForm(SessionController controller) {
         super(new BorderLayout());
+
+        this.controller = controller;
 
         vehicleMap = controller.getVehicles().stream()
                 .collect(toMap(Vehicle::getName, v -> v));
@@ -74,7 +81,7 @@ public class VehicleListForm extends JPanel {
 
         JPanel centerPanel = new JPanel(new BorderLayout());
         centerPanel.setBorder(BorderFactory.createTitledBorder("Flight list"));
-        final FlightTablePanel flightTable = new FlightTablePanel();
+        flightTable = new FlightTablePanel();
         centerPanel.add(BorderLayout.CENTER, flightTable);
         this.add(BorderLayout.CENTER, centerPanel);
 
@@ -141,8 +148,7 @@ public class VehicleListForm extends JPanel {
         bottomPanel.add(BorderLayout.CENTER, timePickersPanel);
 
         Consumer<Vehicle> updateFlightsTableForVehicle = vehicle ->
-                updateFlightsTable(controller, getSelectedStartTimeAsEpochMilli(),
-                        getSelectedEndTimeAsEpochMilli(), flightTable, vehicle);
+                updateFlightsTable(getSelectedStartTimeAsEpochMilli(), getSelectedEndTimeAsEpochMilli(), vehicle);
 
         vehicleJList.addListSelectionListener(event ->
                 invokeLater(() -> getSelectedVehicle().ifPresent(updateFlightsTableForVehicle)));
@@ -153,22 +159,29 @@ public class VehicleListForm extends JPanel {
     }
 
     @SneakyThrows
-    private void updateFlightsTable(SessionController controller, long startTimeEpochMilli,
-                                    long endTimeEpochMilli, FlightTablePanel flightTable, Vehicle vehicle) {
-        final long telemetryCount = controller.countTelemetry(vehicle, startTimeEpochMilli, endTimeEpochMilli);
+    private void updateFlightsTable(long startTimeEpochMilli, long endTimeEpochMilli, Vehicle vehicle) {
+        final Callable<List<? extends Flight>> getFlightListCallable =
+                () -> getFlightsByTelemetryFrames(vehicle, startTimeEpochMilli, endTimeEpochMilli);
 
-        final Callable<List<FlightTelemetry>> getFlightListCallable = () -> {
-            final List<DomainProto.Telemetry> telemetryList =
-                    controller.getTelemetry(vehicle, startTimeEpochMilli, endTimeEpochMilli).getTelemetryList();
-            final TelemetryProcessor telemetryProcessor = new TelemetryProcessor(telemetryList, vehicle);
-            return telemetryProcessor.getFlightTelemetries();
-        };
-
-        final List<FlightTelemetry> flights = telemetryCount > 10000
-                ? waitForm().waitOnCallable("Acquiring data from UgCS...", getFlightListCallable, this)
-                : getFlightListCallable.call();
+        final List<? extends Flight> flights =
+                waitForm().waitOnCallable("Acquiring data from UgCS...", getFlightListCallable, this);
 
         flightTable.updateModel(flights);
+    }
+
+    private List<? extends Flight> getFlightsByTelemetry(Vehicle vehicle,
+                                                         long startTimeEpochMilli, long endTimeEpochMilli) {
+        final List<DomainProto.Telemetry> telemetryList =
+                controller.getTelemetry(vehicle, startTimeEpochMilli, endTimeEpochMilli).getTelemetryList();
+        final TelemetryProcessor telemetryProcessor = new TelemetryProcessor(telemetryList, vehicle);
+        return telemetryProcessor.getFlightTelemetries();
+    }
+
+    private List<? extends Flight> getFlightsByTelemetryFrames(Vehicle vehicle,
+                                                               long startTimeEpochMilli, long endTimeEpochMilli) {
+        final TelemetryFramesProcessor framesProcessor =
+                new TelemetryFramesProcessor(controller, vehicle, startTimeEpochMilli, endTimeEpochMilli);
+        return framesProcessor.getFlightFrames();
     }
 
     private Path getPathToTelemetryFile(Vehicle vehicle, long startTimeEpochMilli, long endTimeEpochMilli) {
