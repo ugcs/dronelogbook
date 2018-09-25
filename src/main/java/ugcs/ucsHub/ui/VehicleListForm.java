@@ -30,7 +30,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
-import java.util.function.Consumer;
 
 import static java.time.ZoneId.systemDefault;
 import static java.util.stream.Collectors.toList;
@@ -53,6 +52,7 @@ public class VehicleListForm extends JPanel {
     private final FlightTablePanel flightTable;
 
     private final DatePicker datePicker;
+    private final TelemetryDatesHighlighter datesHighlighter = new TelemetryDatesHighlighter();
 
     public VehicleListForm() {
         super(new BorderLayout());
@@ -94,20 +94,23 @@ public class VehicleListForm extends JPanel {
         datePickerPanel.setBorder(BorderFactory.createTitledBorder("Pick the date"));
         final DatePickerSettings datePickerSettings = new DatePickerSettings();
         datePickerSettings.setAllowEmptyDates(false);
+        datePickerSettings.setHighlightPolicy(datesHighlighter);
         datePicker = new DatePicker(datePickerSettings);
         datePickerPanel.add(datePicker);
         timePickersPanel.add(datePickerPanel);
 
         bottomPanel.add(BorderLayout.CENTER, timePickersPanel);
 
-        Consumer<Vehicle> updateFlightsTableForVehicle = vehicle ->
-                updateFlightsTable(getSelectedStartTimeAsEpochMilli(), getSelectedEndTimeAsEpochMilli(), vehicle);
+        vehicleJList.addListSelectionListener(event -> invokeLater(this::refreshView));
+        datePicker.addDateChangeListener(event -> invokeLater(this::refreshView));
+        refresher().addRefreshListener(this::refreshView);
+    }
 
-        Runnable updateFlightsTableForCurrentVehicle = () -> getSelectedVehicle().ifPresent(updateFlightsTableForVehicle);
-
-        vehicleJList.addListSelectionListener(event -> invokeLater(updateFlightsTableForCurrentVehicle));
-        datePicker.addDateChangeListener(event -> invokeLater(updateFlightsTableForCurrentVehicle));
-        refresher().addRefreshListener(updateFlightsTableForCurrentVehicle::run);
+    private void refreshView() {
+        getSelectedVehicle().ifPresent(vehicle -> {
+            updateFlightsTable(getSelectedStartTimeAsEpochMilli(), getSelectedEndTimeAsEpochMilli(), vehicle);
+            datesHighlighter.setCurrentVehicle(vehicle);
+        });
     }
 
     @SneakyThrows

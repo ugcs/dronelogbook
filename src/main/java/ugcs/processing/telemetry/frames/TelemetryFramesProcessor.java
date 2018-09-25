@@ -4,7 +4,7 @@ import com.ugcs.ucs.proto.DomainProto.Vehicle;
 import ugcs.common.LazyFieldEvaluator;
 import ugcs.net.SessionController;
 
-import java.time.Instant;
+import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.LinkedList;
 import java.util.List;
@@ -23,22 +23,32 @@ public class TelemetryFramesProcessor extends LazyFieldEvaluator {
     private final long originTimeEpochMilli;
     private final int number;
     private final ZonedDateTime startTime;
+    private final long intervalMillis;
 
     public TelemetryFramesProcessor(SessionController controller, Vehicle vehicle,
                                     long startTimeEpochMilli, long endTimeEpochMilli) {
-        this(controller, vehicle, toZonedDateTime(startTimeEpochMilli), toZonedDateTime(endTimeEpochMilli));
+        this(controller, vehicle, toZonedDateTime(startTimeEpochMilli), toZonedDateTime(endTimeEpochMilli), DEFAULT_INTERVAL_MILLIS);
+    }
+
+    public TelemetryFramesProcessor(SessionController controller, Vehicle vehicle,
+                                    LocalDate startDateInclusive, LocalDate endDateExclusive, long intervalMillis) {
+        this(controller, vehicle,
+                startDateInclusive.atStartOfDay(systemDefault()),
+                endDateExclusive.atStartOfDay(systemDefault()),
+                intervalMillis);
     }
 
     private TelemetryFramesProcessor(SessionController controller, Vehicle vehicle,
-                                     ZonedDateTime startTime, ZonedDateTime endTime) {
+                                     ZonedDateTime startTime, ZonedDateTime endTime, long intervalMillis) {
         this.controller = controller;
         this.vehicle = vehicle;
         this.originTimeEpochMilli = startTime.toInstant().toEpochMilli();
-        this.number = (int) (between(startTime, endTime).toMillis() / getIntervalMillis());
         this.startTime = startTime;
+        this.intervalMillis = intervalMillis;
+        this.number = (int) (between(startTime, endTime).toMillis() / getIntervalMillis());
     }
 
-    private List<Boolean> getFrames() {
+    public List<Boolean> getFrames() {
         return evaluateField("frames",
                 () -> controller
                         .traceTelemetryFrames(vehicle, originTimeEpochMilli, getIntervalSec(), getNumber())
@@ -67,8 +77,7 @@ public class TelemetryFramesProcessor extends LazyFieldEvaluator {
                         if (!telemetryFrame && isFlightFrame) {
                             isFlightFrame = false;
 
-                            final FlightFrame flightFrame =
-                                    new FlightFrame(toEpochMilli(flightStartTime), toEpochMilli(currentTime), vehicle);
+                            final FlightFrame flightFrame = new FlightFrame(flightStartTime, currentTime, vehicle);
 
                             flightFrames.add(flightFrame);
                         }
@@ -80,11 +89,11 @@ public class TelemetryFramesProcessor extends LazyFieldEvaluator {
     }
 
     private long getIntervalNanos() {
-        return DEFAULT_INTERVAL_MILLIS * 1000_000;
+        return intervalMillis * 1000_000;
     }
 
     private double getIntervalSec() {
-        return DEFAULT_INTERVAL_MILLIS / 1000.0;
+        return intervalMillis / 1000.0;
     }
 
     private long getIntervalMillis() {
@@ -97,10 +106,5 @@ public class TelemetryFramesProcessor extends LazyFieldEvaluator {
 
     private static ZonedDateTime toZonedDateTime(long epochMilli) {
         return ofInstant(ofEpochMilli(epochMilli), systemDefault());
-    }
-
-    private static long toEpochMilli(ZonedDateTime zonedDateTime) {
-        final Instant instant = zonedDateTime.toInstant();
-        return instant.getEpochSecond() * 1000 + instant.getNano() / 1000_000;
     }
 }
