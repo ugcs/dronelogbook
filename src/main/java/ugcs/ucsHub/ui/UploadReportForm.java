@@ -1,16 +1,14 @@
 package ugcs.ucsHub.ui;
 
+import ugcs.common.identity.Identity;
 import ugcs.common.operation.Operation;
 import ugcs.exceptions.logbook.LogBookAuthorizationFailed;
-import ugcs.processing.Flight;
-import ugcs.upload.logbook.FlightUploadResponse;
 import ugcs.upload.logbook.UploadResponse;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -29,16 +27,14 @@ final class UploadReportForm extends JPanel {
     private static Color SUCCESS_COLOR = Color.getHSBColor(0.269f, 0.1f, 1.0f);
     private static Color WARNING_COLOR = Color.getHSBColor(0.147f, 0.14f, 1.0f);
 
-    private static SimpleDateFormat FLIGHT_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private final Collection<Operation<Identity<?>, UploadResponse>> uploadResponses;
 
-    private final Collection<Operation<Flight, FlightUploadResponse>> uploadResponses;
-
-    static void showReport(Component parentComponent, List<Operation<Flight, FlightUploadResponse>> uploadResponses) {
+    static void showReport(Component parentComponent, List<Operation<Identity<?>, UploadResponse>> uploadResponses) {
         final UploadReportForm reportForm = new UploadReportForm(uploadResponses);
         showMessageDialog(parentComponent, reportForm, "Upload result", reportForm.getMessageType());
     }
 
-    private UploadReportForm(Collection<Operation<Flight, FlightUploadResponse>> uploadResponses) {
+    private UploadReportForm(Collection<Operation<Identity<?>, UploadResponse>> uploadResponses) {
         this.uploadResponses = uploadResponses;
 
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
@@ -70,7 +66,6 @@ final class UploadReportForm extends JPanel {
                 .map(Operation::getResult)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
-                .map(FlightUploadResponse::getUploadResponse)
                 .filter(UploadResponse::isWarning)
                 .count();
 
@@ -126,13 +121,11 @@ final class UploadReportForm extends JPanel {
         uploadResponses.forEach(operationResult -> {
             final JPanel reportRow = new JPanel();
 
-            final Flight flight = operationResult.getParam();
-            final String flightStartString = FLIGHT_DATE_FORMAT.format(flight.getStartDate());
+            final String identityTextRepresentation = operationResult.getId().toString();
             final String statusString = operationStatusString(operationResult);
-            reportRow.add(new JLabel(format("Flight at %s - %s:", flightStartString, statusString)));
+            reportRow.add(new JLabel(format("%s - %s:", identityTextRepresentation, statusString)));
 
             operationResult.getResult()
-                    .map(FlightUploadResponse::getUploadResponse)
                     .ifPresent(uploadResponse -> formReportRow(uploadResponse, reportRow));
 
             operationResult.getError().ifPresent(error -> formReportRow(error, reportRow));
@@ -160,9 +153,8 @@ final class UploadReportForm extends JPanel {
         return WARNING_COLOR;
     }
 
-    private String operationStatusString(Operation<Flight, FlightUploadResponse> operationResult) {
-        return operationResult.getResult().map(flightUploadResponse -> {
-            final UploadResponse uploadResponse = flightUploadResponse.getUploadResponse();
+    private String operationStatusString(Operation<Identity<?>, UploadResponse> operationResult) {
+        return operationResult.getResult().map(uploadResponse -> {
             if (uploadResponse.isSuccess()) {
                 return "uploaded";
             }

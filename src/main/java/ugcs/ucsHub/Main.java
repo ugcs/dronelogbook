@@ -2,7 +2,6 @@ package ugcs.ucsHub;
 
 import ugcs.exceptions.ExceptionsHandler;
 import ugcs.exceptions.ExpectedException;
-import ugcs.net.SessionController;
 import ugcs.ucsHub.ui.LoginForm;
 import ugcs.ucsHub.ui.VehicleListForm;
 
@@ -10,6 +9,7 @@ import javax.swing.*;
 import java.awt.*;
 
 import static javax.swing.JOptionPane.showMessageDialog;
+import static ugcs.net.SessionController.sessionController;
 import static ugcs.ucsHub.Settings.settings;
 import static ugcs.ucsHub.ui.WaitForm.waitForm;
 import static ugcs.upload.logbook.FlightUploadPerformerFactory.performerFactory;
@@ -37,17 +37,16 @@ public class Main {
             settings().storeUploadServerLogin(loginForm.getDlbLogin());
             settings().storeUploadServerPassword(loginForm.getDlbPassword());
 
-            final SessionController sessionController =
-                    new SessionController(settings().getHost(), settings().getPort(), loginForm.getLogin(), loginForm.getPassword());
+            sessionController().updateSettings(settings());
 
             frame.addWindowListener(new ActionOnCloseWindowAdapter(() -> {
-                sessionController.close();
-                performerFactory().getPerformer().shutDown();
+                sessionController().close();
+                performerFactory().getUploadPerformer().shutDown();
             }));
 
-            waitForm().waitOnAction("Connecting to UgCS...", sessionController::connect, loginForm);
+            waitForm().waitOnAction("Connecting to UgCS...", sessionController()::connect, loginForm);
 
-            final VehicleListForm vehicleForm = new VehicleListForm(sessionController);
+            final VehicleListForm vehicleForm = new VehicleListForm();
             contentPane.remove(loginForm);
             contentPane.add(vehicleForm);
             frame.setSize(750, 600);

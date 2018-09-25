@@ -2,6 +2,7 @@ package ugcs.ucsHub;
 
 import lombok.SneakyThrows;
 import ugcs.common.security.MD5HashCalculator;
+import ugcs.net.SessionSettings;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -20,7 +21,7 @@ import static java.nio.file.Files.createDirectories;
 import static java.nio.file.Files.isRegularFile;
 import static java.util.Objects.isNull;
 
-public final class Settings {
+public final class Settings implements SessionSettings {
     private final static String SETTINGS_FILE_NAME = "client.properties";
     private final static String DATA_FOLDER = System.getProperty("user.home") + "/.dronelogbook";
 
@@ -105,18 +106,22 @@ public final class Settings {
         telemetryFolder = getProperty("telemetry.file.folder", DEFAULT_TELEMETRY_FOLDER);
     }
 
+    @Override
     public String getHost() {
         return host;
     }
 
+    @Override
     public int getPort() {
         return port;
     }
 
-    public String getUcsServerLoginLogin() {
+    @Override
+    public String getUcsServerLogin() {
         return ucsServerLogin;
     }
 
+    @Override
     public String getUcsServerPassword() {
         return ucsServerPassword;
     }

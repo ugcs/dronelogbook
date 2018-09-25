@@ -1,6 +1,7 @@
 package ugcs.processing;
 
 import com.ugcs.ucs.proto.DomainProto.Vehicle;
+import ugcs.common.identity.Identity;
 
 import java.util.Date;
 
@@ -18,4 +19,6 @@ public interface Flight {
     default Date getEndDate() {
         return new Date(getEndEpochMilli());
     }
+
+    Identity<?> getId();
 }

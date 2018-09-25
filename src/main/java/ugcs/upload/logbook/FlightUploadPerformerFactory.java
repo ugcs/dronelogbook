@@ -1,8 +1,8 @@
 package ugcs.upload.logbook;
 
 import ugcs.common.LazyFieldEvaluator;
+import ugcs.common.identity.Identity;
 import ugcs.common.operation.OperationPerformer;
-import ugcs.processing.Flight;
 
 import static java.util.concurrent.Executors.newSingleThreadExecutor;
 
@@ -23,7 +23,7 @@ public class FlightUploadPerformerFactory extends LazyFieldEvaluator {
     private FlightUploadPerformerFactory() {
     }
 
-    public OperationPerformer<Flight, FlightUploadResponse> getPerformer() {
+    public OperationPerformer<Identity<?>, UploadResponse> getUploadPerformer() {
         return evaluateField("uploadPerformer", () ->
                 new OperationPerformer<>(newSingleThreadExecutor())
         );

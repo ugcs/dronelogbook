@@ -1,5 +1,7 @@
 package ugcs.common.operation;
 
+import ugcs.common.identity.Identity;
+
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -10,7 +12,7 @@ import static ugcs.common.operation.Operation.toFault;
 import static ugcs.common.operation.Operation.toPerformed;
 import static ugcs.common.operation.Operation.toPerforming;
 
-public class OperationPerformer<T, R> {
+public class OperationPerformer<T extends Identity<?>, R> {
     private final ExecutorService executorService;
     private final ConcurrentMap<T, Operation<T, R>> operations = new ConcurrentHashMap<>();
 

@@ -27,7 +27,9 @@ public class FlightUploadResponse {
     }
 
     @SneakyThrows
-    public void storeFlightTelemetry(Path targetPath) {
+    public FlightUploadResponse storeFlightTelemetry(Path targetPath) {
         Files.move(flightFile.toPath(), targetPath);
+
+        return this;
     }
 }

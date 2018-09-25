@@ -16,21 +16,36 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class SessionController implements AutoCloseable {
-    private final String host;
-    private final int port;
+    private String host;
+    private int port;
 
-
-    private final String login;
-    private final char[] password;
+    private String login;
+    private String password;
 
     private Client client;
     private ClientSessionEx session;
 
-    public SessionController(String host, int port, String login, char[] password) {
-        this.host = host;
-        this.port = port;
-        this.login = login;
-        this.password = password;
+    private static volatile SessionController instance;
+
+    public static SessionController sessionController() {
+        if (instance == null) {
+            synchronized (SessionController.class) {
+                if (instance == null) {
+                    instance = new SessionController();
+                }
+            }
+        }
+        return instance;
+    }
+
+    private SessionController() {
+    }
+
+    public void updateSettings(SessionSettings settings) {
+        this.host = settings.getHost();
+        this.port = settings.getPort();
+        this.login = settings.getUcsServerLogin();
+        this.password = settings.getUcsServerPassword();
     }
 
     public void connect() {
@@ -126,7 +141,7 @@ public class SessionController implements AutoCloseable {
             client.connect();
             session = new ClientSessionEx(client);
             session.authorizeHci();
-            session.login(login, new String(password));
+            session.login(login, password);
         } catch (IOException connectException) {
             throw new UgcsDisconnectedException(connectException);
         } catch (Exception ugcsException) {

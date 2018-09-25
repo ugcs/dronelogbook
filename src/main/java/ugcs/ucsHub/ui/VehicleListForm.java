@@ -5,68 +5,59 @@ import com.github.lgooddatepicker.components.DatePickerSettings;
 import com.ugcs.ucs.proto.DomainProto;
 import com.ugcs.ucs.proto.DomainProto.Vehicle;
 import lombok.SneakyThrows;
+import ugcs.common.identity.Identity;
 import ugcs.common.operation.FutureWrapper;
 import ugcs.common.operation.Operation;
-import ugcs.common.operation.OperationPerformer;
-import ugcs.net.SessionController;
+import ugcs.exceptions.logic.NoFlightTelemetryFoundException;
 import ugcs.processing.Flight;
+import ugcs.processing.telemetry.CsvFileNameGenerator;
 import ugcs.processing.telemetry.FlightTelemetry;
 import ugcs.processing.telemetry.FlightTelemetryProcessor;
 import ugcs.processing.telemetry.TelemetryProcessor;
 import ugcs.processing.telemetry.frames.TelemetryFramesProcessor;
-import ugcs.upload.logbook.FlightUploadResponse;
 import ugcs.upload.logbook.LogBookUploader;
+import ugcs.upload.logbook.UploadResponse;
 
 import javax.swing.*;
 import java.awt.*;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
 import java.util.function.Consumer;
-import java.util.stream.Stream;
 
-import static java.nio.file.Files.exists;
-import static java.nio.file.Files.isDirectory;
 import static java.time.ZoneId.systemDefault;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
-import static java.util.stream.Collectors.toSet;
 import static javax.swing.ListSelectionModel.SINGLE_SELECTION;
 import static javax.swing.SwingUtilities.invokeLater;
+import static org.slf4j.LoggerFactory.getLogger;
 import static ugcs.csv.telemetry.TelemetryDataSaver.saveTelemetryDataToCsvFile;
+import static ugcs.net.SessionController.sessionController;
+import static ugcs.processing.telemetry.FlightTelemetry.withId;
 import static ugcs.ucsHub.Settings.settings;
 import static ugcs.ucsHub.ui.RefreshButton.refresher;
 import static ugcs.ucsHub.ui.WaitForm.waitForm;
 import static ugcs.upload.logbook.FlightUploadPerformerFactory.performerFactory;
 
 public class VehicleListForm extends JPanel {
-    private static final SimpleDateFormat FILE_DATE_FORMAT = new SimpleDateFormat("yyyyMMdd_HHmmss");
-
     private final Map<String, Vehicle> vehicleMap;
     private final JList<String> vehicleJList;
-
-    private final SessionController controller;
 
     private final FlightTablePanel flightTable;
 
     private final DatePicker datePicker;
 
-    public VehicleListForm(SessionController controller) {
+    public VehicleListForm() {
         super(new BorderLayout());
 
-        this.controller = controller;
-
-        vehicleMap = controller.getVehicles().stream()
+        vehicleMap = sessionController().getVehicles().stream()
                 .collect(toMap(Vehicle::getName, v -> v));
 
         final String[] vehicleNames = vehicleMap.keySet().toArray(new String[0]);
@@ -90,8 +81,7 @@ public class VehicleListForm extends JPanel {
         final JButton uploadTelemetryButton = new JButton("Upload");
         uploadTelemetryButton.setEnabled(false);
         bottomPanel.add(BorderLayout.EAST, new JPanel(new GridBagLayout()).add(uploadTelemetryButton).getParent());
-        uploadTelemetryButton.addActionListener(
-                event -> getSelectedVehicle().ifPresent(this::uploadCurrentlySelectedFlights));
+        uploadTelemetryButton.addActionListener(event -> uploadCurrentlySelectedFlights());
         this.add(BorderLayout.SOUTH, bottomPanel);
 
         flightTable.addTableChangeAction(
@@ -126,7 +116,7 @@ public class VehicleListForm extends JPanel {
                 () -> getFlightsByTelemetry(vehicle, startTimeEpochMilli, endTimeEpochMilli);
 
         final List<? extends Flight> flights = waitForUgcsData(getFlightListCallable,
-                () -> controller.countTelemetry(vehicle, startTimeEpochMilli, endTimeEpochMilli));
+                () -> sessionController().countTelemetry(vehicle, startTimeEpochMilli, endTimeEpochMilli));
 
         flightTable.updateModel(flights);
     }
@@ -145,7 +135,7 @@ public class VehicleListForm extends JPanel {
     private List<? extends Flight> getFlightsByTelemetry(Vehicle vehicle,
                                                          long startTimeEpochMilli, long endTimeEpochMilli) {
         final List<DomainProto.Telemetry> telemetryList =
-                controller.getTelemetry(vehicle, startTimeEpochMilli, endTimeEpochMilli).getTelemetryList();
+                sessionController().getTelemetry(vehicle, startTimeEpochMilli, endTimeEpochMilli).getTelemetryList();
         final TelemetryProcessor telemetryProcessor = new TelemetryProcessor(telemetryList, vehicle);
         return telemetryProcessor.getFlightTelemetries();
     }
@@ -153,21 +143,8 @@ public class VehicleListForm extends JPanel {
     private List<? extends Flight> getFlightsByTelemetryFrames(Vehicle vehicle,
                                                                long startTimeEpochMilli, long endTimeEpochMilli) {
         final TelemetryFramesProcessor framesProcessor =
-                new TelemetryFramesProcessor(controller, vehicle, startTimeEpochMilli, endTimeEpochMilli);
+                new TelemetryFramesProcessor(sessionController(), vehicle, startTimeEpochMilli, endTimeEpochMilli);
         return framesProcessor.getFlightFrames();
-    }
-
-    private Path getPathToTelemetryFile(Vehicle vehicle, long startTimeEpochMilli, long endTimeEpochMilli) {
-        Path pathToTelemetryFile = settings().getTelemetryPath()
-                .resolve(generateFileName(vehicle.getName(), startTimeEpochMilli, endTimeEpochMilli, ""));
-        int numberOfTries = 1;
-        while (exists(pathToTelemetryFile) && numberOfTries < 1000) {
-            final String telemetryFileName =
-                    generateFileName(vehicle.getName(), startTimeEpochMilli, endTimeEpochMilli, "-" + numberOfTries);
-            pathToTelemetryFile = settings().getTelemetryPath().resolve(telemetryFileName);
-            ++numberOfTries;
-        }
-        return pathToTelemetryFile;
     }
 
     private Optional<Vehicle> getSelectedVehicle() {
@@ -186,107 +163,58 @@ public class VehicleListForm extends JPanel {
         return LocalDateTime.of(date, time).atZone(systemDefault()).toEpochSecond() * 1000L;
     }
 
-    private static String generateFileName(String vehicleName, long startTimeEpochMilli, long endTimeEpochMilli,
-                                           String fileSuffix) {
-        return (vehicleName + "-" + FILE_DATE_FORMAT.format(new Date(startTimeEpochMilli)) +
-                "-" + FILE_DATE_FORMAT.format(new Date(endTimeEpochMilli)) + fileSuffix + ".csv")
-                .replaceAll("[*/\\\\!|:?<>]", "_")
-                .replaceAll("(%22)", "_");
+    private UploadResponse uploadFlightTelemetry(FlightTelemetry flightTelemetry) {
+        final String url = settings().getUploadServerUrl();
+        final Path pathForUploadedFiles = settings().getUploadedFlightsPath();
+        return new LogBookUploader(url, settings().getUploadServerLogin(), settings().getUploadServerPassword())
+                .uploadFlight(flightTelemetry)
+                .storeFlightTelemetry(new CsvFileNameGenerator(pathForUploadedFiles, flightTelemetry).generateUnique())
+                .getUploadResponse();
     }
 
-    private static Path generateUniqueFileName(Path targetFolder, String vehicleName, FlightUploadResponse flightResponse) {
-        final long flightStartEpochMilli = flightResponse.getFlightTelemetry().getStartEpochMilli();
-        final long flightEndEpochMilli = flightResponse.getFlightTelemetry().getEndEpochMilli();
-        Path uniqueFilePath = targetFolder.resolve(
-                generateFileName(vehicleName, flightStartEpochMilli, flightEndEpochMilli, "")
-        );
-
-        int numberOfTries = 1;
-        while (exists(uniqueFilePath) && numberOfTries < 1000) {
-            uniqueFilePath = targetFolder.resolve(
-                    generateFileName(vehicleName, flightStartEpochMilli, flightEndEpochMilli, "-" + numberOfTries)
-            );
-            ++numberOfTries;
-        }
-
-        return uniqueFilePath;
+    private static void saveTelemetry(FlightTelemetryProcessor flightTelemetryProcessor, Flight flight) {
+        final Path telemetryFilePath =
+                new CsvFileNameGenerator(settings().getTelemetryPath(), flight).generateUnique();
+        saveTelemetryDataToCsvFile(telemetryFilePath,
+                flightTelemetryProcessor.getProcessedTelemetry(),
+                flightTelemetryProcessor.getAllFieldCodes());
     }
 
-    @SneakyThrows
-    private static void storeUploadedFlights(Collection<FlightUploadResponse> responses, String vehicleName) {
-        Path targetFolder = settings().getUploadedFlightsPath();
+    private Future<Operation<Identity<?>, UploadResponse>> submitFlightForUploading(Flight flight) {
+        return performerFactory().getUploadPerformer().submit(flight.getId(), () -> {
+            final FlightTelemetryProcessor flightTelemetryProcessor =
+                    new FlightTelemetryProcessor(flight, sessionController());
 
-        if (!isDirectory(targetFolder)) {
-            Files.createDirectory(targetFolder);
-        }
+            saveTelemetry(flightTelemetryProcessor, flight);
 
-        for (FlightUploadResponse response : responses) {
-            final Path targetFilePath = generateUniqueFileName(targetFolder, vehicleName, response);
-            response.storeFlightTelemetry(targetFilePath);
-        }
+            final List<FlightTelemetry> flightTelemetries = flightTelemetryProcessor.getFlightTelemetries();
+            if (flightTelemetries.isEmpty()) {
+                throw new NoFlightTelemetryFoundException(flight);
+            }
+            if (flightTelemetries.size() > 1) {
+                getLogger(getClass()).warn("Multiple flights telemetry found, only first flight will be uploaded");
+            }
+
+            FlightTelemetry flightForUpload = withId(flightTelemetries.get(0), flight.getId());
+            return uploadFlightTelemetry(flightForUpload);
+        });
     }
 
-    private void uploadFlightTelemetry(Vehicle vehicle, List<FlightTelemetry> flightTelemetries) {
-        LogBookUploader uploader =
-                new LogBookUploader(settings().getUploadServerUrl(),
-                        settings().getUploadServerLogin(),
-                        settings().getUploadServerPassword());
+    private void uploadCurrentlySelectedFlights() {
+        final Set<? extends Flight> selectedFlights = flightTable.getSelectedFlights();
 
-        final OperationPerformer<Flight, FlightUploadResponse> performer = performerFactory().getPerformer();
-        final List<Operation<Flight, FlightUploadResponse>> operationResults =
+        final List<Future<Operation<Identity<?>, UploadResponse>>> uploadOperationFutures = selectedFlights.stream()
+                .map(this::submitFlightForUploading)
+                .collect(toList());
+
+        final List<Operation<Identity<?>, UploadResponse>> uploadResults =
                 waitForm().waitOnCallable("Uploading flights to LogBook...",
-                        () -> flightTelemetries.stream()
-                                .map(flight -> performer.submit(flight, () -> uploader.uploadFlight(flight)))
+                        () -> uploadOperationFutures.stream()
                                 .map(FutureWrapper::of)
                                 .map(FutureWrapper::get)
                                 .collect(toList()),
                         this);
 
-        final Collection<FlightUploadResponse> performedResponses = operationResults.stream()
-                .flatMap(Operation::getResultAsStream)
-                .collect(toSet());
-        storeUploadedFlights(performedResponses, vehicle.getName());
-
-        UploadReportForm.showReport(this, operationResults);
-    }
-
-    private void uploadCurrentlySelectedFlights(Vehicle vehicle) {
-        final Set<? extends Flight> selectedFlights = flightTable.getSelectedFlights();
-        if (selectedFlights.isEmpty()) {
-            return;
-        }
-
-        final List<FlightTelemetry> flightTelemetries = waitForm().waitOnCallable(
-                "Acquiring data from UgCS..."
-                , () -> selectedFlights.stream()
-                        .flatMap(flight -> flight instanceof FlightTelemetry
-                                ? Stream.of((FlightTelemetry) flight)
-                                : new TelemetryProcessor(
-                                controller.getTelemetry(
-                                        vehicle,
-                                        flight.getStartEpochMilli(),
-                                        flight.getEndEpochMilli()
-                                ).getTelemetryList(), vehicle)
-                                .getFlightTelemetries().stream())
-                        .collect(toList())
-                , this
-        );
-
-        final long startTimeEpochMilli = selectedFlights.stream()
-                .mapToLong(Flight::getStartEpochMilli)
-                .min().orElse(0);
-        final long endTimeEpochMilli = selectedFlights.stream()
-                .mapToLong(Flight::getEndEpochMilli)
-                .max().orElse(0);
-        final Path pathToTelemetryFile = getPathToTelemetryFile(vehicle, startTimeEpochMilli, endTimeEpochMilli);
-        final FlightTelemetryProcessor flightTelemetryProcessor = new FlightTelemetryProcessor(flightTelemetries, vehicle);
-        waitForm().waitOnAction("Saving telemetry data...",
-                () -> saveTelemetryDataToCsvFile(pathToTelemetryFile,
-                        flightTelemetryProcessor.getProcessedTelemetry(),
-                        flightTelemetryProcessor.getAllFieldCodes()), this);
-
-        if (flightTelemetries.size() > 0) {
-            uploadFlightTelemetry(vehicle, flightTelemetries);
-        }
+        UploadReportForm.showReport(this, uploadResults);
     }
 }

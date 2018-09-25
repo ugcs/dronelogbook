@@ -6,7 +6,7 @@ import java.awt.event.ActionListener;
 import static ugcs.ucsHub.Settings.settings;
 
 public class LoginForm extends JPanel {
-    private final JTextField loginField = new JTextField(settings().getUcsServerLoginLogin(), 25);
+    private final JTextField loginField = new JTextField(settings().getUcsServerLogin(), 25);
     private final JTextField passwordField = new JPasswordField(settings().getUcsServerPassword(), 25);
 
     private final JTextField loginDlbField = new JTextField(settings().getUploadServerLogin(), 25);
