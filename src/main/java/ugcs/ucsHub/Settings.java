@@ -192,6 +192,15 @@ public final class Settings implements SessionSettings {
         }
     }
 
+    @SneakyThrows
+    long getMaxHeapSize() {
+        try (final InputStream in = getClass().getResourceAsStream("/settings/jvm.properties")) {
+            final Properties jvmProperties = new Properties();
+            jvmProperties.load(in);
+            return Long.valueOf(jvmProperties.getProperty("jvm.maxHeapSizeMb"));
+        }
+    }
+
     private Path resolveOnDataFolder(String folderToResolve) {
         final Path folderPath = Paths.get(folderToResolve);
         if (folderPath.isAbsolute()) {

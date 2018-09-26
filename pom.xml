@@ -11,7 +11,10 @@
     <properties>
         <jdk.version>1.8</jdk.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
         <fully.qualified.main.class>ugcs.ucsHub.Main</fully.qualified.main.class>
+        <fully.qualified.launcher.class>ugcs.ucsHub.Launcher</fully.qualified.launcher.class>
+        <jvm.max.heap.size.mb>1024</jvm.max.heap.size.mb>
 
         <project.distribution.directory>${project.basedir}/distr</project.distribution.directory>
         <executable.jar.distribution.directory>${project.distribution.directory}/multi-platform
@@ -186,7 +189,7 @@
                             <transformers>
                                 <transformer
                                         implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>${fully.qualified.main.class}</mainClass>
+                                    <mainClass>${fully.qualified.launcher.class}</mainClass>
                                 </transformer>
                                 <transformer
                                         implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
@@ -221,6 +224,7 @@
                             </classPath>
                             <jre>
                                 <minVersion>${jdk.version}.0</minVersion>
+                                <maxHeapSize>${jvm.max.heap.size.mb}</maxHeapSize>
                             </jre>
                             <versionInfo>
                                 <fileVersion>${project.version}.0.0</fileVersion>
