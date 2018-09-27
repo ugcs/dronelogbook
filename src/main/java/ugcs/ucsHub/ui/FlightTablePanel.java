@@ -22,6 +22,7 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
+import static javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS;
 import static javax.swing.SwingUtilities.invokeLater;
 import static ugcs.exceptions.ExceptionsHandler.handler;
 import static ugcs.ucsHub.ui.RefreshButton.refresher;
@@ -168,6 +169,8 @@ class FlightTablePanel extends JPanel {
             flightTablePane.setVisible(true);
             messageLabelPane.setVisible(false);
             flightTable.getModel().addTableModelListener(this::tableChanged);
+            flightTable.setAutoResizeMode(AUTO_RESIZE_ALL_COLUMNS);
+            flightTable.getColumn("Upload").setMaxWidth(70);
         }
         notifyAll(tableChangeListeners);
     }
