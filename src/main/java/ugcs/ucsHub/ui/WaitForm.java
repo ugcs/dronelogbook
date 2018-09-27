@@ -61,7 +61,7 @@ public class WaitForm extends JDialog {
                     });
                     return callable.call();
                 } finally {
-                    SwingUtilities.invokeLater(() -> setVisible(false));
+                    SwingUtilities.invokeLater(this::dispose);
                 }
             });
 

@@ -28,4 +28,8 @@ public class FlightUploadPerformerFactory extends LazyFieldEvaluator {
                 new OperationPerformer<>(newSingleThreadExecutor())
         );
     }
+
+    public void shutDown() {
+        getUploadPerformer().shutDown();
+    }
 }

@@ -1,14 +1,11 @@
 package ugcs.upload.logbook;
 
 import lombok.SneakyThrows;
-import ugcs.common.security.MD5HashCalculator;
 import ugcs.csv.telemetry.TelemetryCsvWriter;
-import ugcs.exceptions.ExpectedException;
 import ugcs.processing.telemetry.FlightTelemetry;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.List;
@@ -29,12 +26,12 @@ public class LogBookUploader {
 
     private final String serverUrl;
     private final String login;
-    private final String passwordAsMd5Hash;
+    private final String rawPasswordOrMd5Hash;
 
     public LogBookUploader(String serverUrl, String login, String rawPasswordOrMd5Hash) {
         this.serverUrl = serverUrl;
         this.login = login;
-        this.passwordAsMd5Hash = MD5HashCalculator.of(rawPasswordOrMd5Hash).hash();
+        this.rawPasswordOrMd5Hash = rawPasswordOrMd5Hash;
     }
 
     @SneakyThrows
@@ -52,16 +49,11 @@ public class LogBookUploader {
     }
 
     private List<String> uploadFile(File file) {
-        try {
-            MultipartUtility multipart = new MultipartUtility(serverUrl, CSV_FILE_CHARSET.displayName());
+        MultipartUtility multipart = new MultipartUtility(serverUrl, CSV_FILE_CHARSET.displayName());
 
-            multipart.addFormField("login", login);
-            multipart.addFormField("password", passwordAsMd5Hash);
-            multipart.addFilePart("data", file);
+        multipart.withCredentials(login, rawPasswordOrMd5Hash);
+        multipart.addFilePart("data", file);
 
-            return multipart.finish();
-        } catch (IOException connectException) {
-            throw new ExpectedException("LogBook service unavailable.", connectException);
-        }
+        return multipart.finish();
     }
 }

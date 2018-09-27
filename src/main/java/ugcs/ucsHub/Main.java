@@ -4,6 +4,7 @@ import ugcs.exceptions.ExceptionsHandler;
 import ugcs.exceptions.ExpectedException;
 import ugcs.ucsHub.ui.LoginForm;
 import ugcs.ucsHub.ui.VehicleListForm;
+import ugcs.upload.logbook.MultipartUtility;
 
 import javax.swing.*;
 import java.awt.*;
@@ -25,11 +26,11 @@ public class Main {
 
         frame.pack();
         frame.setLocationRelativeTo(null);
-        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         frame.setVisible(true);
 
         ExceptionsHandler.handler().addUncaughtExceptionListener(rootException ->
-                showMessageDialog(null, getExceptionMessage(rootException), "Error", JOptionPane.ERROR_MESSAGE));
+                showMessageDialog(frame, getExceptionMessage(rootException), "Error", JOptionPane.ERROR_MESSAGE));
 
         loginForm.makeLoginButtonDefault();
         loginForm.addLoginButtonListener(event -> {
@@ -41,10 +42,17 @@ public class Main {
 
             frame.addWindowListener(new ActionOnCloseWindowAdapter(() -> {
                 sessionController().close();
-                performerFactory().getUploadPerformer().shutDown();
+                performerFactory().shutDown();
             }));
 
             waitForm().waitOnAction("Connecting to UgCS...", sessionController()::connect, loginForm);
+
+            waitForm().waitOnAction("Connecting to LogBook...", () ->
+                            new MultipartUtility(settings().getUploadServerUrl())
+                                    .withCredentials(settings().getUploadServerLogin(), settings().getUploadServerPassword())
+                                    .authorisationTestOnly()
+                                    .finish(),
+                    loginForm);
 
             final VehicleListForm vehicleForm = new VehicleListForm();
             contentPane.remove(loginForm);

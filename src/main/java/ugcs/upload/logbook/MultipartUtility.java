@@ -1,10 +1,11 @@
 package ugcs.upload.logbook;
 
+import lombok.SneakyThrows;
+import ugcs.common.security.MD5HashCalculator;
 import ugcs.exceptions.ExpectedException;
 import ugcs.exceptions.logbook.LogBookAuthorizationFailed;
 
 import java.io.BufferedReader;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -18,8 +19,10 @@ import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
 
+import static java.net.HttpURLConnection.HTTP_INTERNAL_ERROR;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static java.net.HttpURLConnection.HTTP_UNAUTHORIZED;
+import static java.util.Collections.emptyList;
 
 public class MultipartUtility {
     private final String boundary;
@@ -28,9 +31,10 @@ public class MultipartUtility {
     private String charset;
     private OutputStream outputStream;
     private PrintWriter writer;
+    private boolean isAuthorisationTest = false;
 
-    public MultipartUtility(String requestURL, String charset)
-            throws IOException {
+    @SneakyThrows
+    public MultipartUtility(String requestURL, String charset) {
         this.charset = charset;
 
         boundary = "===" + System.currentTimeMillis() + "===";
@@ -50,29 +54,26 @@ public class MultipartUtility {
                 true);
     }
 
+    public MultipartUtility(String requestUrl) {
+        this(requestUrl, "UTF-8");
+    }
+
     public void addFormField(String name, String value) {
-        writer.append("--" + boundary).append(LINE_FEED);
-        writer.append("Content-Disposition: form-data; name=\"" + name + "\"")
-                .append(LINE_FEED);
-        writer.append("Content-Type: text/plain; charset=" + charset).append(
-                LINE_FEED);
+        writer.append("--").append(boundary).append(LINE_FEED);
+        writer.append("Content-Disposition: form-data; name=\"").append(name).append("\"").append(LINE_FEED);
+        writer.append("Content-Type: text/plain; charset=").append(charset).append(LINE_FEED);
         writer.append(LINE_FEED);
         writer.append(value).append(LINE_FEED);
         writer.flush();
     }
 
-    public void addFilePart(String fieldName, File uploadFile)
-            throws IOException {
+    @SneakyThrows
+    public void addFilePart(String fieldName, File uploadFile) {
         String fileName = uploadFile.getName();
-        writer.append("--" + boundary).append(LINE_FEED);
-        writer.append(
-                "Content-Disposition: form-data; name=\"" + fieldName
-                        + "\"; filename=\"" + fileName + "\"")
-                .append(LINE_FEED);
-        writer.append(
-                "Content-Type: "
-                        + URLConnection.guessContentTypeFromName(fileName))
-                .append(LINE_FEED);
+        writer.append("--").append(boundary).append(LINE_FEED);
+        writer.append("Content-Disposition: form-data; name=\"").append(fieldName).append("\"; filename=\"")
+                .append(fileName).append("\"").append(LINE_FEED);
+        writer.append("Content-Type: ").append(URLConnection.guessContentTypeFromName(fileName)).append(LINE_FEED);
         writer.append("Content-Transfer-Encoding: binary").append(LINE_FEED);
         writer.append(LINE_FEED);
         writer.flush();
@@ -90,36 +91,70 @@ public class MultipartUtility {
         writer.flush();
     }
 
+    public MultipartUtility withCredentials(String login, String rawPasswordOrMd5Hash) {
+        addFormField("login", login);
+        addFormField("password", MD5HashCalculator.of(rawPasswordOrMd5Hash).hash());
+
+        return this;
+    }
+
+    public MultipartUtility authorisationTestOnly() {
+        writer.append("--").append(boundary).append(LINE_FEED);
+        writer.append("Content-Disposition: form-data; name=\"").append("file").append("\"; filename=\"")
+                .append("login_try").append("\"").append(LINE_FEED);
+        writer.append("Content-Type: ").append("UTF-8").append(LINE_FEED);
+        writer.append("Content-Transfer-Encoding: binary").append(LINE_FEED);
+        writer.append(LINE_FEED);
+        writer.flush();
+
+        writer.append(LINE_FEED);
+        writer.flush();
+
+        isAuthorisationTest = true;
+
+        return this;
+    }
+
     public void addHeaderField(String name, String value) {
-        writer.append(name + ": " + value).append(LINE_FEED);
+        writer.append(name).append(": ").append(value).append(LINE_FEED);
         writer.flush();
     }
 
-    public List<String> finish() throws IOException {
-        List<String> response = new ArrayList<>();
+    public List<String> finish() {
+        try {
+            List<String> response = new ArrayList<>();
 
-        writer.append(LINE_FEED).flush();
-        writer.append("--" + boundary + "--").append(LINE_FEED);
-        writer.close();
+            writer.append(LINE_FEED).flush();
+            writer.append("--").append(boundary).append("--").append(LINE_FEED);
+            writer.close();
 
-        int status = httpConn.getResponseCode();
-        System.out.println(String.valueOf(status));
-        switch (status) {
-            case HTTP_OK:
-                BufferedReader reader = new BufferedReader(new InputStreamReader(
-                        httpConn.getInputStream()));
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    response.add(line);
-                }
-                reader.close();
-                httpConn.disconnect();
-                break;
-            case HTTP_UNAUTHORIZED:
-                throw new LogBookAuthorizationFailed();
-            default:
-                throw new ExpectedException("Uploading data to LogBook failed.");
+            int status = httpConn.getResponseCode();
+            System.out.println(String.valueOf(status));
+            switch (status) {
+                case HTTP_OK:
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(
+                            httpConn.getInputStream()));
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        response.add(line);
+                    }
+                    reader.close();
+                    httpConn.disconnect();
+                    break;
+                case HTTP_UNAUTHORIZED:
+                    throw new LogBookAuthorizationFailed();
+                case HTTP_INTERNAL_ERROR:
+                    if (isAuthorisationTest) {
+                        return emptyList();
+                    }
+                default:
+                    throw new ExpectedException("Uploading data to LogBook failed.");
+            }
+            return response;
+        } catch (IOException connectException) {
+            throw new ExpectedException("LogBook service unavailable.", connectException);
+        } finally {
+            writer.close();
         }
-        return response;
     }
 }
