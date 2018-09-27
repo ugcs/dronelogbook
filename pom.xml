@@ -16,17 +16,19 @@
         <fully.qualified.launcher.class>ugcs.ucsHub.Launcher</fully.qualified.launcher.class>
         <jvm.max.heap.size.mb>1024</jvm.max.heap.size.mb>
 
+        <distribution.name>${project.artifactId}-${project.version}</distribution.name>
+
         <project.distribution.directory>${project.basedir}/distr</project.distribution.directory>
         <executable.jar.distribution.directory>${project.distribution.directory}/multi-platform
         </executable.jar.distribution.directory>
-        <executable.jar.artifact.name>${project.artifactId}-${project.version}</executable.jar.artifact.name>
-        <executable.jar.path>${executable.jar.distribution.directory}/${executable.jar.artifact.name}.jar
-        </executable.jar.path>
+        <executable.jar.path>${executable.jar.distribution.directory}/${distribution.name}.jar</executable.jar.path>
 
         <windows.exe.distribution.directory>${project.distribution.directory}/windows-executable
         </windows.exe.distribution.directory>
-        <windows.exe.name>${project.artifactId}-${project.version}</windows.exe.name>
-        <windows.exe.path>${windows.exe.distribution.directory}/${windows.exe.name}.exe</windows.exe.path>
+        <windows.exe.path>${windows.exe.distribution.directory}/${distribution.name}.exe</windows.exe.path>
+
+        <mac.app.distribution.directory>${project.distribution.directory}/mac-application</mac.app.distribution.directory>
+        <mac.app.build.directory>${project.build.directory}/mac_build</mac.app.build.directory>
 
         <github.pages.directory>${project.build.directory}/github-pages</github.pages.directory>
 
@@ -183,7 +185,7 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
-                            <finalName>${executable.jar.artifact.name}</finalName>
+                            <finalName>${distribution.name}</finalName>
                             <outputDirectory>${executable.jar.distribution.directory}</outputDirectory>
                             <shadedArtifactAttached>true</shadedArtifactAttached>
                             <transformers>
@@ -235,10 +237,55 @@
                                 <productVersion>${project.version}.0.0</productVersion>
                                 <txtProductVersion>${project.version}</txtProductVersion>
                                 <productName>DroneLogBook uploader</productName>
-                                <internalName>${windows.exe.name}</internalName>
-                                <originalFilename>${windows.exe.name}.exe</originalFilename>
+                                <internalName>${distribution.name}</internalName>
+                                <originalFilename>${distribution.name}.exe</originalFilename>
                             </versionInfo>
                         </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>sh.tak.appbundler</groupId>
+                <artifactId>appbundle-maven-plugin</artifactId>
+                <version>1.2.0</version>
+                <configuration>
+                    <mainClass>${fully.qualified.main.class}</mainClass>
+                    <jvmOptions>
+                        <jvmOption>-Xmx${jvm.max.heap.size.mb}m</jvmOption>
+                    </jvmOptions>
+                    <buildDirectory>${mac.app.build.directory}</buildDirectory>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>build-mac-distribution</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>bundle</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>2.6</version>
+                <configuration>
+                    <descriptors>
+                        <descriptor>src/main/assembly/mac-distribution.xml</descriptor>
+                    </descriptors>
+                    <outputDirectory>${mac.app.distribution.directory}</outputDirectory>
+                    <finalName>${distribution.name}</finalName>
+                    <appendAssemblyId>false</appendAssemblyId>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>make-mac-app-zip</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
                     </execution>
                 </executions>
             </plugin>
