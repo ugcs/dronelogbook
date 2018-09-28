@@ -1,9 +1,11 @@
 package ugcs.ucsHub;
 
+import lombok.Getter;
 import lombok.SneakyThrows;
 import ugcs.common.security.MD5HashCalculator;
 import ugcs.net.SessionSettings;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -63,6 +65,9 @@ public final class Settings implements SessionSettings {
     private final Properties globalSettings;
     private final Properties localSettings;
 
+    @Getter
+    private final ImageIcon logoIcon;
+
     private Settings() {
         this.globalSettings = new Properties();
         final Path pathToGlobalSettings = resolveOnDataFolder(SETTINGS_FILE_NAME);
@@ -104,6 +109,8 @@ public final class Settings implements SessionSettings {
 
         uploadedFileFolder = getProperty("uploaded.file.folder", DEFAULT_UPLOADED_FILE_FOLDER);
         telemetryFolder = getProperty("telemetry.file.folder", DEFAULT_TELEMETRY_FOLDER);
+
+        logoIcon = new ImageIcon(Settings.class.getResource("/graphics/logo.png"));
     }
 
     @Override

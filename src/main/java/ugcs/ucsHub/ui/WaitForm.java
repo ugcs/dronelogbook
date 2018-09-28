@@ -10,6 +10,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import static ugcs.ucsHub.Settings.settings;
+
 public class WaitForm extends JDialog {
 
     private final JLabel messageLabel;
@@ -23,6 +25,8 @@ public class WaitForm extends JDialog {
         final ImageIcon icon = new ImageIcon(WaitForm.class.getResource("/graphics/Loading_icon.gif"));
         this.messageLabel = new JLabel("Loading", icon, SwingConstants.RIGHT);
         add(new JPanel().add(messageLabel).getParent());
+
+        setIconImage(settings().getLogoIcon().getImage());
 
         pack();
     }

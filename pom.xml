@@ -16,7 +16,10 @@
         <fully.qualified.launcher.class>ugcs.ucsHub.Launcher</fully.qualified.launcher.class>
         <jvm.max.heap.size.mb>1024</jvm.max.heap.size.mb>
 
+        <project.resources.path>src/main/resources</project.resources.path>
+
         <distribution.name>${project.artifactId}-${project.version}</distribution.name>
+        <distribution.logo>${project.resources.path}/graphics/logo</distribution.logo>
 
         <project.distribution.directory>${project.basedir}/distr</project.distribution.directory>
         <executable.jar.distribution.directory>${project.distribution.directory}/multi-platform
@@ -108,8 +111,12 @@
 
         <resources>
             <resource>
-                <directory>src/main/resources</directory>
+                <directory>${project.resources.path}</directory>
                 <filtering>true</filtering>
+                <excludes>
+                    <exclude>**/*.icns</exclude>
+                    <exclude>**/*.ico</exclude>
+                </excludes>
             </resource>
         </resources>
 
@@ -219,6 +226,7 @@
                             <headerType>gui</headerType>
                             <outfile>${windows.exe.path}</outfile>
                             <jar>${executable.jar.path}</jar>
+                            <icon>${distribution.logo}.ico</icon>
                             <classPath>
                                 <mainClass>${fully.qualified.main.class}</mainClass>
                                 <addDependencies>true</addDependencies>
@@ -255,6 +263,7 @@
                         <jvmOption>-Xmx${jvm.max.heap.size.mb}m</jvmOption>
                     </jvmOptions>
                     <buildDirectory>${mac.app.build.directory}</buildDirectory>
+                    <iconFile>${distribution.logo}.icns</iconFile>
                 </configuration>
                 <executions>
                     <execution>
@@ -304,7 +313,7 @@
                             <outputDirectory>${github.pages.directory}</outputDirectory>
                             <resources>
                                 <resource>
-                                    <directory>src/main/resources/github-pages</directory>
+                                    <directory>${project.resources.path}/github-pages</directory>
                                 </resource>
                                 <resource>
                                     <directory>${basedir}</directory>
@@ -329,9 +338,9 @@
                             <goal>run</goal>
                         </goals>
                         <configuration>
-                            <tasks>
+                            <target>
                                 <mkdir dir="${windows.exe.distribution.directory}"/>
-                            </tasks>
+                            </target>
                         </configuration>
                     </execution>
 

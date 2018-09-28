@@ -24,6 +24,8 @@ public class Main {
         final LoginForm loginForm = new LoginForm(frame);
         contentPane.add(BorderLayout.CENTER, loginForm);
 
+        frame.setIconImage(settings().getLogoIcon().getImage());
+
         frame.pack();
         frame.setLocationRelativeTo(null);
         frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
