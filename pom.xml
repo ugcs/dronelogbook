@@ -30,8 +30,12 @@
         </windows.exe.distribution.directory>
         <windows.exe.path>${windows.exe.distribution.directory}/${distribution.name}.exe</windows.exe.path>
 
-        <mac.app.distribution.directory>${project.distribution.directory}/mac-application</mac.app.distribution.directory>
+        <mac.app.resources>src/main/osx/app</mac.app.resources>
         <mac.app.build.directory>${project.build.directory}/mac_build</mac.app.build.directory>
+        <mac.app.build.path>${mac.app.build.directory}/${project.artifactId}.app</mac.app.build.path>
+        <mac.app.distribution.directory>${project.distribution.directory}/mac-application</mac.app.distribution.directory>
+        <mac.app.distribution.format>tar.gz</mac.app.distribution.format>
+        <mac.app.path>${mac.app.distribution.directory}/${distribution.name}.${mac.app.distribution.format}</mac.app.path>
 
         <github.pages.directory>${project.build.directory}/github-pages</github.pages.directory>
 
@@ -114,7 +118,6 @@
                 <directory>${project.resources.path}</directory>
                 <filtering>true</filtering>
                 <excludes>
-                    <exclude>**/*.icns</exclude>
                     <exclude>**/*.ico</exclude>
                 </excludes>
             </resource>
@@ -254,57 +257,11 @@
             </plugin>
 
             <plugin>
-                <groupId>sh.tak.appbundler</groupId>
-                <artifactId>appbundle-maven-plugin</artifactId>
-                <version>1.2.0</version>
-                <configuration>
-                    <mainClass>${fully.qualified.main.class}</mainClass>
-                    <jvmOptions>
-                        <jvmOption>-Xmx${jvm.max.heap.size.mb}m</jvmOption>
-                    </jvmOptions>
-                    <buildDirectory>${mac.app.build.directory}</buildDirectory>
-                    <iconFile>${distribution.logo}.icns</iconFile>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>build-mac-distribution</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>bundle</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <version>2.6</version>
-                <configuration>
-                    <descriptors>
-                        <descriptor>src/main/assembly/mac-distribution.xml</descriptor>
-                    </descriptors>
-                    <outputDirectory>${mac.app.distribution.directory}</outputDirectory>
-                    <finalName>${distribution.name}</finalName>
-                    <appendAssemblyId>false</appendAssemblyId>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>make-mac-app-zip</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <plugin>
                 <artifactId>maven-resources-plugin</artifactId>
                 <version>2.7</version>
                 <executions>
                     <execution>
-                        <id>copy-resource-one</id>
+                        <id>copy-github-pages-resources</id>
                         <phase>package</phase>
                         <goals>
                             <goal>copy-resources</goal>
@@ -323,6 +280,72 @@
                                 </resource>
                             </resources>
                         </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-mac-app-resources</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${mac.app.build.path}</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${mac.app.resources}</directory>
+                                    <includes>
+                                        <include>Info.plist</include>
+                                    </includes>
+                                    <filtering>true</filtering>
+                                </resource>
+                                <resource>
+                                    <directory>${mac.app.resources}</directory>
+                                    <excludes>
+                                        <exclude>Info.plist</exclude>
+                                    </excludes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-jar-for-mac-app</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${mac.app.build.path}/Contents/MacOS</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${executable.jar.distribution.directory}</directory>
+                                    <includes>
+                                        <include>*.jar</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>2.6</version>
+                <configuration>
+                    <descriptors>
+                        <descriptor>src/main/assembly/mac-distribution.xml</descriptor>
+                    </descriptors>
+                    <outputDirectory>${mac.app.distribution.directory}</outputDirectory>
+                    <finalName>${distribution.name}</finalName>
+                    <appendAssemblyId>false</appendAssemblyId>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>make-mac-app-assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
                     </execution>
                 </executions>
             </plugin>
@@ -354,6 +377,7 @@
                             <tasks>
                                 <copy file="${executable.jar.path}" tofile="${github.pages.directory}/ucsHub.jar"/>
                                 <copy file="${windows.exe.path}" tofile="${github.pages.directory}/ucsHub.exe"/>
+                                <copy file="${mac.app.path}" tofile="${github.pages.directory}/ucsHub.tar.gz"/>
                             </tasks>
                         </configuration>
                     </execution>
@@ -361,119 +385,4 @@
             </plugin>
         </plugins>
     </build>
-
-    <profiles>
-        <profile>
-            <id>standalone-distribution</id>
-            <activation>
-                <activeByDefault>false</activeByDefault>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-install-plugin</artifactId>
-                        <version>2.5.1</version>
-                        <executions>
-                            <execution>
-                                <id>install-jar-lib</id>
-                                <goals>
-                                    <goal>install-file</goal>
-                                </goals>
-                                <phase>package</phase>
-                                <configuration>
-                                    <groupId>com.github.UgCS.dronelogbook</groupId>
-                                    <artifactId>ucs-hub</artifactId>
-                                    <version>${project.version}</version>
-                                    <packaging>jar</packaging>
-                                    <file>${executable.jar.path}</file>
-                                    <generatePom>true</generatePom>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-
-                    <plugin>
-                        <groupId>org.moditect</groupId>
-                        <artifactId>moditect-maven-plugin</artifactId>
-                        <version>1.0.0.Beta1</version>
-                        <executions>
-                            <execution>
-                                <id>add-module-infos</id>
-                                <phase>package</phase>
-                                <goals>
-                                    <goal>add-module-info</goal>
-                                </goals>
-                                <configuration>
-                                    <outputDirectory>${project.build.directory}/modules</outputDirectory>
-                                    <overwriteExistingFiles>true</overwriteExistingFiles>
-                                    <modules>
-                                        <module>
-                                            <artifact>
-                                                <groupId>com.github.UgCS.dronelogbook</groupId>
-                                                <artifactId>ucs-hub</artifactId>
-                                                <version>${project.version}</version>
-                                            </artifact>
-                                            <moduleInfoSource>
-                                                module ucs.hub {
-                                                requires java.desktop;
-                                                requires java.xml.bind;
-
-                                                exports ugcs.ucsHub;
-                                                }
-                                            </moduleInfoSource>
-                                        </module>
-                                    </modules>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>create-runtime-image</id>
-                                <phase>package</phase>
-                                <goals>
-                                    <goal>create-runtime-image</goal>
-                                </goals>
-                                <configuration>
-                                    <modulePath>
-                                        <path>${project.build.directory}/modules</path>
-                                    </modulePath>
-                                    <modules>
-                                        <module>ucs.hub</module>
-                                    </modules>
-                                    <launcher>
-                                        <name>ucsHub</name>
-                                        <module>ucs.hub/ugcs.ucsHub.Main</module>
-                                    </launcher>
-                                    <outputDirectory>${project.build.directory}/jlink-image</outputDirectory>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-
-                    <plugin>
-                        <artifactId>maven-resources-plugin</artifactId>
-                        <version>3.1.0</version>
-                        <executions>
-                            <execution>
-                                <id>copy-resources</id>
-                                <phase>package</phase>
-                                <goals>
-                                    <goal>copy-resources</goal>
-                                </goals>
-                                <configuration>
-                                    <outputDirectory>${project.distribution.directory}/${os.name}-standalone
-                                    </outputDirectory>
-                                    <resources>
-                                        <resource>
-                                            <directory>${project.build.directory}/jlink-image</directory>
-                                            <filtering>false</filtering>
-                                        </resource>
-                                    </resources>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
 </project>
