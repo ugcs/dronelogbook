@@ -1,7 +1,5 @@
 package ugcs.ucsHub.ui;
 
-import com.github.lgooddatepicker.components.DatePicker;
-import com.github.lgooddatepicker.components.DatePickerSettings;
 import com.ugcs.ucs.proto.DomainProto;
 import com.ugcs.ucs.proto.DomainProto.Vehicle;
 import lombok.SneakyThrows;
@@ -21,9 +19,6 @@ import ugcs.upload.logbook.UploadResponse;
 import javax.swing.*;
 import java.awt.*;
 import java.nio.file.Path;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -31,7 +26,6 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
-import static java.time.ZoneId.systemDefault;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static javax.swing.ListSelectionModel.SINGLE_SELECTION;
@@ -51,8 +45,8 @@ public class VehicleListForm extends JPanel {
 
     private final FlightTablePanel flightTable;
 
-    private final DatePicker datePicker;
     private final TelemetryDatesHighlighter datesHighlighter = new TelemetryDatesHighlighter();
+    private final DatePickerPanel datePicker = new DatePickerPanel(datesHighlighter);
 
     public VehicleListForm() {
         super(new BorderLayout());
@@ -87,22 +81,14 @@ public class VehicleListForm extends JPanel {
         flightTable.addTableChangeAction(
                 () -> uploadTelemetryButton.setEnabled(!flightTable.getSelectedFlights().isEmpty()));
 
-        final JPanel timePickersPanel = new JPanel();
-        timePickersPanel.setLayout(new BoxLayout(timePickersPanel, BoxLayout.Y_AXIS));
+        bottomPanel.add(BorderLayout.CENTER, datePicker);
 
-        final JPanel datePickerPanel = new JPanel();
-        datePickerPanel.setBorder(BorderFactory.createTitledBorder("Pick the date"));
-        final DatePickerSettings datePickerSettings = new DatePickerSettings();
-        datePickerSettings.setAllowEmptyDates(false);
-        datePickerSettings.setHighlightPolicy(datesHighlighter);
-        datePicker = new DatePicker(datePickerSettings);
-        datePickerPanel.add(datePicker);
-        timePickersPanel.add(datePickerPanel);
-
-        bottomPanel.add(BorderLayout.CENTER, timePickersPanel);
-
-        vehicleJList.addListSelectionListener(event -> invokeLater(this::refreshView));
-        datePicker.addDateChangeListener(event -> invokeLater(this::refreshView));
+        vehicleJList.addListSelectionListener(event -> {
+            if (!event.getValueIsAdjusting()) {
+                invokeLater(this::refreshView);
+            }
+        });
+        datePicker.addDateChangeListener(() -> invokeLater(this::refreshView));
         refresher().addRefreshListener(this::refreshView);
     }
 
@@ -155,15 +141,11 @@ public class VehicleListForm extends JPanel {
     }
 
     private long getSelectedStartTimeAsEpochMilli() {
-        return getTimeAsEpochMilli(datePicker.getDate(), LocalTime.of(0, 0));
+        return datePicker.getSelectedStartTimeAsEpochMilli();
     }
 
     private long getSelectedEndTimeAsEpochMilli() {
-        return getTimeAsEpochMilli(datePicker.getDate().plusDays(1), LocalTime.of(0, 0));
-    }
-
-    private static long getTimeAsEpochMilli(LocalDate date, LocalTime time) {
-        return LocalDateTime.of(date, time).atZone(systemDefault()).toEpochSecond() * 1000L;
+        return datePicker.getSelectedEndTimeAsEpochMilli();
     }
 
     private UploadResponse uploadFlightTelemetry(FlightTelemetry flightTelemetry) {
