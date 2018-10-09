@@ -77,8 +77,8 @@ public class LoginForm extends JPanel {
     }
 
 
-    public char[] getPassword() {
-        return passwordField.getText().toCharArray();
+    public String getPassword() {
+        return passwordField.getText();
     }
 
     public void makeLoginButtonDefault() {

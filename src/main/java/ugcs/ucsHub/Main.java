@@ -40,6 +40,7 @@ public class Main {
         loginForm.makeLoginButtonDefault();
         loginForm.addLoginButtonListener(event -> {
             settings().storeUcsServerLogin(loginForm.getLogin());
+            settings().storeUcsServerPassword(loginForm.getPassword());
             settings().storeUploadServerLogin(loginForm.getDlbLogin());
             settings().storeUploadServerPassword(loginForm.getDlbPassword());
 

@@ -58,7 +58,7 @@ public final class Settings implements SessionSettings {
     private final String host;
     private final int port;
     private String ucsServerLogin;
-    private final String ucsServerPassword;
+    private String ucsServerPassword;
     private final String uploadServerUrl;
     private String uploadServerLogin;
     private String uploadServerPassword;
@@ -164,6 +164,13 @@ public final class Settings implements SessionSettings {
         if (!this.ucsServerLogin.equals(ucsServerLogin)) {
             storePropertyLocal("server.login", ucsServerLogin);
             this.ucsServerLogin = ucsServerLogin;
+        }
+    }
+
+    public void storeUcsServerPassword(String ucsServerPassword) {
+        if (!this.ucsServerPassword.equals(ucsServerPassword)) {
+            storePropertyLocal("server.password", ucsServerPassword);
+            this.ucsServerPassword = ucsServerPassword;
         }
     }
 
