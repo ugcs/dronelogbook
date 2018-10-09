@@ -10,6 +10,9 @@ import static java.awt.FlowLayout.LEFT;
 import static java.awt.FlowLayout.RIGHT;
 import static ugcs.ucsHub.Settings.settings;
 
+/**
+ * Login form for UCS and LogBook services
+ */
 public class LoginForm extends JPanel {
     private final JTextField loginField = new JTextField(settings().getUcsServerLogin(), 25);
     private final JTextField passwordField = new JPasswordField(settings().getUcsServerPassword(), 25);

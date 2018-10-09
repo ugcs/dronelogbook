@@ -2,10 +2,16 @@ package ugcs.processing.telemetry.frames;
 
 import com.ugcs.ucs.proto.DomainProto.Vehicle;
 import ugcs.processing.AbstractFlight;
+import ugcs.processing.Flight;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
 
+/**
+ * {@link Flight} implementation based on telemetry frames
+ *
+ * @see TelemetryFramesProcessor
+ */
 class FlightFrame extends AbstractFlight {
     FlightFrame(ZonedDateTime flightStart, ZonedDateTime flightEnd, Vehicle vehicle) {
         super(toEpochMilli(flightStart), toEpochMilli(flightEnd), vehicle);

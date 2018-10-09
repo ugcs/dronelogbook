@@ -15,6 +15,9 @@ import static ugcs.ucsHub.Settings.settings;
 import static ugcs.ucsHub.ui.WaitForm.waitForm;
 import static ugcs.upload.logbook.FlightUploadPerformerFactory.performerFactory;
 
+/**
+ * Main entry point of the application
+ */
 public class Main {
     public static void main(String[] args) {
         JFrame frame = new JFrame("UCS Hub " + settings().getProductVersion());

@@ -1,6 +1,7 @@
 package ugcs.upload.logbook;
 
 import org.json.JSONObject;
+import ugcs.common.operation.Operation;
 
 import java.util.List;
 import java.util.Optional;
@@ -9,6 +10,11 @@ import java.util.regex.Pattern;
 
 import static java.util.Optional.ofNullable;
 
+/**
+ * Upload {@link Operation} result data object
+ *
+ * @see FlightUploadPerformerFactory
+ */
 public class UploadResponse {
 
     private final static Pattern JSON_OBJECT_PATTERN = Pattern.compile("\\{.*}");

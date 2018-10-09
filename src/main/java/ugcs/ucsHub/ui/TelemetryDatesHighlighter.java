@@ -19,6 +19,9 @@ import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toMap;
 import static ugcs.net.SessionController.sessionController;
 
+/**
+ * {@link DateHighlightPolicy} highlighting dates containing telemetry data
+ */
 public class TelemetryDatesHighlighter implements DateHighlightPolicy {
     private static final long MILLIS_IN_DAY = 24L * 60 * 60 * 1000;
 

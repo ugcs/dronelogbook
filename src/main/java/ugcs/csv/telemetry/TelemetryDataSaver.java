@@ -14,6 +14,9 @@ import java.util.SortedMap;
 
 import static ugcs.csv.telemetry.TelemetryFieldCodeToCsvColumnNameMapper.mapper;
 
+/**
+ * Utility class for saving telemetry data to csv-file
+ */
 public class TelemetryDataSaver {
 
     @SneakyThrows

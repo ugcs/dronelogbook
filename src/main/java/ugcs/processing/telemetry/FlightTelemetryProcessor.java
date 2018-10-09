@@ -15,6 +15,9 @@ import java.util.stream.Stream;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 
+/**
+ * {@link TelemetryProcessor} extension with support of dynamic {@link FlightTelemetry} calculation for a {@link Flight}
+ */
 public class FlightTelemetryProcessor extends TelemetryProcessor {
     private final List<FlightTelemetry> flightTelemetries;
 

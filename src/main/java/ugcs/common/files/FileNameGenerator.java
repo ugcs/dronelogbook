@@ -9,6 +9,9 @@ import java.util.stream.Stream;
 import static java.nio.file.Files.exists;
 import static java.util.stream.Collectors.joining;
 
+/**
+ * Generates unique file name from given tokens on given path in the file system
+ */
 public class FileNameGenerator {
     private static final DateFormat FILE_DATE_FORMAT = new SimpleDateFormat("yyyyMMdd_HHmmss");
 

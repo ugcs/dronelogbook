@@ -10,6 +10,9 @@ import java.util.regex.Pattern;
 
 import static javax.xml.bind.DatatypeConverter.printHexBinary;
 
+/**
+ * Class for message digest calculation by MD5 algorithm
+ */
 public class MD5HashCalculator extends LazyFieldEvaluator {
     private static final Predicate<String> MD5_HASH_PREDICATE = Pattern.compile("^[a-fA-F0-9]{32}$").asPredicate();
 

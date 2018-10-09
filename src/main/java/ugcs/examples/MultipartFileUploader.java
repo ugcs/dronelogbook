@@ -5,6 +5,9 @@ import ugcs.upload.logbook.MultipartUtility;
 import java.io.File;
 import java.util.List;
 
+/**
+ * Example for uploading data to DroneLogBook web service
+ */
 public class MultipartFileUploader {
 
     public static void main(String[] args) {

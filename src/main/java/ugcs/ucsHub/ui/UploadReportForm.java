@@ -23,6 +23,9 @@ import static javax.swing.JOptionPane.showConfirmDialog;
 import static javax.swing.JOptionPane.showMessageDialog;
 import static ugcs.ucsHub.Settings.settings;
 
+/**
+ * Representation for results of flights upload {@link Operation}
+ */
 final class UploadReportForm extends JPanel {
     private static Color SUCCESS_COLOR = Color.getHSBColor(0.269f, 0.1f, 1.0f);
     private static Color WARNING_COLOR = Color.getHSBColor(0.147f, 0.14f, 1.0f);

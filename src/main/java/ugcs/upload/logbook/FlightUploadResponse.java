@@ -7,6 +7,11 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+/**
+ * Result for flight upload operation
+ *
+ * @see LogBookUploader#uploadFlight
+ */
 public class FlightUploadResponse {
     private final FlightTelemetry flightTelemetry;
     private final File flightFile;

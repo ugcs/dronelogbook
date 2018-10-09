@@ -24,6 +24,9 @@ import static java.net.HttpURLConnection.HTTP_OK;
 import static java.net.HttpURLConnection.HTTP_UNAUTHORIZED;
 import static java.util.Collections.emptyList;
 
+/**
+ * Builder for multipart data http-request
+ */
 public class MultipartUtility {
     private final String boundary;
     private static final String LINE_FEED = "\r\n";

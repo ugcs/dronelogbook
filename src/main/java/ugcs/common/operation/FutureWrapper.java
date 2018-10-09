@@ -5,6 +5,11 @@ import lombok.SneakyThrows;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Wrapper for the {@link Future} which is not throwing checked exception on {@link #get()} calls
+ *
+ * @param <R> type of {@link Future} result
+ */
 public final class FutureWrapper<R> implements Future<R> {
     private final Future<R> future;
 

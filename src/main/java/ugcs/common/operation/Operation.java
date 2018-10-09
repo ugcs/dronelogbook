@@ -13,6 +13,12 @@ import static ugcs.common.operation.State.INITIAL;
 import static ugcs.common.operation.State.PERFORMED;
 import static ugcs.common.operation.State.PERFORMING;
 
+/**
+ * Object that represents an operation which can be tracked by {@link Identity}
+ *
+ * @param <T> identity type for operation tracking
+ * @param <R> type of operation result
+ */
 public class Operation<T extends Identity<?>, R> {
     @Getter
     private final T id;

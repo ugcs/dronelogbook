@@ -17,6 +17,9 @@ import static java.time.ZoneId.systemDefault;
 import static javax.swing.BorderFactory.createTitledBorder;
 import static javax.swing.SwingUtilities.invokeLater;
 
+/**
+ * Part of the {@link VehicleListForm} for date filtering controls
+ */
 class DatePickerPanel extends JPanel {
     private final DatePicker datePicker;
 

@@ -12,6 +12,12 @@ import static ugcs.common.operation.Operation.toFault;
 import static ugcs.common.operation.Operation.toPerformed;
 import static ugcs.common.operation.Operation.toPerforming;
 
+/**
+ * Wrapper for {@link ExecutorService} for performing and tracking {@link Operation} in separate threads
+ *
+ * @param <T> identity type for operation tracking
+ * @param <R> type of operation result
+ */
 public class OperationPerformer<T extends Identity<?>, R> {
     private final ExecutorService executorService;
     private final ConcurrentMap<T, Operation<T, R>> operations = new ConcurrentHashMap<>();

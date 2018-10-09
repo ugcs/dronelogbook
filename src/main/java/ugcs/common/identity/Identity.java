@@ -5,6 +5,11 @@ import lombok.Getter;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 
+/**
+ * Wrapper for typed identity
+ *
+ * @param <T> type of the identity
+ */
 public class Identity<T> {
     private static final AtomicLong uniqueID = new AtomicLong(0L);
 

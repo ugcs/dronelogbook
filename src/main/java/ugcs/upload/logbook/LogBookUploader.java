@@ -13,6 +13,9 @@ import java.util.List;
 import static ugcs.csv.telemetry.TelemetryCsvWriter.CSV_FILE_CHARSET;
 import static ugcs.upload.logbook.UploadResponse.fromList;
 
+/**
+ * Gateway service for LogBook service upload functionality
+ */
 public class LogBookUploader {
     private static final List<String> FILED_CODES = Arrays.asList(
             "Time",

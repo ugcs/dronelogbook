@@ -7,6 +7,9 @@ import java.util.Set;
 import static java.util.Collections.emptySet;
 import static java.util.Objects.isNull;
 
+/**
+ * Handler for all unhandled exceptions in application
+ */
 public class ExceptionsHandler {
     private GlobalExceptionListener uncaughtExceptionListener = null;
 

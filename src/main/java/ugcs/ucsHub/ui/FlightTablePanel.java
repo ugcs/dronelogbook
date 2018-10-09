@@ -28,6 +28,9 @@ import static ugcs.exceptions.ExceptionsHandler.handler;
 import static ugcs.ucsHub.ui.RefreshButton.refresher;
 import static ugcs.ucsHub.ui.util.PresentationUtil.periodToString;
 
+/**
+ * Part of {@link VehicleListForm} representing current list of {@link Flight}s
+ */
 class FlightTablePanel extends JPanel {
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
     private static final SimpleDateFormat TIME_FORMAT = new SimpleDateFormat("HH:mm:ss");

@@ -17,6 +17,9 @@ import static com.ugcs.common.util.Strings.isNullOrEmpty;
 import static java.util.Collections.unmodifiableList;
 import static java.util.stream.Collectors.joining;
 
+/**
+ * Helper class for writing csv-records to given {@link OutputStream}
+ */
 public class CsvWriter {
     private final static String CSV_SEPARATOR = ",";
 

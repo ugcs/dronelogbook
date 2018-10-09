@@ -23,6 +23,9 @@ import static java.nio.file.Files.createDirectories;
 import static java.nio.file.Files.isRegularFile;
 import static java.util.Objects.isNull;
 
+/**
+ * Settings gateway for the application
+ */
 public final class Settings implements SessionSettings {
     private final static String SETTINGS_FILE_NAME = "client.properties";
     private final static String DATA_FOLDER = System.getProperty("user.home") + "/.dronelogbook";

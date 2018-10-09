@@ -6,6 +6,9 @@ import ugcs.common.operation.OperationPerformer;
 
 import static java.util.concurrent.Executors.newSingleThreadExecutor;
 
+/**
+ * Factory for {@link OperationPerformer} for flight upload operations
+ */
 public class FlightUploadPerformerFactory extends LazyFieldEvaluator {
     private static volatile FlightUploadPerformerFactory instance;
 

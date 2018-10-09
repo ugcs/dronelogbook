@@ -9,6 +9,9 @@ import java.util.List;
 import static javax.swing.SwingUtilities.invokeLater;
 import static ugcs.ucsHub.ui.WaitForm.waitForm;
 
+/**
+ * Service supplying button for calling application refreshment
+ */
 class RefreshButton {
     private List<RefreshListener> listeners = new LinkedList<>();
 

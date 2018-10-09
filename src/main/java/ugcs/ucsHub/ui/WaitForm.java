@@ -12,6 +12,9 @@ import java.util.concurrent.Future;
 
 import static ugcs.ucsHub.Settings.settings;
 
+/**
+ * Modal window appearing for long running blocking operations
+ */
 public class WaitForm extends JDialog {
 
     private final JLabel messageLabel;

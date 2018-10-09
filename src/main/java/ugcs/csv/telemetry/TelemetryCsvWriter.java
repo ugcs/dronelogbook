@@ -24,6 +24,9 @@ import static java.time.temporal.ChronoField.SECOND_OF_MINUTE;
 import static java.util.Objects.isNull;
 import static ugcs.csv.telemetry.TelemetryFieldCodeToCsvColumnNameMapper.mapper;
 
+/**
+ * {@link CsvWriter} for telemetry records
+ */
 public class TelemetryCsvWriter extends CsvWriter {
     public static final Charset CSV_FILE_CHARSET = Charset.forName("UTF-8");
 

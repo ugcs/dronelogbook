@@ -4,6 +4,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Supplier;
 
+/**
+ * Base class supporting thread-safe lazy field initialization
+ */
 public abstract class LazyFieldEvaluator {
     private final ConcurrentMap<String, Object> evaluatedFields = new ConcurrentHashMap<>();
 

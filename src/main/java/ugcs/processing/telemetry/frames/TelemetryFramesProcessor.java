@@ -3,6 +3,7 @@ package ugcs.processing.telemetry.frames;
 import com.ugcs.ucs.proto.DomainProto.Vehicle;
 import ugcs.common.LazyFieldEvaluator;
 import ugcs.net.SessionController;
+import ugcs.processing.Flight;
 
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
@@ -15,6 +16,9 @@ import static java.time.ZoneId.systemDefault;
 import static java.time.ZonedDateTime.ofInstant;
 import static java.util.Collections.unmodifiableList;
 
+/**
+ * Class for {@link Flight} calculation based on telemetry frames
+ */
 public class TelemetryFramesProcessor extends LazyFieldEvaluator {
     private final static long DEFAULT_INTERVAL_MILLIS = 30000;
 

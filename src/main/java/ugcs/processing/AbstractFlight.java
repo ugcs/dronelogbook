@@ -8,6 +8,9 @@ import java.util.Date;
 
 import static ugcs.common.identity.Identity.generateId;
 
+/**
+ * Abstract {@link Vehicle} flight implementation
+ */
 public abstract class AbstractFlight implements Flight {
     private static SimpleDateFormat FLIGHT_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 

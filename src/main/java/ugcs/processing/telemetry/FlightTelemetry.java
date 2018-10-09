@@ -5,12 +5,16 @@ import com.ugcs.ucs.proto.DomainProto.Vehicle;
 import org.apache.commons.lang3.tuple.Pair;
 import ugcs.common.identity.Identity;
 import ugcs.processing.AbstractFlight;
+import ugcs.processing.Flight;
 
 import java.util.List;
 import java.util.Map;
 
 import static java.util.Collections.unmodifiableList;
 
+/**
+ * {@link Flight} implementation with {@link Telemetry}
+ */
 public class FlightTelemetry extends AbstractFlight {
     private final List<Pair<Long, Map<String, Telemetry>>> telemetry;
 

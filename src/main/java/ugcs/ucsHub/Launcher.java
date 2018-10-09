@@ -10,6 +10,9 @@ import static java.lang.String.format;
 import static java.nio.file.Files.exists;
 import static ugcs.ucsHub.Settings.settings;
 
+/**
+ * Launcher for the main {@link Main} class of application with support of specified JVM arguments
+ */
 public class Launcher {
     private static final long MAX_HEAP_SIZE_MB = settings().getMaxHeapSize();
 

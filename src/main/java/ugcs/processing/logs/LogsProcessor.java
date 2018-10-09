@@ -3,6 +3,7 @@ package ugcs.processing.logs;
 import com.ugcs.ucs.proto.DomainProto.Vehicle;
 import com.ugcs.ucs.proto.DomainProto.VehicleLogEntry;
 import ugcs.common.LazyFieldEvaluator;
+import ugcs.processing.Flight;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -11,6 +12,9 @@ import static com.ugcs.ucs.proto.DomainProto.ProcessStage.PS_SUCCESS;
 import static java.util.Collections.unmodifiableList;
 import static java.util.stream.Collectors.toList;
 
+/**
+ * Class for {@link Flight} calculation based on {@link VehicleLogEntry}
+ */
 public class LogsProcessor extends LazyFieldEvaluator {
     private final static long UNDEFINED = Long.MIN_VALUE;
 

@@ -5,6 +5,9 @@ import ugcs.processing.Flight;
 
 import java.nio.file.Path;
 
+/**
+ * {@link FileNameGenerator} for files with .csv extension
+ */
 public class CsvFileNameGenerator extends FileNameGenerator {
 
     public CsvFileNameGenerator(Path targetFolder, Flight flight) {

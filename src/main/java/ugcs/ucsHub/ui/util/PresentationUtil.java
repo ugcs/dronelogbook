@@ -12,6 +12,9 @@ import java.util.List;
 import static java.util.Locale.ENGLISH;
 import static java.util.stream.Collectors.joining;
 
+/**
+ * Utility class for text representation of date/time objects
+ */
 public class PresentationUtil {
 
     public static String periodToString(Date startDate, Date endDate) {

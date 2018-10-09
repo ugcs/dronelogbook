@@ -5,6 +5,9 @@ import ugcs.common.identity.Identity;
 
 import java.util.Date;
 
+/**
+ * Interface for {@link Vehicle} flight
+ */
 public interface Flight {
     long getStartEpochMilli();
 

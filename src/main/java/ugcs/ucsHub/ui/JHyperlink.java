@@ -8,6 +8,9 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+/**
+ * {@link JLabel} with clickable hyperlink
+ */
 class JHyperlink extends JLabel {
 
     JHyperlink(String hyperlink, String text) {

@@ -39,6 +39,9 @@ import static ugcs.ucsHub.ui.RefreshButton.refresher;
 import static ugcs.ucsHub.ui.WaitForm.waitForm;
 import static ugcs.upload.logbook.FlightUploadPerformerFactory.performerFactory;
 
+/**
+ * Form containing controls for flight list representation and uploading
+ */
 public class VehicleListForm extends JPanel {
     private final Map<String, Vehicle> vehicleMap;
     private final JList<String> vehicleJList;

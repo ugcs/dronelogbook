@@ -1,5 +1,8 @@
 package ugcs.exceptions;
 
+/**
+ * Base class for all exception expected by application logic
+ */
 public class ExpectedException extends RuntimeException {
     private final Throwable attachedCause;
 

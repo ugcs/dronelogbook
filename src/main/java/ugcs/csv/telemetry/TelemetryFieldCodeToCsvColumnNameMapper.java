@@ -4,6 +4,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Mapper between telemetry field codes and column names in csv-formatted data
+ */
 final class TelemetryFieldCodeToCsvColumnNameMapper {
     private final Map<String, String> filedCodeToCsvColumnName;
 

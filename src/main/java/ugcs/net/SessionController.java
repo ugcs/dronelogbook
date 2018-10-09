@@ -15,6 +15,9 @@ import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Exports service gateway for interactions with {@link Client}
+ */
 public class SessionController implements AutoCloseable {
     private String host;
     private int port;
