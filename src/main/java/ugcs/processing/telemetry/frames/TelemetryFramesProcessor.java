@@ -7,6 +7,7 @@ import ugcs.processing.Flight;
 
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -54,9 +55,13 @@ public class TelemetryFramesProcessor extends LazyFieldEvaluator {
 
     public List<Boolean> getFrames() {
         return evaluateField("frames",
-                () -> controller
+                Collections::emptyList
+                        /*
+                        TODO: fix in https://github.com/ugcs/dronelogbook/issues/38
+                        () -> controller
                         .traceTelemetryFrames(vehicle, originTimeEpochMilli, getIntervalSec(), getNumber())
-                        .getFramesList()
+                        .getCommandFramesList()
+                        */
         );
     }
 

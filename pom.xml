@@ -16,7 +16,7 @@
         <fully.qualified.launcher.class>ugcs.ucsHub.Launcher</fully.qualified.launcher.class>
         <jvm.max.heap.size.mb>1024</jvm.max.heap.size.mb>
 
-        <project.resources.path>src/main/resources</project.resources.path>
+        <project.resources.path>${project.basedir}/src/main/resources</project.resources.path>
 
         <distribution.name>${project.artifactId}-${project.version}</distribution.name>
         <distribution.logo>${project.resources.path}/graphics/logo</distribution.logo>
@@ -44,11 +44,13 @@
     </properties>
 
     <dependencies>
+        <!--
+        Should be replaced with version 3.1 on release of SDK
         <dependency>
             <groupId>com.github.UgCS</groupId>
             <artifactId>ugcs-java-sdk</artifactId>
             <version>3.0</version>
-        </dependency>
+        </dependency>-->
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
@@ -135,6 +137,26 @@
                         </fileset>
                     </filesets>
                 </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>com.googlecode.addjars-maven-plugin</groupId>
+                <artifactId>addjars-maven-plugin</artifactId>
+                <version>1.0.5</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>add-jars</goal>
+                        </goals>
+                        <configuration>
+                            <resources>
+                                <resource>
+                                    <directory>${project.basedir}/ugcs-java-sdk-lib/lib</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
 
             <plugin>
@@ -375,9 +397,9 @@
                         </goals>
                         <configuration>
                             <tasks>
-                                <copy file="${executable.jar.path}" tofile="${github.pages.directory}/ucsHub.jar"/>
-                                <copy file="${windows.exe.path}" tofile="${github.pages.directory}/ucsHub.exe"/>
-                                <copy file="${mac.app.path}" tofile="${github.pages.directory}/ucsHub.tar.gz"/>
+                                <copy file="${executable.jar.path}" tofile="${github.pages.directory}/${project.artifactId}.jar"/>
+                                <copy file="${windows.exe.path}" tofile="${github.pages.directory}/${project.artifactId}.exe"/>
+                                <copy file="${mac.app.path}" tofile="${github.pages.directory}/${project.artifactId}.${mac.app.distribution.format}"/>
                             </tasks>
                         </configuration>
                     </execution>
