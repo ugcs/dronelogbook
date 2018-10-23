@@ -14,7 +14,7 @@ import ugcs.processing.telemetry.FlightTelemetryProcessor;
 import ugcs.processing.telemetry.TelemetryProcessor;
 import ugcs.processing.telemetry.frames.TelemetryFramesProcessor;
 import ugcs.upload.logbook.LogBookUploader;
-import ugcs.upload.logbook.UploadResponse;
+import ugcs.upload.logbook.DroneLogBookResponse;
 
 import javax.swing.*;
 import java.awt.*;
@@ -151,13 +151,13 @@ public class VehicleListForm extends JPanel {
         return datePicker.getSelectedEndTimeAsEpochMilli();
     }
 
-    private UploadResponse uploadFlightTelemetry(FlightTelemetry flightTelemetry) {
+    private DroneLogBookResponse uploadFlightTelemetry(FlightTelemetry flightTelemetry) {
         final String url = settings().getUploadServerUrl();
         final Path pathForUploadedFiles = settings().getUploadedFlightsPath();
         return new LogBookUploader(url, settings().getUploadServerLogin(), settings().getUploadServerPassword())
                 .uploadFlight(flightTelemetry)
                 .storeFlightTelemetry(new CsvFileNameGenerator(pathForUploadedFiles, flightTelemetry).generateUnique())
-                .getUploadResponse();
+                .getDroneLogBookResponse();
     }
 
     private static void saveTelemetry(FlightTelemetryProcessor flightTelemetryProcessor, Flight flight) {
@@ -168,7 +168,7 @@ public class VehicleListForm extends JPanel {
                 flightTelemetryProcessor.getAllFieldCodes());
     }
 
-    private Future<Operation<Identity<?>, UploadResponse>> submitFlightForUploading(Flight flight) {
+    private Future<Operation<Identity<?>, DroneLogBookResponse>> submitFlightForUploading(Flight flight) {
         return performerFactory().getUploadPerformer().submit(flight.getId(), () -> {
             final FlightTelemetryProcessor flightTelemetryProcessor =
                     new FlightTelemetryProcessor(flight, sessionController());
@@ -191,11 +191,11 @@ public class VehicleListForm extends JPanel {
     private void uploadCurrentlySelectedFlights() {
         final Set<? extends Flight> selectedFlights = flightTable.getSelectedFlights();
 
-        final List<Future<Operation<Identity<?>, UploadResponse>>> uploadOperationFutures = selectedFlights.stream()
+        final List<Future<Operation<Identity<?>, DroneLogBookResponse>>> uploadOperationFutures = selectedFlights.stream()
                 .map(this::submitFlightForUploading)
                 .collect(toList());
 
-        final List<Operation<Identity<?>, UploadResponse>> uploadResults =
+        final List<Operation<Identity<?>, DroneLogBookResponse>> uploadResults =
                 waitForm().waitOnCallable("Uploading flights to LogBook...",
                         () -> uploadOperationFutures.stream()
                                 .map(FutureWrapper::of)

@@ -53,12 +53,13 @@ public class Main {
 
             waitForm().waitOnAction("Connecting to UgCS...", sessionController()::connect, loginForm);
 
-            waitForm().waitOnAction("Connecting to LogBook...", () ->
+            waitForm().waitOnCallable("Connecting to LogBook...", () ->
                             new MultipartUtility(settings().getUploadServerUrl())
                                     .withCredentials(settings().getUploadServerLogin(), settings().getUploadServerPassword())
-                                    .authorisationTestOnly()
-                                    .finish(),
-                    loginForm);
+                                    .authorizationTestOnly()
+                                    .performRequest(),
+                    loginForm)
+                    .assertAuthorizationSucceed();
 
             final VehicleListForm vehicleForm = new VehicleListForm();
             contentPane.remove(loginForm);

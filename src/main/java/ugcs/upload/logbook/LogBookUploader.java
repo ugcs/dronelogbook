@@ -11,7 +11,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import static ugcs.csv.telemetry.TelemetryCsvWriter.CSV_FILE_CHARSET;
-import static ugcs.upload.logbook.UploadResponse.fromList;
 
 /**
  * Gateway service for LogBook service upload functionality
@@ -48,15 +47,13 @@ public class LogBookUploader {
             );
         }
 
-        return new FlightUploadResponse(flight, csvFile, fromList(uploadFile(csvFile)));
+        return new FlightUploadResponse(flight, csvFile, uploadFile(csvFile));
     }
 
-    private List<String> uploadFile(File file) {
-        MultipartUtility multipart = new MultipartUtility(serverUrl, CSV_FILE_CHARSET.displayName());
-
-        multipart.withCredentials(login, rawPasswordOrMd5Hash);
-        multipart.addFilePart("data", file);
-
-        return multipart.finish();
+    private DroneLogBookResponse uploadFile(File file) {
+        return new MultipartUtility(serverUrl, CSV_FILE_CHARSET.displayName())
+                .withCredentials(login, rawPasswordOrMd5Hash)
+                .addFilePart("data", file)
+                .performRequest();
     }
 }

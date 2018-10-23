@@ -1,5 +1,6 @@
 package ugcs.examples;
 
+import ugcs.upload.logbook.DroneLogBookResponse;
 import ugcs.upload.logbook.MultipartUtility;
 
 import java.io.File;
@@ -22,12 +23,9 @@ public class MultipartFileUploader {
 
         multipart.addFilePart("data", uploadFile1);
 
-        List<String> response = multipart.finish();
+        DroneLogBookResponse response = multipart.performRequest();
 
         System.out.println("SERVER REPLIED:");
-
-        for (String line : response) {
-            System.out.println(line);
-        }
+        System.out.println(response);
     }
 }

@@ -3,7 +3,7 @@ package ugcs.ucsHub.ui;
 import ugcs.common.identity.Identity;
 import ugcs.common.operation.Operation;
 import ugcs.exceptions.logbook.LogBookAuthorizationFailed;
-import ugcs.upload.logbook.UploadResponse;
+import ugcs.upload.logbook.DroneLogBookResponse;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,14 +30,14 @@ final class UploadReportForm extends JPanel {
     private static Color SUCCESS_COLOR = Color.getHSBColor(0.269f, 0.1f, 1.0f);
     private static Color WARNING_COLOR = Color.getHSBColor(0.147f, 0.14f, 1.0f);
 
-    private final Collection<Operation<Identity<?>, UploadResponse>> uploadResponses;
+    private final Collection<Operation<Identity<?>, DroneLogBookResponse>> uploadResponses;
 
-    static void showReport(Component parentComponent, List<Operation<Identity<?>, UploadResponse>> uploadResponses) {
+    static void showReport(Component parentComponent, List<Operation<Identity<?>, DroneLogBookResponse>> uploadResponses) {
         final UploadReportForm reportForm = new UploadReportForm(uploadResponses);
         showMessageDialog(parentComponent, reportForm, "Upload result", reportForm.getMessageType());
     }
 
-    private UploadReportForm(Collection<Operation<Identity<?>, UploadResponse>> uploadResponses) {
+    private UploadReportForm(Collection<Operation<Identity<?>, DroneLogBookResponse>> uploadResponses) {
         this.uploadResponses = uploadResponses;
 
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
@@ -69,7 +69,7 @@ final class UploadReportForm extends JPanel {
                 .map(Operation::getResult)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
-                .filter(UploadResponse::isWarning)
+                .filter(DroneLogBookResponse::isWarning)
                 .count();
 
         if (errorsCount > 0) {
@@ -137,28 +137,28 @@ final class UploadReportForm extends JPanel {
         });
     }
 
-    private void formReportRow(UploadResponse uploadResponse, JPanel rowContainer) {
-        final String description = uploadResponse.getDescription().orElse("No description.");
+    private void formReportRow(DroneLogBookResponse droneLogBookResponse, JPanel rowContainer) {
+        final String description = droneLogBookResponse.getDescription().orElse("No description.");
         rowContainer.add(new JLabel(description));
-        uploadResponse.getUrl().ifPresent(url -> rowContainer.add(new JHyperlink(url, "click to view on LogBook")));
-        rowContainer.setBackground(getResponseColor(uploadResponse));
+        droneLogBookResponse.getUrl().ifPresent(url -> rowContainer.add(new JHyperlink(url, "click to view on LogBook")));
+        rowContainer.setBackground(getResponseColor(droneLogBookResponse));
     }
 
     private void formReportRow(Throwable error, JPanel rowContainer) {
         rowContainer.add(new JLabel(error.getMessage()));
     }
 
-    private Color getResponseColor(UploadResponse uploadResponse) {
-        if (uploadResponse.isSuccess()) {
+    private Color getResponseColor(DroneLogBookResponse droneLogBookResponse) {
+        if (droneLogBookResponse.isUploadSucceed()) {
             return SUCCESS_COLOR;
         }
 
         return WARNING_COLOR;
     }
 
-    private String operationStatusString(Operation<Identity<?>, UploadResponse> operationResult) {
+    private String operationStatusString(Operation<Identity<?>, DroneLogBookResponse> operationResult) {
         return operationResult.getResult().map(uploadResponse -> {
-            if (uploadResponse.isSuccess()) {
+            if (uploadResponse.isUploadSucceed()) {
                 return "uploaded";
             }
             if (uploadResponse.isWarning()) {

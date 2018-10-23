@@ -9,6 +9,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
@@ -19,10 +20,8 @@ import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
 
-import static java.net.HttpURLConnection.HTTP_INTERNAL_ERROR;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static java.net.HttpURLConnection.HTTP_UNAUTHORIZED;
-import static java.util.Collections.emptyList;
 
 /**
  * Builder for multipart data http-request
@@ -71,7 +70,7 @@ public class MultipartUtility {
     }
 
     @SneakyThrows
-    public void addFilePart(String fieldName, File uploadFile) {
+    public MultipartUtility addFilePart(String fieldName, File uploadFile) {
         String fileName = uploadFile.getName();
         writer.append("--").append(boundary).append(LINE_FEED);
         writer.append("Content-Disposition: form-data; name=\"").append(fieldName).append("\"; filename=\"")
@@ -92,6 +91,8 @@ public class MultipartUtility {
 
         writer.append(LINE_FEED);
         writer.flush();
+
+        return this;
     }
 
     public MultipartUtility withCredentials(String login, String rawPasswordOrMd5Hash) {
@@ -101,7 +102,7 @@ public class MultipartUtility {
         return this;
     }
 
-    public MultipartUtility authorisationTestOnly() {
+    public MultipartUtility authorizationTestOnly() {
         writer.append("--").append(boundary).append(LINE_FEED);
         writer.append("Content-Disposition: form-data; name=\"").append("file").append("\"; filename=\"")
                 .append("login_try").append("\"").append(LINE_FEED);
@@ -123,10 +124,12 @@ public class MultipartUtility {
         writer.flush();
     }
 
-    public List<String> finish() {
-        try {
-            List<String> response = new ArrayList<>();
+    public DroneLogBookResponse performRequest() {
+        return DroneLogBookResponse.fromList(perform());
+    }
 
+    private List<String> perform() {
+        try {
             writer.append(LINE_FEED).flush();
             writer.append("--").append(boundary).append("--").append(LINE_FEED);
             writer.close();
@@ -135,29 +138,33 @@ public class MultipartUtility {
             System.out.println(String.valueOf(status));
             switch (status) {
                 case HTTP_OK:
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(
-                            httpConn.getInputStream()));
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        response.add(line);
-                    }
-                    reader.close();
-                    httpConn.disconnect();
-                    break;
+                    return readAllStrings(httpConn.getInputStream());
                 case HTTP_UNAUTHORIZED:
-                    throw new LogBookAuthorizationFailed();
-                case HTTP_INTERNAL_ERROR:
                     if (isAuthorisationTest) {
-                        return emptyList();
+                        return readAllStrings(httpConn.getErrorStream());
                     }
+                    throw new LogBookAuthorizationFailed();
                 default:
                     throw new ExpectedException("Uploading data to LogBook failed.");
             }
-            return response;
         } catch (IOException connectException) {
             throw new ExpectedException("LogBook service unavailable.", connectException);
         } finally {
+            httpConn.disconnect();
             writer.close();
+        }
+    }
+
+    private static List<String> readAllStrings(InputStream is) throws IOException {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(is))) {
+            List<String> response = new ArrayList<>();
+
+            String line;
+            while ((line = reader.readLine()) != null) {
+                response.add(line);
+            }
+
+            return response;
         }
     }
 }

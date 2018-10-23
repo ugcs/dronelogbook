@@ -15,20 +15,20 @@ import java.nio.file.Path;
 public class FlightUploadResponse {
     private final FlightTelemetry flightTelemetry;
     private final File flightFile;
-    private final UploadResponse uploadResponse;
+    private final DroneLogBookResponse droneLogBookResponse;
 
-    FlightUploadResponse(FlightTelemetry flightTelemetry, File flightFile, UploadResponse uploadResponse) {
+    FlightUploadResponse(FlightTelemetry flightTelemetry, File flightFile, DroneLogBookResponse droneLogBookResponse) {
         this.flightTelemetry = flightTelemetry;
         this.flightFile = flightFile;
-        this.uploadResponse = uploadResponse;
+        this.droneLogBookResponse = droneLogBookResponse;
     }
 
     public FlightTelemetry getFlightTelemetry() {
         return flightTelemetry;
     }
 
-    public UploadResponse getUploadResponse() {
-        return uploadResponse;
+    public DroneLogBookResponse getDroneLogBookResponse() {
+        return droneLogBookResponse;
     }
 
     @SneakyThrows

@@ -26,7 +26,7 @@ public class FlightUploadPerformerFactory extends LazyFieldEvaluator {
     private FlightUploadPerformerFactory() {
     }
 
-    public OperationPerformer<Identity<?>, UploadResponse> getUploadPerformer() {
+    public OperationPerformer<Identity<?>, DroneLogBookResponse> getUploadPerformer() {
         return evaluateField("uploadPerformer", () ->
                 new OperationPerformer<>(newSingleThreadExecutor())
         );

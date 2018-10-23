@@ -56,7 +56,7 @@ public class WaitForm extends JDialog {
     }
 
     @SneakyThrows
-    <T> T waitOnCallable(String message, Callable<T> callable, Component parentOrNull) {
+    public <T> T waitOnCallable(String message, Callable<T> callable, Component parentOrNull) {
         final ExecutorService executorService = Executors.newSingleThreadExecutor();
         try {
             final Future<T> resultFuture = executorService.submit(() -> {
