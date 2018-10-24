@@ -6,7 +6,6 @@ import ugcs.csv.CsvWriter;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.util.List;
@@ -23,6 +22,7 @@ import static java.time.temporal.ChronoField.NANO_OF_SECOND;
 import static java.time.temporal.ChronoField.SECOND_OF_MINUTE;
 import static java.util.Objects.isNull;
 import static ugcs.csv.telemetry.TelemetryFieldCodeToCsvColumnNameMapper.mapper;
+import static ugcs.time.TimeUtils.time;
 
 /**
  * {@link CsvWriter} for telemetry records
@@ -63,7 +63,7 @@ public class TelemetryCsvWriter extends CsvWriter {
     }
 
     private static String convertDateTime(long epochMilli) {
-        final LocalDateTime localDateTime = LocalDateTime.ofInstant(ofEpochMilli(epochMilli), ZoneId.systemDefault());
+        final LocalDateTime localDateTime = LocalDateTime.ofInstant(ofEpochMilli(epochMilli), time().defaultZoneId());
         return localDateTime.format(DATE_TIME_FORMATTER);
     }
 

@@ -13,9 +13,9 @@ import java.util.List;
 
 import static java.awt.Color.LIGHT_GRAY;
 import static java.time.LocalDate.now;
-import static java.time.ZoneId.systemDefault;
 import static javax.swing.BorderFactory.createTitledBorder;
 import static javax.swing.SwingUtilities.invokeLater;
+import static ugcs.time.TimeUtils.time;
 
 /**
  * Part of the {@link VehicleListForm} for date filtering controls
@@ -85,11 +85,11 @@ class DatePickerPanel extends JPanel {
     }
 
     private static ZonedDateTime atStartOfDay(LocalDate date) {
-        return ZonedDateTime.of(date, LocalTime.of(0, 0), systemDefault());
+        return ZonedDateTime.of(date, LocalTime.of(0, 0), time().defaultZoneId());
     }
 
     private static ZonedDateTime atEndOfDay(LocalDate date) {
-        return ZonedDateTime.of(date.plusDays(1), LocalTime.of(0, 0), systemDefault());
+        return ZonedDateTime.of(date.plusDays(1), LocalTime.of(0, 0), time().defaultZoneId());
     }
 
     private boolean isLast24hSelected() {
