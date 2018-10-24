@@ -60,13 +60,15 @@ public class MultipartUtility {
         this(requestUrl, "UTF-8");
     }
 
-    public void addFormField(String name, String value) {
+    public MultipartUtility addFormField(String name, String value) {
         writer.append("--").append(boundary).append(LINE_FEED);
         writer.append("Content-Disposition: form-data; name=\"").append(name).append("\"").append(LINE_FEED);
         writer.append("Content-Type: text/plain; charset=").append(charset).append(LINE_FEED);
         writer.append(LINE_FEED);
         writer.append(value).append(LINE_FEED);
         writer.flush();
+
+        return this;
     }
 
     @SneakyThrows

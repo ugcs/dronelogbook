@@ -6,6 +6,7 @@ import ugcs.common.identity.Identity;
 import java.time.LocalDate;
 import java.util.Date;
 
+import static org.apache.commons.lang3.StringUtils.substringBeforeLast;
 import static ugcs.time.TimeUtils.time;
 
 /**
@@ -17,6 +18,8 @@ public interface Flight {
     long getEndEpochMilli();
 
     Vehicle getVehicle();
+
+    Identity<?> getId();
 
     default Date getStartDate() {
         return new Date(getStartEpochMilli());
@@ -30,5 +33,11 @@ public interface Flight {
         return time().toLocalDate(getStartEpochMilli());
     }
 
-    Identity<?> getId();
+    default String getDroneSerialNumber() {
+        return getVehicle().getSerialNumber();
+    }
+
+    default String getDroneName() {
+        return substringBeforeLast(getVehicle().getName(), "-");
+    }
 }

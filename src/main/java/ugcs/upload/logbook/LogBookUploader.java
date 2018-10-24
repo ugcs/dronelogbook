@@ -16,7 +16,7 @@ import static ugcs.csv.telemetry.TelemetryCsvWriter.CSV_FILE_CHARSET;
  * Gateway service for LogBook service upload functionality
  */
 public class LogBookUploader {
-    private static final List<String> FILED_CODES = Arrays.asList(
+    private static final List<String> FIELD_CODES = Arrays.asList(
             "Time",
             "latitude",
             "longitude",
@@ -40,20 +40,20 @@ public class LogBookUploader {
     public FlightUploadResponse uploadFlight(FlightTelemetry flight) {
         final File csvFile = File.createTempFile(flight.getVehicle().getName(), "");
         try (final OutputStream out = new FileOutputStream(csvFile)) {
-            final TelemetryCsvWriter telemetryWriter = new TelemetryCsvWriter(FILED_CODES, out);
+            final TelemetryCsvWriter telemetryWriter = new TelemetryCsvWriter(FIELD_CODES, out);
             telemetryWriter.printHeader();
             flight.getTelemetry().forEach(timeAndTelemetry ->
                     telemetryWriter.printTelemetryRecord(timeAndTelemetry.getLeft(), timeAndTelemetry.getRight())
             );
         }
 
-        return new FlightUploadResponse(flight, csvFile, uploadFile(csvFile));
-    }
-
-    private DroneLogBookResponse uploadFile(File file) {
-        return new MultipartUtility(serverUrl, CSV_FILE_CHARSET.displayName())
+        final DroneLogBookResponse droneLogBookResponse = new MultipartUtility(serverUrl, CSV_FILE_CHARSET.displayName())
                 .withCredentials(login, rawPasswordOrMd5Hash)
-                .addFilePart("data", file)
+                .addFormField("droneId", flight.getDroneSerialNumber())
+                .addFormField("droneName", flight.getDroneName())
+                .addFilePart("data", csvFile)
                 .performRequest();
+
+        return new FlightUploadResponse(flight, csvFile, droneLogBookResponse);
     }
 }
