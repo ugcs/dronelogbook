@@ -1,6 +1,7 @@
 package ugcs.processing.telemetry.frames;
 
 import com.ugcs.ucs.proto.DomainProto.Vehicle;
+import com.ugcs.ucs.proto.MessagesProto;
 import ugcs.common.LazyFieldEvaluator;
 import ugcs.net.SessionController;
 import ugcs.processing.Flight;
@@ -16,6 +17,7 @@ import static java.time.Instant.ofEpochMilli;
 import static java.time.ZoneId.systemDefault;
 import static java.time.ZonedDateTime.ofInstant;
 import static java.util.Collections.unmodifiableList;
+import static ugcs.net.SessionController.sessionController;
 
 /**
  * Class for {@link Flight} calculation based on telemetry frames
@@ -30,22 +32,22 @@ public class TelemetryFramesProcessor extends LazyFieldEvaluator {
     private final ZonedDateTime startTime;
     private final long intervalMillis;
 
-    public TelemetryFramesProcessor(SessionController controller, Vehicle vehicle,
+    public TelemetryFramesProcessor(Vehicle vehicle,
                                     long startTimeEpochMilli, long endTimeEpochMilli) {
-        this(controller, vehicle, toZonedDateTime(startTimeEpochMilli), toZonedDateTime(endTimeEpochMilli), DEFAULT_INTERVAL_MILLIS);
+        this(vehicle, toZonedDateTime(startTimeEpochMilli), toZonedDateTime(endTimeEpochMilli), DEFAULT_INTERVAL_MILLIS);
     }
 
-    public TelemetryFramesProcessor(SessionController controller, Vehicle vehicle,
+    public TelemetryFramesProcessor(Vehicle vehicle,
                                     LocalDate startDateInclusive, LocalDate endDateExclusive, long intervalMillis) {
-        this(controller, vehicle,
+        this(vehicle,
                 startDateInclusive.atStartOfDay(systemDefault()),
                 endDateExclusive.atStartOfDay(systemDefault()),
                 intervalMillis);
     }
 
-    private TelemetryFramesProcessor(SessionController controller, Vehicle vehicle,
+    private TelemetryFramesProcessor(Vehicle vehicle,
                                      ZonedDateTime startTime, ZonedDateTime endTime, long intervalMillis) {
-        this.controller = controller;
+        this.controller = sessionController();
         this.vehicle = vehicle;
         this.originTimeEpochMilli = startTime.toInstant().toEpochMilli();
         this.startTime = startTime;

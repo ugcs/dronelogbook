@@ -64,15 +64,7 @@ class DatePickerPanel extends JPanel {
         dateChangeListeners.add(listener);
     }
 
-    long getSelectedStartTimeAsEpochMilli() {
-        return getTimeAsEpochMilli(getSelectedStartTime());
-    }
-
-    long getSelectedEndTimeAsEpochMilli() {
-        return getTimeAsEpochMilli(getSelectedEndTime());
-    }
-
-    private ZonedDateTime getSelectedStartTime() {
+    ZonedDateTime getSelectedStartTime() {
         if (isLast24hSelected()) {
             return ZonedDateTime.now().minusDays(1);
         }
@@ -84,7 +76,7 @@ class DatePickerPanel extends JPanel {
         return atStartOfDay(datePicker.getDate());
     }
 
-    private ZonedDateTime getSelectedEndTime() {
+    ZonedDateTime getSelectedEndTime() {
         if (isLast24hSelected() || isLast7DaysSelected()) {
             return ZonedDateTime.now();
         }

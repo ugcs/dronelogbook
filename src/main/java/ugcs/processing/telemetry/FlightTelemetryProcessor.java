@@ -14,6 +14,7 @@ import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
+import static ugcs.net.SessionController.sessionController;
 
 /**
  * {@link TelemetryProcessor} extension with support of dynamic {@link FlightTelemetry} calculation for a {@link Flight}
@@ -27,10 +28,10 @@ public class FlightTelemetryProcessor extends TelemetryProcessor {
         this.flightTelemetries = flightTelemetries;
     }
 
-    public FlightTelemetryProcessor(Flight flight, SessionController sessionController) {
+    public FlightTelemetryProcessor(Flight flight) {
         super(null, flight.getVehicle());
 
-        flightTelemetries = getFlightTelemetry(flight, sessionController);
+        flightTelemetries = getFlightTelemetry(flight, sessionController());
     }
 
     @Override

@@ -31,6 +31,10 @@ public class Identity<T> {
         return new Identity<>(id);
     }
 
+    public static <T> Identity<T> of(T id, String textRepresentation) {
+        return new Identity<>(id, textRepresentation);
+    }
+
     public static Identity<Long> generateId() {
         return new Identity<>(nextUniqueId());
     }

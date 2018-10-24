@@ -7,8 +7,8 @@ import com.ugcs.ucs.proto.DomainProto.DomainObjectWrapper;
 import com.ugcs.ucs.proto.DomainProto.Vehicle;
 import com.ugcs.ucs.proto.MessagesProto;
 import lombok.SneakyThrows;
-import ugcs.exceptions.ExpectedException;
 import ugcs.exceptions.ugcs.UgcsDisconnectedException;
+import ugcs.exceptions.ugcs.UgcsFailure;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -67,8 +67,6 @@ public class SessionController implements AutoCloseable {
 
     @SneakyThrows
     public MessagesProto.GetTelemetryResponse getTelemetry(Vehicle vehicle, long startTimeEpochMilli, long endTimeEpochMilli) {
-        reconnectIfConnectionLost();
-
         final MessagesProto.GetTelemetryRequest getTelemetryRequest =
                 MessagesProto.GetTelemetryRequest.newBuilder()
                         .setFromTime(startTimeEpochMilli)
@@ -83,8 +81,6 @@ public class SessionController implements AutoCloseable {
 
     @SneakyThrows
     public MessagesProto.GetVehicleLogByTimeRangeResponse getVehicleLog(Vehicle vehicle, long startTimeEpochMilli, long endTimeEpochMilli) {
-        reconnectIfConnectionLost();
-
         final MessagesProto.GetVehicleLogByTimeRangeRequest getVehicleLogByTimeRangeRequest =
                 MessagesProto.GetVehicleLogByTimeRangeRequest.newBuilder()
                         .setFromTime(startTimeEpochMilli)
@@ -99,8 +95,6 @@ public class SessionController implements AutoCloseable {
 
     @SneakyThrows
     public long countTelemetry(Vehicle vehicle, long startTimeEpochMilli, long endTimeEpochMilli) {
-        reconnectIfConnectionLost();
-
         final MessagesProto.CountTelemetryRequest countTelemetryRequest =
                 MessagesProto.CountTelemetryRequest.newBuilder()
                         .setClientId(getClientId())
@@ -115,8 +109,6 @@ public class SessionController implements AutoCloseable {
 
     @SneakyThrows
     public MessagesProto.TraceTelemetryFramesResponse traceTelemetryFrames(Vehicle vehicle, long originTimeEpochMilli, double intervalSec, int number) {
-        reconnectIfConnectionLost();
-
         final MessagesProto.TraceTelemetryFramesRequest traceTelemetryFramesRequest =
                 MessagesProto.TraceTelemetryFramesRequest.newBuilder()
                         .setClientId(getClientId())
@@ -129,7 +121,22 @@ public class SessionController implements AutoCloseable {
         return execute(traceTelemetryFramesRequest);
     }
 
+    @SneakyThrows
+    public MessagesProto.GetVehicleTracksResponse getVehicleTracks(List<Vehicle> vehicles, long fromTimeEpochMilli, long toTimeEpochMilli, int limit) {
+        final MessagesProto.GetVehicleTracksRequest.Builder getVehicleTracksRequestBuilder =
+                MessagesProto.GetVehicleTracksRequest.newBuilder()
+                        .setClientId(getClientId())
+                        .setFrom(fromTimeEpochMilli)
+                        .setTo(toTimeEpochMilli)
+                        .setLimit(limit);
+        vehicles.forEach(getVehicleTracksRequestBuilder::addVehicles);
+
+        return execute(getVehicleTracksRequestBuilder.build());
+    }
+
     private <T> T execute(Message message) throws Exception {
+        reconnectIfConnectionLost();
+
         return client.execute(message);
     }
 
@@ -148,7 +155,7 @@ public class SessionController implements AutoCloseable {
         } catch (IOException connectException) {
             throw new UgcsDisconnectedException(connectException);
         } catch (Exception ugcsException) {
-            throw new ExpectedException("UgCS: " + ugcsException.getMessage(), ugcsException);
+            throw new UgcsFailure(ugcsException);
         }
     }
 

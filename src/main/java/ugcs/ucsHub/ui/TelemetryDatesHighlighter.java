@@ -50,7 +50,7 @@ public class TelemetryDatesHighlighter implements DateHighlightPolicy {
             final LocalDate endDate = startDate.plusMonths(1);
 
             final List<Boolean> frames =
-                    new TelemetryFramesProcessor(sessionController(), vehicle, startDate, endDate, MILLIS_IN_DAY).getFrames();
+                    new TelemetryFramesProcessor(vehicle, startDate, endDate, MILLIS_IN_DAY).getFrames();
 
             final Map<LocalDate, HighlightInformation> highlightMapping = LongStream
                     .range(0, frames.size())

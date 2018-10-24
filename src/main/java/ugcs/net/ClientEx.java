@@ -2,6 +2,7 @@ package ugcs.net;
 
 import com.google.protobuf.Message;
 import com.ugcs.ucs.client.Client;
+import ugcs.exceptions.ugcs.UgcsFailure;
 
 import java.net.SocketAddress;
 
@@ -24,7 +25,11 @@ public class ClientEx extends Client {
     }
 
     @Override
-    public <T> T execute(Message message) throws Exception {
-        return super.execute(message, timeout);
+    public <T> T execute(Message message) {
+        try {
+            return super.execute(message, timeout);
+        } catch (Exception e) {
+            throw new UgcsFailure(e);
+        }
     }
 }

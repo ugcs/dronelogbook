@@ -1,6 +1,5 @@
 package ugcs.ucsHub.ui;
 
-import com.ugcs.ucs.proto.DomainProto;
 import com.ugcs.ucs.proto.DomainProto.Vehicle;
 import lombok.SneakyThrows;
 import ugcs.common.identity.Identity;
@@ -11,14 +10,14 @@ import ugcs.processing.Flight;
 import ugcs.processing.telemetry.CsvFileNameGenerator;
 import ugcs.processing.telemetry.FlightTelemetry;
 import ugcs.processing.telemetry.FlightTelemetryProcessor;
-import ugcs.processing.telemetry.TelemetryProcessor;
-import ugcs.processing.telemetry.frames.TelemetryFramesProcessor;
-import ugcs.upload.logbook.LogBookUploader;
+import ugcs.processing.telemetry.tracks.VehicleTracksProcessor;
 import ugcs.upload.logbook.DroneLogBookResponse;
+import ugcs.upload.logbook.LogBookUploader;
 
 import javax.swing.*;
 import java.awt.*;
 import java.nio.file.Path;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -97,18 +96,17 @@ public class VehicleListForm extends JPanel {
 
     private void refreshView() {
         getSelectedVehicle().ifPresent(vehicle -> {
-            updateFlightsTable(getSelectedStartTimeAsEpochMilli(), getSelectedEndTimeAsEpochMilli(), vehicle);
+            updateFlightsTable(getSelectedStartTime(), getSelectedEndTime(), vehicle);
             datesHighlighter.setCurrentVehicle(vehicle);
         });
     }
 
     @SneakyThrows
-    private void updateFlightsTable(long startTimeEpochMilli, long endTimeEpochMilli, Vehicle vehicle) {
+    private void updateFlightsTable(ZonedDateTime startTime, ZonedDateTime endTime, Vehicle vehicle) {
         final Callable<List<? extends Flight>> getFlightListCallable =
-                () -> getFlightsByTelemetry(vehicle, startTimeEpochMilli, endTimeEpochMilli);
+                () -> new VehicleTracksProcessor(startTime, endTime, vehicle).getVehicleTracks();
 
-        final List<? extends Flight> flights = waitForUgcsData(getFlightListCallable,
-                () -> sessionController().countTelemetry(vehicle, startTimeEpochMilli, endTimeEpochMilli));
+        final List<? extends Flight> flights = waitForUgcsData(getFlightListCallable, null);
 
         flightTable.updateModel(flights);
     }
@@ -124,31 +122,16 @@ public class VehicleListForm extends JPanel {
                 : flightListCallable.call();
     }
 
-    private List<? extends Flight> getFlightsByTelemetry(Vehicle vehicle,
-                                                         long startTimeEpochMilli, long endTimeEpochMilli) {
-        final List<DomainProto.Telemetry> telemetryList =
-                sessionController().getTelemetry(vehicle, startTimeEpochMilli, endTimeEpochMilli).getTelemetryList();
-        final TelemetryProcessor telemetryProcessor = new TelemetryProcessor(telemetryList, vehicle);
-        return telemetryProcessor.getFlightTelemetries();
-    }
-
-    private List<? extends Flight> getFlightsByTelemetryFrames(Vehicle vehicle,
-                                                               long startTimeEpochMilli, long endTimeEpochMilli) {
-        final TelemetryFramesProcessor framesProcessor =
-                new TelemetryFramesProcessor(sessionController(), vehicle, startTimeEpochMilli, endTimeEpochMilli);
-        return framesProcessor.getFlightFrames();
-    }
-
     private Optional<Vehicle> getSelectedVehicle() {
         return Optional.ofNullable(vehicleMap.get(vehicleJList.getSelectedValue()));
     }
 
-    private long getSelectedStartTimeAsEpochMilli() {
-        return datePicker.getSelectedStartTimeAsEpochMilli();
+    private ZonedDateTime getSelectedStartTime() {
+        return datePicker.getSelectedStartTime();
     }
 
-    private long getSelectedEndTimeAsEpochMilli() {
-        return datePicker.getSelectedEndTimeAsEpochMilli();
+    private ZonedDateTime getSelectedEndTime() {
+        return datePicker.getSelectedEndTime();
     }
 
     private DroneLogBookResponse uploadFlightTelemetry(FlightTelemetry flightTelemetry) {
@@ -170,8 +153,7 @@ public class VehicleListForm extends JPanel {
 
     private Future<Operation<Identity<?>, DroneLogBookResponse>> submitFlightForUploading(Flight flight) {
         return performerFactory().getUploadPerformer().submit(flight.getId(), () -> {
-            final FlightTelemetryProcessor flightTelemetryProcessor =
-                    new FlightTelemetryProcessor(flight, sessionController());
+            final FlightTelemetryProcessor flightTelemetryProcessor = new FlightTelemetryProcessor(flight);
 
             saveTelemetry(flightTelemetryProcessor, flight);
 
