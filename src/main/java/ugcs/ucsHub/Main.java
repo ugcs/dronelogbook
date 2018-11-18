@@ -41,19 +41,19 @@ public class Main {
         ExceptionsHandler.handler().addUncaughtExceptionListener(rootException ->
                 showMessageDialog(frame, getExceptionMessage(rootException), "Error", JOptionPane.ERROR_MESSAGE));
 
+        frame.addWindowListener(new ActionOnCloseWindowAdapter(() -> {
+            sessionController().close();
+            performerFactory().shutDown();
+            SwingUtilities.invokeLater(() -> System.exit(0));
+        }));
+
         loginForm.makeLoginButtonDefault();
         loginForm.addLoginButtonListener(event -> {
             settings().storeUcsServerLogin(loginForm.getLogin());
             settings().storeUcsServerPassword(loginForm.getPassword());
             settings().storeUploadServerLogin(loginForm.getDlbLogin());
             settings().storeUploadServerPassword(loginForm.getDlbPassword());
-
             sessionController().updateSettings(settings());
-
-            frame.addWindowListener(new ActionOnCloseWindowAdapter(() -> {
-                sessionController().close();
-                performerFactory().shutDown();
-            }));
 
             waitForm().waitOnAction("Connecting to UgCS...", sessionController()::connect, loginForm);
 
