@@ -8,7 +8,11 @@ import ugcs.upload.logbook.MultipartUtility;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionListener;
 
+import static javax.swing.JOptionPane.OK_CANCEL_OPTION;
+import static javax.swing.JOptionPane.OK_OPTION;
+import static javax.swing.JOptionPane.showConfirmDialog;
 import static javax.swing.JOptionPane.showMessageDialog;
 import static ugcs.net.SessionController.sessionController;
 import static ugcs.ucsHub.Settings.settings;
@@ -66,6 +70,10 @@ public class Main {
             contentPane.add(vehicleForm);
             frame.setSize(750, 600);
             frame.setLocationRelativeTo(null);
+
+            vehicleForm.addLogoutButtonActionListener(
+                    getLogoutActionListener(frame, loginForm, vehicleForm)
+            );
         });
 
     }
@@ -75,5 +83,23 @@ public class Main {
             return ex.getMessage();
         }
         return "Unknown error: " + ex.getMessage() + "\nTry to restart application.";
+    }
+
+    private static ActionListener getLogoutActionListener(JFrame mainFrame, LoginForm loginForm, VehicleListForm currentVehicleForm) {
+        return event -> {
+            final int dialogResult =
+                    showConfirmDialog(mainFrame, "Do you want to logout from the application?", "Logout", OK_CANCEL_OPTION);
+
+            if (dialogResult == OK_OPTION) {
+                sessionController().close();
+
+                final Container contentPane = mainFrame.getContentPane();
+                contentPane.remove(currentVehicleForm);
+                contentPane.add(loginForm);
+
+                mainFrame.pack();
+                mainFrame.setLocationRelativeTo(null);
+            }
+        };
     }
 }

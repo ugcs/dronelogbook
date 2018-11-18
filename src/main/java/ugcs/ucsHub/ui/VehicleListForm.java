@@ -11,11 +11,13 @@ import ugcs.processing.telemetry.CsvFileNameGenerator;
 import ugcs.processing.telemetry.FlightTelemetry;
 import ugcs.processing.telemetry.FlightTelemetryProcessor;
 import ugcs.processing.telemetry.tracks.VehicleTracksProcessor;
+import ugcs.ucsHub.ui.thirdparty.JSplitButton;
 import ugcs.upload.logbook.DroneLogBookResponse;
 import ugcs.upload.logbook.LogBookUploader;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionListener;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -24,7 +26,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
-import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
@@ -51,6 +52,8 @@ public class VehicleListForm extends JPanel {
     private final TelemetryDatesHighlighter datesHighlighter = new TelemetryDatesHighlighter();
     private final DatePickerPanel datePicker = new DatePickerPanel(datesHighlighter);
 
+    private final JMenuItem logoutMenuItem = new JMenuItem("Logout");
+
     public VehicleListForm() {
         super(new BorderLayout());
 
@@ -64,9 +67,14 @@ public class VehicleListForm extends JPanel {
         leftPanel.add(BorderLayout.CENTER, new JScrollPane(vehicleJList));
         this.add(BorderLayout.WEST, leftPanel);
 
-        final JButton reloadVehiclesButton = new JButton("Reload vehicles");
-        leftPanel.add(BorderLayout.SOUTH, new JPanel().add(reloadVehiclesButton).getParent());
-        reloadVehiclesButton.addActionListener(e -> reloadVehicles());
+        JSplitButton vehicleListButton = new JSplitButton("Reload vehicles");
+        leftPanel.add(BorderLayout.SOUTH, new JPanel().add(vehicleListButton).getParent());
+        vehicleListButton.addActionListener(e -> reloadVehicles());
+
+        final JPopupMenu vehicleListPopupMenu = new JPopupMenu();
+        vehicleListPopupMenu.add(logoutMenuItem);
+        vehicleListButton.setPopupMenu(vehicleListPopupMenu);
+        vehicleJList.setComponentPopupMenu(vehicleListPopupMenu);
 
         JPanel centerPanel = new JPanel(new BorderLayout());
         centerPanel.setBorder(BorderFactory.createTitledBorder("Flight list"));
@@ -93,6 +101,10 @@ public class VehicleListForm extends JPanel {
         });
         datePicker.addDateChangeListener(() -> invokeLater(this::refreshView));
         refresher().addRefreshListener(this::refreshView);
+    }
+
+    public void addLogoutButtonActionListener(ActionListener listener) {
+        logoutMenuItem.addActionListener(listener);
     }
 
     private void refreshView() {
