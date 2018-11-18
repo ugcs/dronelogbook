@@ -5,13 +5,16 @@ import com.github.lgooddatepicker.components.DatePickerSettings;
 
 import javax.swing.*;
 import java.awt.*;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.LinkedList;
 import java.util.List;
 
 import static java.awt.Color.LIGHT_GRAY;
+import static java.text.MessageFormat.format;
 import static java.time.LocalDate.now;
 import static javax.swing.BorderFactory.createTitledBorder;
 import static javax.swing.SwingUtilities.invokeLater;
@@ -21,6 +24,8 @@ import static ugcs.time.TimeUtils.time;
  * Part of the {@link VehicleListForm} for date filtering controls
  */
 class DatePickerPanel extends JPanel {
+    private final static int DEFAULT_FLIGHTS_COUNT = 50;
+
     private final DatePicker datePicker;
 
     private final Color NORMAL_FOREGROUND_COLOR;
@@ -28,6 +33,8 @@ class DatePickerPanel extends JPanel {
     private final ButtonGroup datePickerButtonGroup = new ButtonGroup();
     private final JToggleButton last24HoursButton = new JToggleButton("Last 24h");
     private final JToggleButton last7DaysButton = new JToggleButton("Last 7 days");
+    private final JToggleButton lastXFlightsButton =
+            new JToggleButton(format("Last {0} flights", DEFAULT_FLIGHTS_COUNT));
 
     private final List<DateChangeListener> dateChangeListeners = new LinkedList<>();
 
@@ -52,6 +59,10 @@ class DatePickerPanel extends JPanel {
         last7DaysButton.getModel().setGroup(datePickerButtonGroup);
         last7DaysButton.addActionListener(event -> onToggleButtonChanged());
 
+        datePickerPanel.add(lastXFlightsButton);
+        lastXFlightsButton.getModel().setGroup(datePickerButtonGroup);
+        lastXFlightsButton.addActionListener(event -> onToggleButtonChanged());
+
         add(datePickerPanel);
     }
 
@@ -73,6 +84,10 @@ class DatePickerPanel extends JPanel {
             return atStartOfDay(now().minusWeeks(1));
         }
 
+        if (isLastXFlightsSelected()) {
+            return ZonedDateTime.ofInstant(Instant.ofEpochMilli(0), ZoneId.systemDefault());
+        }
+
         return atStartOfDay(datePicker.getDate());
     }
 
@@ -81,7 +96,15 @@ class DatePickerPanel extends JPanel {
             return ZonedDateTime.now();
         }
 
+        if (isLastXFlightsSelected()) {
+            return ZonedDateTime.ofInstant(Instant.ofEpochMilli(Long.MAX_VALUE), ZoneId.systemDefault());
+        }
+
         return atEndOfDay(datePicker.getDate());
+    }
+
+    int getSelectedFlightsLimit() {
+        return DEFAULT_FLIGHTS_COUNT;
     }
 
     private static ZonedDateTime atStartOfDay(LocalDate date) {
@@ -100,8 +123,8 @@ class DatePickerPanel extends JPanel {
         return datePickerButtonGroup.getSelection() == last7DaysButton.getModel();
     }
 
-    private static long getTimeAsEpochMilli(ZonedDateTime dateTime) {
-        return dateTime.toEpochSecond() * 1000L;
+    private boolean isLastXFlightsSelected() {
+        return datePickerButtonGroup.getSelection() == lastXFlightsButton.getModel();
     }
 
     private void fadeDatePicker() {

@@ -109,15 +109,15 @@ public class VehicleListForm extends JPanel {
 
     private void refreshView() {
         getSelectedVehicle().ifPresent(vehicle -> {
-            updateFlightsTable(getSelectedStartTime(), getSelectedEndTime(), vehicle);
+            updateFlightsTable(getSelectedStartTime(), getSelectedEndTime(), getSelectedTracksLimit(), vehicle);
             datesHighlighter.setCurrentVehicle(vehicle);
         });
     }
 
     @SneakyThrows
-    private void updateFlightsTable(ZonedDateTime startTime, ZonedDateTime endTime, Vehicle vehicle) {
+    private void updateFlightsTable(ZonedDateTime startTime, ZonedDateTime endTime, int tracksLimit, Vehicle vehicle) {
         final Callable<List<? extends Flight>> getFlightListCallable =
-                () -> new VehicleTracksProcessor(startTime, endTime, vehicle).getVehicleTracks();
+                () -> new VehicleTracksProcessor(startTime, endTime, tracksLimit, vehicle).getVehicleTracks();
 
         final boolean showWaitForm = sessionController().countTelemetry(vehicle, startTime, endTime) > 100000;
         final List<? extends Flight> flights = waitForUgcsData(getFlightListCallable, showWaitForm);
@@ -147,6 +147,10 @@ public class VehicleListForm extends JPanel {
 
     private ZonedDateTime getSelectedEndTime() {
         return datePicker.getSelectedEndTime();
+    }
+
+    private int getSelectedTracksLimit() {
+        return datePicker.getSelectedFlightsLimit();
     }
 
     private DroneLogBookResponse uploadFlightTelemetry(FlightTelemetry flightTelemetry) {

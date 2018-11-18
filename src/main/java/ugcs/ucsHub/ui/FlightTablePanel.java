@@ -166,7 +166,7 @@ class FlightTablePanel extends JPanel {
 
     void updateModel(List<? extends Flight> flights) {
         if (flights.isEmpty()) {
-            updateMessageOnlyView("No flights found for the selected dates...");
+            updateMessageOnlyView("No flights found for the selected options...");
         } else {
             flightTable.setModel(new FlightTableModel(flights));
             flightTablePane.setVisible(true);

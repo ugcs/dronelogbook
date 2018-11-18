@@ -25,12 +25,18 @@ public class VehicleTracksProcessor extends LazyFieldEvaluator {
     private final Vehicle vehicle;
     private final ZonedDateTime fromTime;
     private final ZonedDateTime toTime;
+    private final int tracksLimit;
 
     public VehicleTracksProcessor(ZonedDateTime fromTime, ZonedDateTime toTime, Vehicle vehicle) {
+        this(fromTime, toTime, UNLIMITED_TRACKS, vehicle);
+    }
+
+    public VehicleTracksProcessor(ZonedDateTime fromTime, ZonedDateTime toTime, int tracksLimit, Vehicle vehicle) {
         this.controller = sessionController();
         this.vehicle = vehicle;
         this.fromTime = fromTime;
         this.toTime = toTime;
+        this.tracksLimit = tracksLimit;
     }
 
     public List<VehicleTrack> getVehicleTracks() {
@@ -47,7 +53,7 @@ public class VehicleTracksProcessor extends LazyFieldEvaluator {
             final long fromTimeEpochMilli = fromTime.toInstant().toEpochMilli();
             final long toTimeEpochMilli = toTime.toInstant().toEpochMilli();
             return controller
-                    .getVehicleTracks(singletonList(vehicle), fromTimeEpochMilli, toTimeEpochMilli, UNLIMITED_TRACKS)
+                    .getVehicleTracks(singletonList(vehicle), fromTimeEpochMilli, toTimeEpochMilli, tracksLimit)
                     .getVehicleTracksList();
         });
     }
