@@ -12,6 +12,7 @@ import ugcs.exceptions.ugcs.UgcsFailure;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -94,13 +95,13 @@ public class SessionController implements AutoCloseable {
     }
 
     @SneakyThrows
-    public long countTelemetry(Vehicle vehicle, long startTimeEpochMilli, long endTimeEpochMilli) {
+    public long countTelemetry(Vehicle vehicle, ZonedDateTime startTime, ZonedDateTime endTime) {
         final MessagesProto.CountTelemetryRequest countTelemetryRequest =
                 MessagesProto.CountTelemetryRequest.newBuilder()
                         .setClientId(getClientId())
                         .setVehicle(vehicle)
-                        .setFromTime(startTimeEpochMilli)
-                        .setToTime(endTimeEpochMilli)
+                        .setFromTime(startTime.toInstant().toEpochMilli())
+                        .setToTime(endTime.toInstant().toEpochMilli())
                         .build();
 
         final MessagesProto.CountTelemetryResponse countTelemetryResponse = execute(countTelemetryRequest);

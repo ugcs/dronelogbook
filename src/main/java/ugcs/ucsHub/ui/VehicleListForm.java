@@ -24,6 +24,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
+import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
@@ -42,7 +43,7 @@ import static ugcs.upload.logbook.FlightUploadPerformerFactory.performerFactory;
  * Form containing controls for flight list representation and uploading
  */
 public class VehicleListForm extends JPanel {
-    private final Map<String, Vehicle> vehicleMap;
+    private Map<String, Vehicle> vehicleMap;
     private final JList<String> vehicleJList;
 
     private final FlightTablePanel flightTable;
@@ -53,12 +54,8 @@ public class VehicleListForm extends JPanel {
     public VehicleListForm() {
         super(new BorderLayout());
 
-        vehicleMap = sessionController().getVehicles().stream()
-                .collect(toMap(Vehicle::getName, v -> v));
-
-        final String[] vehicleNames = vehicleMap.keySet().toArray(new String[0]);
-        vehicleJList = new JList<>(vehicleNames);
-
+        vehicleJList = new JList<>();
+        reloadVehicles();
         JPanel leftPanel = new JPanel(new BorderLayout());
         leftPanel.setBorder(BorderFactory.createBevelBorder(0));
         leftPanel.add(BorderLayout.NORTH, new JLabel("List of all vehicles:"));
@@ -66,6 +63,10 @@ public class VehicleListForm extends JPanel {
         vehicleJList.setSelectionMode(SINGLE_SELECTION);
         leftPanel.add(BorderLayout.CENTER, new JScrollPane(vehicleJList));
         this.add(BorderLayout.WEST, leftPanel);
+
+        final JButton reloadVehiclesButton = new JButton("Reload vehicles");
+        leftPanel.add(BorderLayout.SOUTH, new JPanel().add(reloadVehiclesButton).getParent());
+        reloadVehiclesButton.addActionListener(e -> reloadVehicles());
 
         JPanel centerPanel = new JPanel(new BorderLayout());
         centerPanel.setBorder(BorderFactory.createTitledBorder("Flight list"));
@@ -106,17 +107,13 @@ public class VehicleListForm extends JPanel {
         final Callable<List<? extends Flight>> getFlightListCallable =
                 () -> new VehicleTracksProcessor(startTime, endTime, vehicle).getVehicleTracks();
 
-        final List<? extends Flight> flights = waitForUgcsData(getFlightListCallable, null);
+        final boolean showWaitForm = sessionController().countTelemetry(vehicle, startTime, endTime) > 100000;
+        final List<? extends Flight> flights = waitForUgcsData(getFlightListCallable, showWaitForm);
 
         flightTable.updateModel(flights);
     }
 
-    private List<? extends Flight> waitForUgcsData(Callable<List<? extends Flight>> flightListCallable,
-                                                   Callable<Long> telemetryCountCallable) throws Exception {
-        boolean showWaitForm = true;
-        if (telemetryCountCallable != null) {
-            showWaitForm = telemetryCountCallable.call() > 10000;
-        }
+    private List<? extends Flight> waitForUgcsData(Callable<List<? extends Flight>> flightListCallable, boolean showWaitForm) throws Exception {
         return showWaitForm
                 ? waitForm().waitOnCallable("Acquiring data from UgCS...", flightListCallable, this)
                 : flightListCallable.call();
@@ -124,6 +121,12 @@ public class VehicleListForm extends JPanel {
 
     private Optional<Vehicle> getSelectedVehicle() {
         return Optional.ofNullable(vehicleMap.get(vehicleJList.getSelectedValue()));
+    }
+
+    private void reloadVehicles() {
+        vehicleMap = sessionController().getVehicles().stream()
+                .collect(toMap(Vehicle::getName, v -> v));
+        vehicleJList.setListData(vehicleMap.keySet().toArray(new String[0]));
     }
 
     private ZonedDateTime getSelectedStartTime() {
