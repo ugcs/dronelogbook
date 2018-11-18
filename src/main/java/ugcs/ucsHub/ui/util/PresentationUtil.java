@@ -28,18 +28,18 @@ public class PresentationUtil {
     private static String durationToString(Duration duration) {
         final Class<? extends TimeUnit> timeUnitClass = duration.getUnit().getClass();
         if (Minute.class.equals(timeUnitClass)) {
-            return new PrettyTime(ENGLISH).formatDuration(duration) + " " + formatMillis(duration.getDelta());
+            return new PrettyTime(ENGLISH).formatDurationUnrounded(duration) + " " + formatMillis(duration.getDelta());
         }
 
         if (JustNow.class.equals(timeUnitClass)) {
             return formatMillis(duration.getQuantity());
         }
 
-        return new PrettyTime(ENGLISH).formatDuration(duration);
+        return new PrettyTime(ENGLISH).formatDurationUnrounded(duration);
     }
 
     private static String formatMillis(long millis) {
-        return millis / 1000L + " s";
+        return (millis + 500) / 1000L + " s";
     }
 
 
