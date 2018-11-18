@@ -1,5 +1,7 @@
 package ugcs.ucsHub.ui;
 
+import ugcs.ucsHub.ui.components.JPasswordFieldEx;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
@@ -15,10 +17,10 @@ import static ugcs.ucsHub.Settings.settings;
  */
 public class LoginForm extends JPanel {
     private final JTextField loginField = new JTextField(settings().getUcsServerLogin(), 25);
-    private final JTextField passwordField = new JPasswordField(settings().getUcsServerPassword(), 25);
+    private final JPasswordFieldEx passwordField = new JPasswordFieldEx(settings().getUcsServerPassword(), 25);
 
     private final JTextField loginDlbField = new JTextField(settings().getUploadServerLogin(), 25);
-    private final JTextField passwordDlbField = new JPasswordField(settings().getUploadServerPassword(), 25);
+    private final JPasswordFieldEx passwordDlbField = new JPasswordFieldEx(settings().getUploadServerPassword(), 25);
 
     private final JButton loginButton = new JButton("Login");
 
@@ -73,12 +75,12 @@ public class LoginForm extends JPanel {
     }
 
     public String getDlbPassword() {
-        return passwordDlbField.getText();
+        return passwordDlbField.getCurrentPassword();
     }
 
 
     public String getPassword() {
-        return passwordField.getText();
+        return passwordField.getCurrentPassword();
     }
 
     public void makeLoginButtonDefault() {

@@ -1,4 +1,4 @@
-package ugcs.ucsHub.ui;
+package ugcs.ucsHub.ui.components;
 
 import javax.swing.*;
 import java.awt.*;
@@ -11,9 +11,9 @@ import java.net.URISyntaxException;
 /**
  * {@link JLabel} with clickable hyperlink
  */
-class JHyperlink extends JLabel {
+public class JHyperlink extends JLabel {
 
-    JHyperlink(String hyperlink, String text) {
+    public JHyperlink(String hyperlink, String text) {
         super(String.format("<html><a href=\\\"%s\\\">%s</a></html>", hyperlink, text));
 
         setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));

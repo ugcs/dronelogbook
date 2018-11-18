@@ -3,6 +3,7 @@ package ugcs.ucsHub.ui;
 import ugcs.common.identity.Identity;
 import ugcs.common.operation.Operation;
 import ugcs.exceptions.logbook.LogBookAuthorizationFailed;
+import ugcs.ucsHub.ui.components.JHyperlink;
 import ugcs.upload.logbook.DroneLogBookResponse;
 
 import javax.swing.*;
