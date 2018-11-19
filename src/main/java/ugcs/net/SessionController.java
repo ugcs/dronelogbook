@@ -61,6 +61,8 @@ public class SessionController implements AutoCloseable {
 
     @SneakyThrows
     public List<Vehicle> getVehicles() {
+        reconnectIfConnectionLost();
+
         return session.getObjectList(Vehicle.class).stream()
                 .map(DomainObjectWrapper::getVehicle)
                 .collect(Collectors.toList());

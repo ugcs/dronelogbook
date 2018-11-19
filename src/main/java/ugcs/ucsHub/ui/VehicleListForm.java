@@ -12,11 +12,13 @@ import ugcs.processing.telemetry.FlightTelemetry;
 import ugcs.processing.telemetry.FlightTelemetryProcessor;
 import ugcs.processing.telemetry.tracks.VehicleTracksProcessor;
 import ugcs.ucsHub.ui.thirdparty.JSplitButton;
+import ugcs.ucsHub.ui.thirdparty.SplitButtonActionListener;
 import ugcs.upload.logbook.DroneLogBookResponse;
 import ugcs.upload.logbook.LogBookUploader;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
@@ -24,7 +26,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
 import static java.util.stream.Collectors.toList;
@@ -69,7 +70,16 @@ public class VehicleListForm extends JPanel {
 
         JSplitButton vehicleListButton = new JSplitButton("Reload vehicles");
         leftPanel.add(BorderLayout.SOUTH, new JPanel().add(vehicleListButton).getParent());
-        vehicleListButton.addActionListener(e -> reloadVehicles());
+        vehicleListButton.addSplitButtonActionListener(new SplitButtonActionListener() {
+            @Override
+            public void buttonClicked(ActionEvent e) {
+                reloadVehicles();
+            }
+
+            @Override
+            public void splitButtonClicked(ActionEvent e) {
+            }
+        });
 
         final JPopupMenu vehicleListPopupMenu = new JPopupMenu();
         vehicleListPopupMenu.add(logoutMenuItem);
