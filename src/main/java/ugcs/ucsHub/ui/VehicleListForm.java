@@ -116,19 +116,9 @@ public class VehicleListForm extends JPanel {
 
     @SneakyThrows
     private void updateFlightsTable(ZonedDateTime startTime, ZonedDateTime endTime, int tracksLimit, Vehicle vehicle) {
-        final Callable<List<? extends Flight>> getFlightListCallable =
-                () -> new VehicleTracksProcessor(startTime, endTime, tracksLimit, vehicle).getVehicleTracks();
-
-        final boolean showWaitForm = sessionController().countTelemetry(vehicle, startTime, endTime) > 100000;
-        final List<? extends Flight> flights = waitForUgcsData(getFlightListCallable, showWaitForm);
-
+        final List<? extends Flight> flights =
+                new VehicleTracksProcessor(startTime, endTime, tracksLimit, vehicle).getVehicleTracks();
         flightTable.updateModel(flights);
-    }
-
-    private List<? extends Flight> waitForUgcsData(Callable<List<? extends Flight>> flightListCallable, boolean showWaitForm) throws Exception {
-        return showWaitForm
-                ? waitForm().waitOnCallable("Acquiring data from UgCS...", flightListCallable, this)
-                : flightListCallable.call();
     }
 
     private Optional<Vehicle> getSelectedVehicle() {
