@@ -1,6 +1,5 @@
 package ugcs.ucsHub;
 
-import ugcs.exceptions.ExceptionsHandler;
 import ugcs.exceptions.ExpectedException;
 import ugcs.ucsHub.ui.LoginForm;
 import ugcs.ucsHub.ui.VehicleListForm;
@@ -14,6 +13,7 @@ import static javax.swing.JOptionPane.OK_CANCEL_OPTION;
 import static javax.swing.JOptionPane.OK_OPTION;
 import static javax.swing.JOptionPane.showConfirmDialog;
 import static javax.swing.JOptionPane.showMessageDialog;
+import static ugcs.exceptions.ExceptionsHandler.handler;
 import static ugcs.net.SessionController.sessionController;
 import static ugcs.ucsHub.Settings.settings;
 import static ugcs.ucsHub.ui.WaitForm.waitForm;
@@ -38,7 +38,7 @@ public class Main {
         frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         frame.setVisible(true);
 
-        ExceptionsHandler.handler().addUncaughtExceptionListener(rootException ->
+        handler().addUncaughtExceptionListener(rootException ->
                 showMessageDialog(frame, getExceptionMessage(rootException), "Error", JOptionPane.ERROR_MESSAGE));
 
         frame.addWindowListener(new ActionOnCloseWindowAdapter(() -> {
@@ -91,6 +91,7 @@ public class Main {
                     showConfirmDialog(mainFrame, "Do you want to logout from the application?", "Logout", OK_CANCEL_OPTION);
 
             if (dialogResult == OK_OPTION) {
+                handler().clearExceptionListeners();
                 sessionController().close();
 
                 final Container contentPane = mainFrame.getContentPane();

@@ -71,6 +71,10 @@ public class ExceptionsHandler {
         listenerMap.computeIfAbsent(exceptionClass, c -> new HashSet<>()).add(listener);
     }
 
+    public void clearExceptionListeners() {
+        listenerMap.clear();
+    }
+
     private static Throwable getRootException(Throwable ex) {
         Throwable rootException = ex;
         while (rootException.getCause() != null) {
