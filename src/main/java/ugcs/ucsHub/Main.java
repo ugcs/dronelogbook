@@ -11,6 +11,7 @@ import java.awt.event.ActionListener;
 
 import static javax.swing.JOptionPane.OK_CANCEL_OPTION;
 import static javax.swing.JOptionPane.OK_OPTION;
+import static javax.swing.JOptionPane.PLAIN_MESSAGE;
 import static javax.swing.JOptionPane.showConfirmDialog;
 import static javax.swing.JOptionPane.showMessageDialog;
 import static ugcs.exceptions.ExceptionsHandler.handler;
@@ -38,8 +39,9 @@ public class Main {
         frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         frame.setVisible(true);
 
-        handler().addUncaughtExceptionListener(rootException ->
-                showMessageDialog(frame, getExceptionMessage(rootException), "Error", JOptionPane.ERROR_MESSAGE));
+        handler().addUncaughtExceptionListener(rootException -> showMessageDialog(
+                frame, getExceptionMessage(rootException), "Error", PLAIN_MESSAGE, settings().getErrorIcon()
+        ));
 
         frame.addWindowListener(new ActionOnCloseWindowAdapter(() -> {
             sessionController().close();
@@ -87,8 +89,10 @@ public class Main {
 
     private static ActionListener getLogoutActionListener(JFrame mainFrame, LoginForm loginForm, VehicleListForm currentVehicleForm) {
         return event -> {
-            final int dialogResult =
-                    showConfirmDialog(mainFrame, "Do you want to logout from the application?", "Logout", OK_CANCEL_OPTION);
+            final int dialogResult = showConfirmDialog(
+                    mainFrame, "Do you want to logout from the application?", "Logout",
+                    OK_CANCEL_OPTION, PLAIN_MESSAGE, settings().getQuestionIcon()
+            );
 
             if (dialogResult == OK_OPTION) {
                 handler().clearExceptionListeners();

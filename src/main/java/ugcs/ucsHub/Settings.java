@@ -71,6 +71,18 @@ public final class Settings implements SessionSettings {
     @Getter
     private final ImageIcon logoIcon;
 
+    @Getter
+    private final ImageIcon errorIcon;
+
+    @Getter
+    private final ImageIcon warningIcon;
+
+    @Getter
+    private final ImageIcon successIcon;
+
+    @Getter
+    private final ImageIcon questionIcon;
+
     private Settings() {
         this.globalSettings = new Properties();
         final Path pathToGlobalSettings = resolveOnDataFolder(SETTINGS_FILE_NAME);
@@ -113,7 +125,11 @@ public final class Settings implements SessionSettings {
         uploadedFileFolder = getProperty("uploaded.file.folder", DEFAULT_UPLOADED_FILE_FOLDER);
         telemetryFolder = getProperty("telemetry.file.folder", DEFAULT_TELEMETRY_FOLDER);
 
-        logoIcon = new ImageIcon(Settings.class.getResource("/graphics/logo.png"));
+        logoIcon = loadImageIcon("/graphics/logo.png");
+        errorIcon = loadImageIcon("/graphics/errorIcon.png");
+        warningIcon = loadImageIcon("/graphics/warningIcon.png");
+        successIcon = loadImageIcon("/graphics/successIcon.png");
+        questionIcon = loadImageIcon("/graphics/questionIcon.png");
     }
 
     @Override
@@ -252,5 +268,9 @@ public final class Settings implements SessionSettings {
             this.localSettings.store(out, "");
         } catch (IOException ignored) {
         }
+    }
+
+    private static ImageIcon loadImageIcon(String resourcePath) {
+        return new ImageIcon(Settings.class.getResource(resourcePath));
     }
 }
