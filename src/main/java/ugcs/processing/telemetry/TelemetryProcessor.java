@@ -24,7 +24,7 @@ import static java.util.stream.Collectors.toMap;
  * Class for {@link Flight} calculation based on {@link Telemetry}
  */
 public class TelemetryProcessor extends LazyFieldEvaluator {
-    private static final int FLIGHT_SEPARATION_THRESHOLD_MS = 15000;
+    private static final int FLIGHT_SEPARATION_THRESHOLD_MS = Integer.MAX_VALUE;
 
     private final List<Telemetry> telemetryList;
     private final Vehicle vehicle;
