@@ -17,6 +17,7 @@ import ugcs.upload.logbook.DroneLogBookResponse;
 import ugcs.upload.logbook.LogBookUploader;
 
 import javax.swing.*;
+import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -30,6 +31,8 @@ import java.util.concurrent.Future;
 
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
+import static javax.swing.BorderFactory.createEmptyBorder;
+import static javax.swing.BorderFactory.createTitledBorder;
 import static javax.swing.ListSelectionModel.SINGLE_SELECTION;
 import static javax.swing.SwingUtilities.invokeLater;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -63,7 +66,7 @@ public class VehicleListForm extends JPanel {
         JPanel leftPanel = new JPanel(new BorderLayout());
         leftPanel.setBorder(BorderFactory.createBevelBorder(0));
         leftPanel.add(BorderLayout.NORTH, new JLabel("List of all vehicles:"));
-        vehicleJList.setBorder(BorderFactory.createTitledBorder(""));
+        vehicleJList.setBorder(createTitledBorder(""));
         vehicleJList.setSelectionMode(SINGLE_SELECTION);
         leftPanel.add(BorderLayout.CENTER, new JScrollPane(vehicleJList));
         this.add(BorderLayout.WEST, leftPanel);
@@ -87,7 +90,7 @@ public class VehicleListForm extends JPanel {
         vehicleJList.setComponentPopupMenu(vehicleListPopupMenu);
 
         JPanel centerPanel = new JPanel(new BorderLayout());
-        centerPanel.setBorder(BorderFactory.createTitledBorder("Flight list"));
+        centerPanel.setBorder(createTitledBorder("Flight list"));
         flightTable = new FlightTablePanel();
         centerPanel.add(BorderLayout.CENTER, flightTable);
         this.add(BorderLayout.CENTER, centerPanel);
@@ -95,8 +98,16 @@ public class VehicleListForm extends JPanel {
         JPanel bottomPanel = new JPanel(new BorderLayout());
         final JButton uploadTelemetryButton = new JButton("Upload");
         uploadTelemetryButton.setEnabled(false);
-        bottomPanel.add(BorderLayout.EAST, new JPanel(new GridBagLayout()).add(uploadTelemetryButton).getParent());
         uploadTelemetryButton.addActionListener(event -> uploadCurrentlySelectedFlights());
+
+        final JPanel uploadButtonPanel = new JPanel();
+        final TitledBorder bottomPanelBorder = createTitledBorder("1");
+        bottomPanelBorder.setBorder(createEmptyBorder());
+        bottomPanelBorder.setTitleColor(uploadButtonPanel.getBackground());
+        uploadButtonPanel.setBorder(bottomPanelBorder);
+        uploadButtonPanel.add(new JPanel().add(uploadTelemetryButton).getParent());
+        bottomPanel.add(BorderLayout.EAST, uploadButtonPanel);
+
         this.add(BorderLayout.SOUTH, bottomPanel);
 
         flightTable.addTableChangeAction(
