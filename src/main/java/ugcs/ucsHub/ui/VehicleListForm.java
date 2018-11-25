@@ -3,7 +3,6 @@ package ugcs.ucsHub.ui;
 import com.ugcs.ucs.proto.DomainProto.Vehicle;
 import lombok.SneakyThrows;
 import ugcs.common.identity.Identity;
-import ugcs.common.operation.FutureWrapper;
 import ugcs.common.operation.Operation;
 import ugcs.exceptions.logic.NoFlightTelemetryFoundException;
 import ugcs.processing.Flight;
@@ -41,7 +40,7 @@ import static ugcs.net.SessionController.sessionController;
 import static ugcs.processing.telemetry.FlightTelemetry.withId;
 import static ugcs.ucsHub.Settings.settings;
 import static ugcs.ucsHub.ui.RefreshButton.refresher;
-import static ugcs.ucsHub.ui.WaitForm.waitForm;
+import static ugcs.ucsHub.ui.WaitWithProgressBarForm.waitWithProgressBarForm;
 import static ugcs.upload.logbook.FlightUploadPerformerFactory.performerFactory;
 
 /**
@@ -207,13 +206,9 @@ public class VehicleListForm extends JPanel {
                 .map(this::submitFlightForUploading)
                 .collect(toList());
 
-        final List<Operation<Identity<?>, DroneLogBookResponse>> uploadResults =
-                waitForm().waitOnCallable("Uploading flights to LogBook...",
-                        () -> uploadOperationFutures.stream()
-                                .map(FutureWrapper::of)
-                                .map(FutureWrapper::get)
-                                .collect(toList()),
-                        this);
+        final List<Operation<Identity<?>, DroneLogBookResponse>> uploadResults = waitWithProgressBarForm()
+                .withMessageTemplate(" {0} of {1} flights uploaded to DroneLogBook ")
+                .waitOnFutures(uploadOperationFutures, this);
 
         UploadReportForm.showReport(this, uploadResults);
     }

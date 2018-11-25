@@ -83,6 +83,9 @@ public final class Settings implements SessionSettings {
     @Getter
     private final ImageIcon questionIcon;
 
+    @Getter
+    private final ImageIcon loadingIcon;
+
     private Settings() {
         this.globalSettings = new Properties();
         final Path pathToGlobalSettings = resolveOnDataFolder(SETTINGS_FILE_NAME);
@@ -130,6 +133,7 @@ public final class Settings implements SessionSettings {
         warningIcon = loadImageIcon("/graphics/warningIcon.png");
         successIcon = loadImageIcon("/graphics/successIcon.png");
         questionIcon = loadImageIcon("/graphics/questionIcon.png");
+        loadingIcon = loadImageIcon("/graphics/Loading_icon.gif");
     }
 
     @Override

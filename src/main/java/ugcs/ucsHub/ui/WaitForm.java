@@ -25,8 +25,7 @@ public class WaitForm extends JDialog {
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
 
         setTitle("Please wait...");
-        final ImageIcon icon = new ImageIcon(WaitForm.class.getResource("/graphics/Loading_icon.gif"));
-        this.messageLabel = new JLabel("Loading", icon, SwingConstants.RIGHT);
+        this.messageLabel = new JLabel("Loading", settings().getLoadingIcon(), SwingConstants.RIGHT);
         add(new JPanel().add(messageLabel).getParent());
 
         setIconImage(settings().getLogoIcon().getImage());
