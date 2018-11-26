@@ -28,6 +28,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Future;
 
+import static java.text.MessageFormat.format;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static javax.swing.BorderFactory.createEmptyBorder;
@@ -147,7 +148,7 @@ public class VehicleListForm extends JPanel {
 
     private void reloadVehicles() {
         vehicleMap = sessionController().getVehicles().stream()
-                .collect(toMap(Vehicle::getName, v -> v));
+                .collect(toMap(v -> format("{0}-{1}", v.getName(), v.getSerialNumber()), v -> v));
         vehicleJList.setListData(vehicleMap.keySet().toArray(new String[0]));
     }
 
