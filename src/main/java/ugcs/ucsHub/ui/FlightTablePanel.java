@@ -25,6 +25,7 @@ import static java.util.stream.Collectors.toSet;
 import static javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS;
 import static javax.swing.SwingUtilities.invokeLater;
 import static ugcs.exceptions.ExceptionsHandler.handler;
+import static ugcs.ucsHub.Settings.settings;
 import static ugcs.ucsHub.ui.RefreshButton.refresher;
 import static ugcs.ucsHub.ui.util.PresentationUtil.periodToString;
 
@@ -44,7 +45,7 @@ class FlightTablePanel extends JPanel {
 
     private final List<Action> tableChangeListeners = new CopyOnWriteArrayList<>();
 
-    private final JLabel errorIconLabel = new JLabel((Icon) UIManager.get("OptionPane.errorIcon"));
+    private final JLabel errorIconLabel = new JLabel(settings().getErrorIcon());
 
     private final JButton refreshButton;
 
