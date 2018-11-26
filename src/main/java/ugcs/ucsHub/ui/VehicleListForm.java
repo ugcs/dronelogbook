@@ -33,6 +33,7 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static javax.swing.BorderFactory.createEmptyBorder;
 import static javax.swing.BorderFactory.createTitledBorder;
+import static javax.swing.JSplitPane.HORIZONTAL_SPLIT;
 import static javax.swing.ListSelectionModel.SINGLE_SELECTION;
 import static javax.swing.SwingUtilities.invokeLater;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -69,7 +70,6 @@ public class VehicleListForm extends JPanel {
         vehicleJList.setBorder(createTitledBorder(""));
         vehicleJList.setSelectionMode(SINGLE_SELECTION);
         leftPanel.add(BorderLayout.CENTER, new JScrollPane(vehicleJList));
-        this.add(BorderLayout.WEST, leftPanel);
 
         JSplitButton vehicleListButton = new JSplitButton("Reload vehicles");
         leftPanel.add(BorderLayout.SOUTH, new JPanel().add(vehicleListButton).getParent());
@@ -93,7 +93,8 @@ public class VehicleListForm extends JPanel {
         centerPanel.setBorder(createTitledBorder("Flight list"));
         flightTable = new FlightTablePanel();
         centerPanel.add(BorderLayout.CENTER, flightTable);
-        this.add(BorderLayout.CENTER, centerPanel);
+
+        this.add(BorderLayout.CENTER, new JSplitPane(HORIZONTAL_SPLIT, leftPanel, centerPanel));
 
         JPanel bottomPanel = new JPanel(new BorderLayout());
         final JButton uploadTelemetryButton = new JButton("Upload");
