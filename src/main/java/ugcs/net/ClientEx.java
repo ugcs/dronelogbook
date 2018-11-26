@@ -10,7 +10,7 @@ import java.net.SocketAddress;
  * {@link Client} with given timeout for message interaction
  */
 public class ClientEx extends Client {
-    private static final long DEFAULT_REQUEST_TIMEOUT_MS = 120_0000L;
+    private static final long DEFAULT_REQUEST_TIMEOUT_MS = 120_000L;
 
     private final long timeout;
 

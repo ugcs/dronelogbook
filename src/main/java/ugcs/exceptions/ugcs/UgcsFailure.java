@@ -1,5 +1,6 @@
 package ugcs.exceptions.ugcs;
 
+import org.apache.commons.lang3.StringUtils;
 import ugcs.exceptions.ExpectedException;
 
 import static java.lang.String.format;
@@ -20,6 +21,10 @@ public class UgcsFailure extends ExpectedException {
 
         if (cause instanceof UgcsFailure) {
             return cause.getMessage();
+        }
+
+        if (StringUtils.isEmpty(cause.getMessage())) {
+            return format("UgCS failure - \"%s\"", cause.getClass().getName());
         }
 
         return format("UgCS failure - \"%s\"", cause.getMessage());

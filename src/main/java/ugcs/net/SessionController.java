@@ -14,12 +14,15 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
 /**
  * Exports service gateway for interactions with {@link Client}
  */
 public class SessionController implements AutoCloseable {
+    private static int TRY_COUNT = 2;
+
     private String host;
     private int port;
 
@@ -70,71 +73,81 @@ public class SessionController implements AutoCloseable {
 
     @SneakyThrows
     public MessagesProto.GetTelemetryResponse getTelemetry(Vehicle vehicle, long startTimeEpochMilli, long endTimeEpochMilli) {
-        final MessagesProto.GetTelemetryRequest getTelemetryRequest =
-                MessagesProto.GetTelemetryRequest.newBuilder()
-                        .setFromTime(startTimeEpochMilli)
-                        .setToTime(endTimeEpochMilli)
-                        .setVehicle(vehicle)
-                        .setClientId(getClientId())
-                        .setLimit(0)
-                        .build();
+        return trySeveralTimes(() -> {
+            final MessagesProto.GetTelemetryRequest getTelemetryRequest =
+                    MessagesProto.GetTelemetryRequest.newBuilder()
+                            .setFromTime(startTimeEpochMilli)
+                            .setToTime(endTimeEpochMilli)
+                            .setVehicle(vehicle)
+                            .setClientId(getClientId())
+                            .setLimit(0)
+                            .build();
 
-        return execute(getTelemetryRequest);
+            return execute(getTelemetryRequest);
+        });
     }
 
     @SneakyThrows
     public MessagesProto.GetVehicleLogByTimeRangeResponse getVehicleLog(Vehicle vehicle, long startTimeEpochMilli, long endTimeEpochMilli) {
-        final MessagesProto.GetVehicleLogByTimeRangeRequest getVehicleLogByTimeRangeRequest =
-                MessagesProto.GetVehicleLogByTimeRangeRequest.newBuilder()
-                        .setFromTime(startTimeEpochMilli)
-                        .setToTime(endTimeEpochMilli)
-                        .setClientId(getClientId())
-                        .setLevel(DomainProto.SeverityLevel.SL_DEBUG)
-                        .addVehicles(vehicle)
-                        .build();
+        return trySeveralTimes(() -> {
+            final MessagesProto.GetVehicleLogByTimeRangeRequest getVehicleLogByTimeRangeRequest =
+                    MessagesProto.GetVehicleLogByTimeRangeRequest.newBuilder()
+                            .setFromTime(startTimeEpochMilli)
+                            .setToTime(endTimeEpochMilli)
+                            .setClientId(getClientId())
+                            .setLevel(DomainProto.SeverityLevel.SL_DEBUG)
+                            .addVehicles(vehicle)
+                            .build();
 
-        return execute(getVehicleLogByTimeRangeRequest);
+            return execute(getVehicleLogByTimeRangeRequest);
+        });
     }
 
     @SneakyThrows
     public long countTelemetry(Vehicle vehicle, ZonedDateTime startTime, ZonedDateTime endTime) {
-        final MessagesProto.CountTelemetryRequest countTelemetryRequest =
-                MessagesProto.CountTelemetryRequest.newBuilder()
-                        .setClientId(getClientId())
-                        .setVehicle(vehicle)
-                        .setFromTime(startTime.toInstant().toEpochMilli())
-                        .setToTime(endTime.toInstant().toEpochMilli())
-                        .build();
+        return trySeveralTimes(() -> {
+            final MessagesProto.CountTelemetryRequest countTelemetryRequest =
+                    MessagesProto.CountTelemetryRequest.newBuilder()
+                            .setClientId(getClientId())
+                            .setVehicle(vehicle)
+                            .setFromTime(startTime.toInstant().toEpochMilli())
+                            .setToTime(endTime.toInstant().toEpochMilli())
+                            .build();
 
-        final MessagesProto.CountTelemetryResponse countTelemetryResponse = execute(countTelemetryRequest);
-        return countTelemetryResponse.getCount();
+            final MessagesProto.CountTelemetryResponse countTelemetryResponse = execute(countTelemetryRequest);
+            return countTelemetryResponse.getCount();
+        });
     }
 
     @SneakyThrows
     public MessagesProto.TraceTelemetryFramesResponse traceTelemetryFrames(Vehicle vehicle, long originTimeEpochMilli, double intervalSec, int number) {
-        final MessagesProto.TraceTelemetryFramesRequest traceTelemetryFramesRequest =
-                MessagesProto.TraceTelemetryFramesRequest.newBuilder()
-                        .setClientId(getClientId())
-                        .setVehicle(vehicle)
-                        .setInterval(intervalSec)
-                        .setOriginTime(originTimeEpochMilli)
-                        .setNumber(number)
-                        .build();
+        return trySeveralTimes(() -> {
+            final MessagesProto.TraceTelemetryFramesRequest traceTelemetryFramesRequest =
+                    MessagesProto.TraceTelemetryFramesRequest.newBuilder()
+                            .setClientId(getClientId())
+                            .setVehicle(vehicle)
+                            .setInterval(intervalSec)
+                            .setOriginTime(originTimeEpochMilli)
+                            .setNumber(number)
+                            .build();
 
-        return execute(traceTelemetryFramesRequest);
+            return execute(traceTelemetryFramesRequest);
+        });
     }
 
     @SneakyThrows
     public MessagesProto.GetVehicleTracksResponse getVehicleTracks(List<Vehicle> vehicles, long fromTimeEpochMilli, long toTimeEpochMilli, int limit) {
-        final MessagesProto.GetVehicleTracksRequest.Builder getVehicleTracksRequestBuilder =
-                MessagesProto.GetVehicleTracksRequest.newBuilder()
-                        .setClientId(getClientId())
-                        .setFrom(fromTimeEpochMilli)
-                        .setTo(toTimeEpochMilli)
-                        .setLimit(limit);
-        vehicles.forEach(getVehicleTracksRequestBuilder::addVehicles);
+        return trySeveralTimes(() -> {
+            final MessagesProto.GetVehicleTracksRequest.Builder getVehicleTracksRequestBuilder =
+                    MessagesProto.GetVehicleTracksRequest.newBuilder()
+                            .setClientId(getClientId())
+                            .setFrom(fromTimeEpochMilli)
+                            .setTo(toTimeEpochMilli)
+                            .setLimit(limit);
+            vehicles.forEach(getVehicleTracksRequestBuilder::addVehicles);
 
-        return execute(getVehicleTracksRequestBuilder.build());
+            return execute(getVehicleTracksRequestBuilder.build());
+        });
     }
 
     private <T> T execute(Message message) throws Exception {
@@ -172,5 +185,17 @@ public class SessionController implements AutoCloseable {
 
     private int getClientId() {
         return session.getClientId();
+    }
+
+    private static <V> V trySeveralTimes(Callable<V> operation) throws Exception {
+        Exception failure = null;
+        for (int i = 1; i <= TRY_COUNT; i++) {
+            try {
+                return operation.call();
+            } catch (Exception e) {
+                failure = e;
+            }
+        }
+        throw failure;
     }
 }
