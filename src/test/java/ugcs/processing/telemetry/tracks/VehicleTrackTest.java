@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import static com.ugcs.ucs.proto.DomainProto.Track;
 import static com.ugcs.ucs.proto.DomainProto.TrackPoint;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class VehicleTrackTest {
@@ -30,9 +31,13 @@ class VehicleTrackTest {
 
         final VehicleTrack testedVehicleTrack = new VehicleTrack(vehicle, domainVehicleTrack);
 
-        assertEquals(testedVehicleTrack.getStartEpochMilli(), 12345L);
-        assertEquals(testedVehicleTrack.getEndEpochMilli(), 54321L);
-        assertEquals(testedVehicleTrack.getId().toString(), "Flight at 1970-01-01 08:00:12");
+        assertEquals(12345L, testedVehicleTrack.getStartEpochMilli());
+        assertEquals(54321L, testedVehicleTrack.getEndEpochMilli());
+
+        assertThat(testedVehicleTrack.getId().toString())
+                .startsWith("Flight at 1970-01-01")
+                .endsWith(":12");
+
         assertEquals(testedVehicleTrack.getId().getId().toString(), "12345_54321_test_serial");
     }
 }
