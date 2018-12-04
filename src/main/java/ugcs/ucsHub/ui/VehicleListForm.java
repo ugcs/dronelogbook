@@ -10,15 +10,12 @@ import ugcs.processing.telemetry.CsvFileNameGenerator;
 import ugcs.processing.telemetry.FlightTelemetry;
 import ugcs.processing.telemetry.FlightTelemetryProcessor;
 import ugcs.processing.telemetry.tracks.VehicleTracksProcessor;
-import ugcs.ucsHub.ui.thirdparty.JSplitButton;
-import ugcs.ucsHub.ui.thirdparty.SplitButtonActionListener;
 import ugcs.upload.logbook.DroneLogBookResponse;
 import ugcs.upload.logbook.LogBookUploader;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
@@ -31,8 +28,12 @@ import java.util.concurrent.Future;
 import static java.text.MessageFormat.format;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
+import static javax.swing.BorderFactory.createCompoundBorder;
 import static javax.swing.BorderFactory.createEmptyBorder;
+import static javax.swing.BorderFactory.createEtchedBorder;
 import static javax.swing.BorderFactory.createTitledBorder;
+import static javax.swing.Box.createGlue;
+import static javax.swing.BoxLayout.X_AXIS;
 import static javax.swing.JSplitPane.HORIZONTAL_SPLIT;
 import static javax.swing.ListSelectionModel.SINGLE_SELECTION;
 import static javax.swing.SwingUtilities.invokeLater;
@@ -57,46 +58,32 @@ public class VehicleListForm extends JPanel {
     private final TelemetryDatesHighlighter datesHighlighter = new TelemetryDatesHighlighter();
     private final DatePickerPanel datePicker = new DatePickerPanel(datesHighlighter);
 
-    private final JMenuItem logoutMenuItem = new JMenuItem("Logout");
+    private final JButton logoutButton = new JButton("Logout");
 
     public VehicleListForm() {
         super(new BorderLayout());
 
         vehicleJList = new JList<>();
         reloadVehicles();
-        JPanel leftPanel = new JPanel(new BorderLayout());
+        final JPanel leftPanel = new JPanel(new BorderLayout());
         leftPanel.setBorder(BorderFactory.createBevelBorder(0));
         leftPanel.add(BorderLayout.NORTH, new JLabel("List of all vehicles:"));
         vehicleJList.setBorder(createTitledBorder(""));
         vehicleJList.setSelectionMode(SINGLE_SELECTION);
         leftPanel.add(BorderLayout.CENTER, new JScrollPane(vehicleJList));
 
-        JSplitButton vehicleListButton = new JSplitButton("Reload vehicles");
+        final JButton vehicleListButton = new JButton("Reload vehicles");
         leftPanel.add(BorderLayout.SOUTH, new JPanel().add(vehicleListButton).getParent());
-        vehicleListButton.addSplitButtonActionListener(new SplitButtonActionListener() {
-            @Override
-            public void buttonClicked(ActionEvent e) {
-                reloadVehicles();
-            }
+        vehicleListButton.addActionListener(e -> reloadVehicles());
 
-            @Override
-            public void splitButtonClicked(ActionEvent e) {
-            }
-        });
-
-        final JPopupMenu vehicleListPopupMenu = new JPopupMenu();
-        vehicleListPopupMenu.add(logoutMenuItem);
-        vehicleListButton.setPopupMenu(vehicleListPopupMenu);
-        vehicleJList.setComponentPopupMenu(vehicleListPopupMenu);
-
-        JPanel centerPanel = new JPanel(new BorderLayout());
+        final JPanel centerPanel = new JPanel(new BorderLayout());
         centerPanel.setBorder(createTitledBorder("Flight list"));
         flightTable = new FlightTablePanel();
         centerPanel.add(BorderLayout.CENTER, flightTable);
 
         this.add(BorderLayout.CENTER, new JSplitPane(HORIZONTAL_SPLIT, leftPanel, centerPanel));
 
-        JPanel bottomPanel = new JPanel(new BorderLayout());
+        final JPanel bottomPanel = new JPanel(new BorderLayout());
         final JButton uploadTelemetryButton = new JButton("Upload");
         uploadTelemetryButton.setEnabled(false);
         uploadTelemetryButton.addActionListener(event -> uploadCurrentlySelectedFlights());
@@ -110,6 +97,15 @@ public class VehicleListForm extends JPanel {
         bottomPanel.add(BorderLayout.EAST, uploadButtonPanel);
 
         this.add(BorderLayout.SOUTH, bottomPanel);
+
+        final JPanel topPanel = new JPanel();
+        topPanel.setLayout(new BoxLayout(topPanel, X_AXIS));
+        topPanel.add(logoutButton);
+        topPanel.add(createGlue());
+        topPanel.add(flightTable.createSelectAllButton());
+        topPanel.setBorder(createCompoundBorder(createEtchedBorder(), createEmptyBorder(3, 3, 3, 3)));
+
+        this.add(BorderLayout.NORTH, topPanel);
 
         flightTable.addTableChangeAction(
                 () -> uploadTelemetryButton.setEnabled(!flightTable.getSelectedFlights().isEmpty()));
@@ -126,7 +122,7 @@ public class VehicleListForm extends JPanel {
     }
 
     public void addLogoutButtonActionListener(ActionListener listener) {
-        logoutMenuItem.addActionListener(listener);
+        logoutButton.addActionListener(listener);
     }
 
     private void refreshView() {

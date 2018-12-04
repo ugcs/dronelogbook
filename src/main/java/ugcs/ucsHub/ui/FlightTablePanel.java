@@ -21,7 +21,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import static java.lang.Boolean.FALSE;
 import static java.util.Collections.emptyList;
-import static java.util.Collections.emptySet;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS;
@@ -109,13 +108,13 @@ class FlightTablePanel extends JPanel {
         public void setValueAt(Object boolValue, int rowIndex, int columnIndex) {
             if (boolValue instanceof Boolean) {
                 flightsAndSelection.get(rowIndex).setValue((Boolean) boolValue);
-
                 fireTableDataChanged();
             }
         }
 
         private void clearSelection() {
             flightsAndSelection.forEach(pair -> pair.setValue(false));
+            fireTableDataChanged();
         }
 
         Set<Flight> getSelectedFlights() {
@@ -123,6 +122,21 @@ class FlightTablePanel extends JPanel {
                     .filter(Pair::getRight)
                     .map(Pair::getLeft)
                     .collect(toSet());
+        }
+
+        boolean isAllNotUploadedFlightsSelected() {
+            return getFlightCount() > 0 && flightsAndSelection.stream()
+                    .filter(pair -> !storage().isUploaded(pair.getLeft()))
+                    .allMatch(Pair::getRight);
+        }
+
+        int getFlightCount() {
+            return flightsAndSelection.size();
+        }
+
+        void selectAllNotUploadedFlights() {
+            flightsAndSelection.forEach(pair -> pair.setValue(!storage().isUploaded(pair.getLeft())));
+            fireTableDataChanged();
         }
 
         private String flightEpochToTimeString(long epochMilli) {
@@ -194,6 +208,35 @@ class FlightTablePanel extends JPanel {
         notifyAll(tableChangeListeners);
     }
 
+    JToggleButton createSelectAllButton() {
+        final JToggleButton selectAllBtn = new JToggleButton("Select all");
+        selectAllBtn.setEnabled(false);
+
+        ThreadLocal<Boolean> selectionChangedBySelectAllBtn = new ThreadLocal<>();
+        selectionChangedBySelectAllBtn.set(false);
+
+        addTableChangeAction(() -> {
+            if (selectionChangedBySelectAllBtn.get()) {
+                selectionChangedBySelectAllBtn.set(false);
+            } else {
+                selectAllBtn.setEnabled(getTableModel().getFlightCount() > 0);
+                selectAllBtn.setSelected(getTableModel().isAllNotUploadedFlightsSelected());
+            }
+        });
+
+        selectAllBtn.addChangeListener(e -> selectAllBtn.setText(selectAllBtn.isSelected() ? "Unselect all" : "Select all"));
+        selectAllBtn.addActionListener(e -> {
+            selectionChangedBySelectAllBtn.set(true);
+            if (selectAllBtn.isSelected()) {
+                getTableModel().selectAllNotUploadedFlights();
+            } else {
+                getTableModel().clearSelection();
+            }
+        });
+
+        return selectAllBtn;
+    }
+
     private void updateExceptionView(Throwable ex) {
         errorIconLabel.setVisible(true);
         refreshButton.setVisible(true);
@@ -213,14 +256,18 @@ class FlightTablePanel extends JPanel {
         flightTable.setModel(new FlightTableModel(emptyList()));
     }
 
+    private FlightTableModel getTableModel() {
+        return flightTable.getModel() instanceof FlightTableModel
+                ? ((FlightTableModel) flightTable.getModel())
+                : new FlightTableModel(emptyList());
+    }
+
     void addTableChangeAction(Action action) {
         tableChangeListeners.add(action);
     }
 
     Set<Flight> getSelectedFlights() {
-        return flightTable.getModel() instanceof FlightTableModel
-                ? ((FlightTableModel) flightTable.getModel()).getSelectedFlights()
-                : emptySet();
+        return getTableModel().getSelectedFlights();
     }
 
     private void tableChanged(TableModelEvent e) {
