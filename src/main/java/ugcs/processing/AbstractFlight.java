@@ -6,7 +6,7 @@ import ugcs.common.identity.Identity;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import static ugcs.common.identity.Identity.generateId;
+import static ugcs.common.identity.Identity.of;
 
 /**
  * Abstract {@link Vehicle} flight implementation
@@ -27,7 +27,8 @@ public abstract class AbstractFlight implements Flight {
     }
 
     public AbstractFlight(long flightStartEpochMilli, long flightEndEpochMilli, Vehicle vehicle) {
-        this(flightStartEpochMilli, flightEndEpochMilli, vehicle, generateId(textRepresentation(flightStartEpochMilli)));
+        this(flightStartEpochMilli, flightEndEpochMilli, vehicle,
+                getIdentity(flightStartEpochMilli, flightEndEpochMilli, vehicle));
     }
 
     public AbstractFlight(Flight flight) {
@@ -56,5 +57,10 @@ public abstract class AbstractFlight implements Flight {
 
     private static String textRepresentation(long flightStartEpochMilli) {
         return "Flight at " + FLIGHT_DATE_FORMAT.format(new Date(flightStartEpochMilli));
+    }
+
+    private static Identity<String> getIdentity(long flightStartEpochMilli, long flightEndEpochMilli, Vehicle vehicle) {
+        return of(flightStartEpochMilli + "_" + flightEndEpochMilli + "_"
+                + vehicle.getSerialNumber(), textRepresentation(flightStartEpochMilli));
     }
 }
