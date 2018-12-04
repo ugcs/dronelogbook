@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static ugcs.csv.telemetry.TelemetryCsvWriter.CSV_FILE_CHARSET;
+import static ugcs.upload.service.UploadedFlightsStorage.storage;
 
 /**
  * Gateway service for LogBook service upload functionality
@@ -53,6 +54,10 @@ public class LogBookUploader {
                 .addFormField("droneName", flight.getDroneName())
                 .addFilePart("data", csvFile)
                 .performRequest();
+
+        if (droneLogBookResponse.isUploadSucceed()) {
+            storage().storeAsUploaded(flight);
+        }
 
         return new FlightUploadResponse(flight, csvFile, droneLogBookResponse);
     }

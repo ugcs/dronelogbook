@@ -70,7 +70,7 @@ public class Main {
             final VehicleListForm vehicleForm = new VehicleListForm();
             contentPane.remove(loginForm);
             contentPane.add(vehicleForm);
-            frame.setSize(750, 600);
+            frame.setSize(950, 700);
             frame.setLocationRelativeTo(null);
 
             vehicleForm.addLogoutButtonActionListener(

@@ -212,6 +212,8 @@ public class VehicleListForm extends JPanel {
                 .withMessageTemplate(" {0} of {1} flights uploaded to DroneLogBook ")
                 .waitOnFutures(uploadOperationFutures, this);
 
+        flightTable.repaint();
+
         UploadReportForm.showReport(this, uploadResults);
     }
 }

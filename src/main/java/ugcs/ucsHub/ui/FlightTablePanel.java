@@ -9,6 +9,8 @@ import ugcs.processing.Flight;
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -28,6 +30,7 @@ import static ugcs.exceptions.ExceptionsHandler.handler;
 import static ugcs.ucsHub.Settings.settings;
 import static ugcs.ucsHub.ui.RefreshButton.refresher;
 import static ugcs.ucsHub.ui.util.PresentationUtil.periodToString;
+import static ugcs.upload.service.UploadedFlightsStorage.storage;
 
 /**
  * Part of {@link VehicleListForm} representing current list of {@link Flight}s
@@ -36,6 +39,7 @@ class FlightTablePanel extends JPanel {
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
     private static final SimpleDateFormat TIME_FORMAT = new SimpleDateFormat("HH:mm:ss");
     private final static String[] columnNames = {"Upload", "Date", "Start time", "End time", "Duration"};
+    private static Color UPLOADED_FLIGHT_COLOR = Color.getHSBColor(0.269f, 0.1f, 1.0f);
 
     private final JTable flightTable = new JTable();
     private final Component flightTablePane;
@@ -90,7 +94,7 @@ class FlightTablePanel extends JPanel {
                 case 0:
                     return flightsAndSelection.get(rowIndex).getRight();
                 case 1:
-                    return flightEpochToDateString(flight.getStartEpochMilli());
+                    return formatFlightDate(flight);
                 case 2:
                     return flightEpochToTimeString(flight.getStartEpochMilli());
                 case 3:
@@ -140,6 +144,15 @@ class FlightTablePanel extends JPanel {
         private static String formatFlightDuration(Flight flight) {
             return periodToString(flight.getStartDate(), flight.getEndDate());
         }
+
+        private String formatFlightDate(Flight flight) {
+            final String dateString = flightEpochToDateString(flight.getStartEpochMilli());
+            if (!storage().isUploaded(flight)) {
+                return dateString;
+            }
+
+            return dateString + " (uploaded)";
+        }
     }
 
     FlightTablePanel() {
@@ -148,6 +161,8 @@ class FlightTablePanel extends JPanel {
         flightTablePane = new JScrollPane(flightTable);
         add(flightTablePane, BorderLayout.CENTER);
         flightTablePane.setVisible(true);
+
+        flightTable.setDefaultRenderer(Object.class, createTableCellRenderer());
 
         refreshButton = refresher().createButton();
         refreshButton.addActionListener(e -> updateMessageOnlyView("Updating flight's table..."));
@@ -210,6 +225,33 @@ class FlightTablePanel extends JPanel {
 
     private void tableChanged(TableModelEvent e) {
         notifyAll(tableChangeListeners);
+    }
+
+    private static TableCellRenderer createTableCellRenderer() {
+        return new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+
+                if (!(table.getModel() instanceof FlightTableModel)) {
+                    return this;
+                }
+
+                final FlightTableModel model = (FlightTableModel) (table.getModel());
+                final Flight flight = model.getFlight(row);
+                if (storage().isUploaded(flight) && !isSelected) {
+                    setBackground(UPLOADED_FLIGHT_COLOR);
+                } else {
+                    if (isSelected) {
+                        setBackground(table.getSelectionBackground());
+                    } else {
+                        setBackground(table.getBackground());
+                    }
+                }
+
+                return this;
+            }
+        };
     }
 
     private static void notifyAll(List<Action> actions) {
