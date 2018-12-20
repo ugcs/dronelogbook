@@ -14,6 +14,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
+import static java.awt.Color.decode;
+import static java.awt.Color.getHSBColor;
 import static java.lang.String.format;
 import static javax.swing.JOptionPane.OK_CANCEL_OPTION;
 import static javax.swing.JOptionPane.OK_OPTION;
@@ -26,8 +28,9 @@ import static ugcs.ucsHub.Settings.settings;
  * Representation for results of flights upload {@link Operation}
  */
 final class UploadReportForm extends JPanel {
-    private static Color SUCCESS_COLOR = Color.getHSBColor(0.269f, 0.1f, 1.0f);
-    private static Color WARNING_COLOR = Color.getHSBColor(0.147f, 0.14f, 1.0f);
+    private static Color SUCCESS_COLOR = getHSBColor(0.269f, 0.1f, 1.0f);
+    private static Color WARNING_COLOR = getHSBColor(0.147f, 0.14f, 1.0f);
+    private static Color ERROR_COLOR = decode("#ffcece");
 
     private final Collection<Operation<Identity<?>, DroneLogBookResponse>> uploadResponses;
 
@@ -122,6 +125,7 @@ final class UploadReportForm extends JPanel {
     private void formReport() {
         uploadResponses.forEach(operationResult -> {
             final JPanel reportRow = new JPanel();
+            reportRow.setLayout(new BoxLayout(reportRow, BoxLayout.X_AXIS));
 
             final String identityTextRepresentation = operationResult.getId().toString();
             final String statusString = operationStatusString(operationResult);
@@ -132,6 +136,7 @@ final class UploadReportForm extends JPanel {
 
             operationResult.getError().ifPresent(error -> formReportRow(error, reportRow));
 
+            reportRow.add(Box.createHorizontalGlue());
             this.add(reportRow);
         });
     }
@@ -150,6 +155,7 @@ final class UploadReportForm extends JPanel {
 
     private void formReportRow(Throwable error, JPanel rowContainer) {
         rowContainer.add(new JLabel(error.getMessage()));
+        rowContainer.setBackground(ERROR_COLOR);
     }
 
     private Color getResponseColor(DroneLogBookResponse droneLogBookResponse) {
