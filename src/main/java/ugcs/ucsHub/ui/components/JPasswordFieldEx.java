@@ -9,6 +9,7 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 
 import static javax.swing.SwingUtilities.invokeLater;
+import static org.apache.commons.lang3.StringUtils.isEmpty;
 
 /**
  * Extended version of {@link JPasswordField} which shows only fixed count of echo chars instead of password-sized
@@ -16,6 +17,8 @@ import static javax.swing.SwingUtilities.invokeLater;
  */
 public class JPasswordFieldEx extends JPasswordField {
     private final static int DEFAULT_ECHO_CHARS_COUNT = 6;
+
+    private final static char[] EMPTY_PASSWORD = new char[0];
 
     private final char[] dummyPassword;
     private final String dummyPasswordStr;
@@ -46,7 +49,7 @@ public class JPasswordFieldEx extends JPasswordField {
 
         this.dummyPassword = new char[echoCharsCount];
         this.dummyPasswordStr = new String(dummyPassword);
-        this.setText(dummyPasswordStr);
+        this.setText(getDummyPasswordStr());
 
         this.addFocusListener(new FocusListener() {
             @Override
@@ -84,12 +87,12 @@ public class JPasswordFieldEx extends JPasswordField {
 
     @Override
     public String getText() {
-        return dummyPasswordStr;
+        return getDummyPasswordStr();
     }
 
     @Override
     public char[] getPassword() {
-        return dummyPassword;
+        return getDummyPasswordChars();
     }
 
     private void setTextWithoutPasswordUpdate(String text) {
@@ -105,5 +108,17 @@ public class JPasswordFieldEx extends JPasswordField {
             isPasswordChangedByUser = true;
             currentPassword = new String(super.getPassword());
         }
+    }
+
+    private boolean isCurrentPasswordEmpty() {
+        return isEmpty(getCurrentPassword());
+    }
+
+    private char[] getDummyPasswordChars() {
+        return isCurrentPasswordEmpty() ? EMPTY_PASSWORD : dummyPassword;
+    }
+
+    private String getDummyPasswordStr() {
+        return isCurrentPasswordEmpty() ? "" : dummyPasswordStr;
     }
 }

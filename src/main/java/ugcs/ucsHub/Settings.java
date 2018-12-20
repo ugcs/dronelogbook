@@ -36,7 +36,7 @@ public final class Settings implements SessionSettings {
     private final static String DEFAULT_UCS_PASSWORD = "";
 
     private final static String DEFAULT_UPLOAD_SERVER_URL = "https://www.dronelogbook.com/webservices/importFlight-ugcs.php";
-    private final static String DEFAULT_UPLOAD_SERVER_LOGIN = "undefined";
+    private final static String DEFAULT_UPLOAD_SERVER_LOGIN = "";
     private final static String DEFAULT_UPLOAD_SERVER_PASSWORD = "";
     private final static String DEFAULT_UPLOADED_FILE_FOLDER = "uploaded";
 
