@@ -125,7 +125,7 @@ final class UploadReportForm extends JPanel {
 
             final String identityTextRepresentation = operationResult.getId().toString();
             final String statusString = operationStatusString(operationResult);
-            reportRow.add(new JLabel(format("%s - %s:", identityTextRepresentation, statusString)));
+            reportRow.add(new JLabel(format("[ %s ] - %s:", identityTextRepresentation, statusString)));
 
             operationResult.getResult()
                     .ifPresent(uploadResponse -> formReportRow(uploadResponse, reportRow));
@@ -137,9 +137,14 @@ final class UploadReportForm extends JPanel {
     }
 
     private void formReportRow(DroneLogBookResponse droneLogBookResponse, JPanel rowContainer) {
-        final String description = droneLogBookResponse.getDescription().orElse("No description.");
+        final String description = droneLogBookResponse.getDescription()
+                .map(String::trim)
+                .map(s -> s.endsWith(".") ? s : s.concat("."))
+                .orElse("No description.");
+
         rowContainer.add(new JLabel(description));
-        droneLogBookResponse.getUrl().ifPresent(url -> rowContainer.add(new JHyperlink(url, "click to view on LogBook")));
+        droneLogBookResponse.getUrl()
+                .ifPresent(url -> rowContainer.add(new JHyperlink(url, "Click to view on DroneLogBook.")));
         rowContainer.setBackground(getResponseColor(droneLogBookResponse));
     }
 
