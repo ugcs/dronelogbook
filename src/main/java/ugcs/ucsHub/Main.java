@@ -25,7 +25,7 @@ import static ugcs.upload.logbook.FlightUploadPerformerFactory.performerFactory;
  */
 public class Main {
     public static void main(String[] args) {
-        JFrame frame = new JFrame("UCS Hub " + settings().getProductVersion());
+        JFrame frame = new JFrame("Telemetry Sync Tool " + settings().getProductVersion());
 
         final Container contentPane = frame.getContentPane();
 
