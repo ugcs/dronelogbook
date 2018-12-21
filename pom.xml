@@ -30,7 +30,7 @@
         </windows.exe.distribution.directory>
         <windows.exe.path>${windows.exe.distribution.directory}/${distribution.name}.exe</windows.exe.path>
 
-        <mac.app.resources>src/main/osx/app</mac.app.resources>
+        <mac.app.resources>${project.basedir}/src/main/osx/app</mac.app.resources>
         <mac.app.build.directory>${project.build.directory}/mac_build</mac.app.build.directory>
         <mac.app.build.path>${mac.app.build.directory}/${project.artifactId}.app</mac.app.build.path>
         <mac.app.distribution.directory>${project.distribution.directory}/mac-application</mac.app.distribution.directory>
