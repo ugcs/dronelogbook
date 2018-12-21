@@ -59,7 +59,7 @@ public class Main {
 
             waitForm().waitOnAction("Connecting to UgCS...", sessionController()::connect, loginForm);
 
-            waitForm().waitOnCallable("Connecting to LogBook...", () ->
+            waitForm().waitOnCallable("Connecting to DroneLogBook...", () ->
                             new MultipartUtility(settings().getUploadServerUrl())
                                     .withCredentials(settings().getUploadServerLogin(), settings().getUploadServerPassword())
                                     .authorizationTestOnly()

@@ -6,7 +6,7 @@ public class LogBookAuthorizationFailed extends ExpectedException {
     static String INCORRECT_CREDENTIALS_MESSAGE = "Incorrect DroneLogbook username or password. Please try again.";
 
     public LogBookAuthorizationFailed() {
-        super("LogBook login failed.");
+        super("DroneLogBook login failed.");
     }
 
     public LogBookAuthorizationFailed(String message) {
@@ -24,6 +24,6 @@ public class LogBookAuthorizationFailed extends ExpectedException {
             return INCORRECT_CREDENTIALS_MESSAGE;
         }
 
-        return "LogBook login failed: " + message;
+        return "DroneLogBook login failed: " + message;
     }
 }

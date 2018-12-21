@@ -13,7 +13,7 @@ import static java.awt.FlowLayout.RIGHT;
 import static ugcs.ucsHub.Settings.settings;
 
 /**
- * Login form for UCS and LogBook services
+ * Login form for UCS and DroneLogBook services
  */
 public class LoginForm extends JPanel {
     private final JTextField loginField = new JTextField(settings().getUcsServerLogin(), 25);
@@ -42,12 +42,12 @@ public class LoginForm extends JPanel {
         centerPanel.add(passwordPanel);
 
         final JPanel loginDlbPanel = new JPanel(new BorderLayout());
-        loginDlbPanel.add(alignLeft(new JLabel("LogBook login:")), WEST);
+        loginDlbPanel.add(alignLeft(new JLabel("DroneLogBook login:")), WEST);
         loginDlbPanel.add(alignRight(loginDlbField), CENTER);
         centerPanel.add(loginDlbPanel);
 
         final JPanel passwordDlbPanel = new JPanel(new BorderLayout());
-        passwordDlbPanel.add(alignLeft(new JLabel("LogBook password:")), WEST);
+        passwordDlbPanel.add(alignLeft(new JLabel("DroneLogBook password:")), WEST);
         passwordDlbPanel.add(alignRight(passwordDlbField), CENTER);
         centerPanel.add(passwordDlbPanel);
 

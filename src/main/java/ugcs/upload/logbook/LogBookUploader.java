@@ -14,7 +14,7 @@ import static ugcs.csv.telemetry.TelemetryCsvWriter.CSV_FILE_CHARSET;
 import static ugcs.upload.service.UploadedFlightsStorage.storage;
 
 /**
- * Gateway service for LogBook service upload functionality
+ * Gateway service for DroneLogBook service upload functionality
  */
 public class LogBookUploader {
     private static final List<String> FIELD_CODES = Arrays.asList(

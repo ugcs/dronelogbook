@@ -147,10 +147,10 @@ public class MultipartUtility {
                     }
                     throw new LogBookAuthorizationFailed();
                 default:
-                    throw new ExpectedException("Uploading data to LogBook failed.");
+                    throw new ExpectedException("Uploading data to DroneLogBook failed.");
             }
         } catch (IOException connectException) {
-            throw new ExpectedException("LogBook service unavailable.", connectException);
+            throw new ExpectedException("DroneLogBook service unavailable.", connectException);
         } finally {
             httpConn.disconnect();
             writer.close();

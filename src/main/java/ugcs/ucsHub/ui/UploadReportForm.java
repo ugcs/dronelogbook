@@ -88,7 +88,7 @@ final class UploadReportForm extends JPanel {
     private void formAuthorizationFailedReport() {
         final JPanel reportRow = new JPanel();
 
-        reportRow.add(new JLabel("LogBook authorization failed."));
+        reportRow.add(new JLabel("DroneLogBook authorization failed."));
 
         final JLabel changeCredentialsLabel =
                 new JLabel(format("<html><a href=\\\"_\\\">%s</a></html>", "click to change credentials"));
@@ -108,14 +108,14 @@ final class UploadReportForm extends JPanel {
         final JPanel mainPanel = new JPanel(new GridLayout(0, 1));
 
         final JTextField loginDlbField = new JTextField(settings().getUploadServerLogin(), 25);
-        mainPanel.add(new JLabel("LogBook login:"));
+        mainPanel.add(new JLabel("DroneLogBook login:"));
         mainPanel.add(new JPanel().add(loginDlbField).getParent());
 
         final JTextField passwordDlbField = new JPasswordField(settings().getUploadServerPassword(), 25);
-        mainPanel.add(new JLabel("LogBook password:"));
+        mainPanel.add(new JLabel("DroneLogBook password:"));
         mainPanel.add(new JPanel().add(passwordDlbField).getParent());
 
-        final int dialogResult = showConfirmDialog(this, mainPanel, "LogBook credentials", OK_CANCEL_OPTION);
+        final int dialogResult = showConfirmDialog(this, mainPanel, "DroneLogBook credentials", OK_CANCEL_OPTION);
         if (dialogResult == OK_OPTION) {
             settings().storeUploadServerLogin(loginDlbField.getText());
             settings().storeUploadServerPassword(passwordDlbField.getText());
