@@ -8,7 +8,7 @@ This is a tool to import telemetry data from [UgCS](www.ugcs.com) to [DroneLogbo
 ## Getting pre-built release distribution
 1. Download the [latest](https://github.com/ugcs/dronelogbook/releases/latest) release distribution as executable jar-file (or go to the [release page](https://github.com/ugcs/dronelogbook/releases) if you want a different one).
 
-2. Run `telemetrySyncTool-1.2.jar` (in Linux you may have to add execution permissions on jar-file).
+2. Run `telemetrySyncTool-1.3.jar` (in Linux you may have to add execution permissions on jar-file).
 
 3. All configurations are available through `client.properties` file located in `<user_home>/.dronelogbook` _application data folder_ (e. g. for Windows it is `C:\Users\<user_name>\.dronelogbook`).
 
@@ -23,7 +23,7 @@ This is a tool to import telemetry data from [UgCS](www.ugcs.com) to [DroneLogbo
 ```bash
 mvnw clean package
 ```
-* after successful build you'll find executable `telemetrySyncTool-1.2.jar` application in `distr/multi-platform` directory
+* after successful build you'll find executable `telemetrySyncTool-1.3.jar` application in `distr/multi-platform` directory
 * for Windows you may use `ditr/windows-executable/telemetrySyncTool.exe`
 
 ## Connection with UgCS
