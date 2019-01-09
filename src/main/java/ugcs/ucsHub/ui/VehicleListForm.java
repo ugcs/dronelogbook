@@ -145,8 +145,19 @@ public class VehicleListForm extends JPanel {
 
     private void reloadVehicles() {
         vehicleMap = sessionController().getVehicles().stream()
-                .collect(toMap(v -> format("{0}-{1}", v.getName(), v.getSerialNumber()), v -> v));
+                .collect(toMap(this::getDisplayableName, v -> v));
         vehicleJList.setListData(vehicleMap.keySet().toArray(new String[0]));
+    }
+
+    private String getDisplayableName(Vehicle vehicle) {
+        final String name = vehicle.getName().trim();
+        final String serialNumber = vehicle.getSerialNumber().trim();
+
+        if (name.contains(serialNumber)) {
+            return name;
+        }
+
+        return format("{0}-{1}", name, serialNumber);
     }
 
     private ZonedDateTime getSelectedStartTime() {
