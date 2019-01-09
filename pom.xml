@@ -352,14 +352,16 @@
                                 <resource>
                                     <directory>${mac.app.resources}</directory>
                                     <includes>
-                                        <include>Info.plist</include>
+                                        <include>**/Info.plist</include>
+                                        <include>**/launcher.sh</include>
                                     </includes>
                                     <filtering>true</filtering>
                                 </resource>
                                 <resource>
                                     <directory>${mac.app.resources}</directory>
                                     <excludes>
-                                        <exclude>Info.plist</exclude>
+                                        <exclude>**/Info.plist</exclude>
+                                        <exclude>**/launcher.sh</exclude>
                                     </excludes>
                                 </resource>
                             </resources>
