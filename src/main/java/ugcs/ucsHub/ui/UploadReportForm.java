@@ -145,7 +145,8 @@ final class UploadReportForm extends JPanel {
         final String description = droneLogBookResponse.getDescription()
                 .map(String::trim)
                 .map(s -> s.endsWith(".") ? s : s.concat("."))
-                .orElse("No description.");
+                .map(s -> s.concat(" "))
+                .orElse("No description. ");
 
         rowContainer.add(new JLabel(description));
         droneLogBookResponse.getUrl()

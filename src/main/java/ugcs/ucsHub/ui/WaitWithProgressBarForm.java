@@ -12,6 +12,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static java.awt.Color.decode;
 import static java.text.MessageFormat.format;
 import static java.util.stream.Collectors.toList;
 import static javax.swing.BorderFactory.createEmptyBorder;
@@ -23,9 +24,12 @@ import static ugcs.ucsHub.Settings.settings;
 public class WaitWithProgressBarForm extends JDialog {
 
     private static String DEFAULT_MESSAGE_TEMPLATE = "{0} of {1} completed";
+    private static Color PROGRESS_COLOR = decode("0x74BD44");
 
     private final JProgressBar progressBar;
     private final AtomicInteger progressCounter = new AtomicInteger(0);
+
+    private final JLabel progressLabel;
 
     private int totalCount = 1;
     private String messageTemplate = DEFAULT_MESSAGE_TEMPLATE;
@@ -38,12 +42,12 @@ public class WaitWithProgressBarForm extends JDialog {
         setTitle("Please wait...");
         JPanel mainPanel = new JPanel(new BorderLayout());
 
-        JPanel progressBarPanel = new JPanel();
-        progressBarPanel.setBorder(createEmptyBorder(0, 10, 10, 10));
+        JPanel progressBarPanel = new JPanel(new BorderLayout());
+        progressBarPanel.setBorder(createEmptyBorder(0, 5, 0, 5));
         progressBar = new JProgressBar();
-        progressBarPanel.add(progressBar);
-        mainPanel.add(progressBarPanel, BorderLayout.SOUTH);
-        progressBar.setStringPainted(true);
+        progressBarPanel.add(progressBar, BorderLayout.CENTER);
+        mainPanel.add(progressBarPanel, BorderLayout.CENTER);
+        progressBar.setStringPainted(false);
         progressBar.setUI(new BasicProgressBarUI() {
             @Override
             protected Color getSelectionForeground() {
@@ -55,10 +59,13 @@ public class WaitWithProgressBarForm extends JDialog {
                 return Color.BLACK;
             }
         });
+        progressBar.setForeground(PROGRESS_COLOR);
+
+        progressLabel = new JLabel();
+        mainPanel.add(new JPanel().add(progressLabel).getParent(), BorderLayout.SOUTH);
 
         JLabel loadingIcon = new JLabel("", settings().getLoadingIcon(), SwingConstants.CENTER);
-        mainPanel.add(new JPanel().add(loadingIcon).getParent(), BorderLayout.CENTER);
-
+        mainPanel.add(new JPanel().add(loadingIcon).getParent(), BorderLayout.NORTH);
 
         add(mainPanel);
 
@@ -117,7 +124,11 @@ public class WaitWithProgressBarForm extends JDialog {
         SwingUtilities.invokeLater(() -> {
             final int progress = progressCounter.addAndGet(updateCounterDelta);
             progressBar.setValue(progress);
-            progressBar.setString(format(messageTemplate, progress, totalCount));
+
+            final String message = format(messageTemplate, progress, totalCount);
+            progressBar.setString(message);
+            progressLabel.setText(message);
+
             pack();
             setLocationRelativeTo(parentOrNull);
         });
