@@ -14,9 +14,9 @@ import static ugcs.csv.telemetry.TelemetryCsvWriter.CSV_FILE_CHARSET;
 import static ugcs.upload.service.UploadedFlightsStorage.storage;
 
 /**
- * Gateway service for DroneLogBook service upload functionality
+ * Gateway service for DroneLogbook service upload functionality
  */
-public class LogBookUploader {
+public class LogbookUploader {
     private static final List<String> FIELD_CODES = Arrays.asList(
             "Time",
             "latitude",
@@ -31,7 +31,7 @@ public class LogBookUploader {
     private final String login;
     private final String rawPasswordOrMd5Hash;
 
-    public LogBookUploader(String serverUrl, String login, String rawPasswordOrMd5Hash) {
+    public LogbookUploader(String serverUrl, String login, String rawPasswordOrMd5Hash) {
         this.serverUrl = serverUrl;
         this.login = login;
         this.rawPasswordOrMd5Hash = rawPasswordOrMd5Hash;
@@ -48,17 +48,17 @@ public class LogBookUploader {
             );
         }
 
-        final DroneLogBookResponse droneLogBookResponse = new MultipartUtility(serverUrl, CSV_FILE_CHARSET.displayName())
+        final DroneLogbookResponse droneLogbookResponse = new MultipartUtility(serverUrl, CSV_FILE_CHARSET.displayName())
                 .withCredentials(login, rawPasswordOrMd5Hash)
                 .addFormField("droneId", flight.getDroneSerialNumber())
                 .addFormField("droneName", flight.getDroneName())
                 .addFilePart("data", csvFile)
                 .performRequest();
 
-        if (droneLogBookResponse.isUploadSucceed()) {
+        if (droneLogbookResponse.isUploadSucceed()) {
             storage().storeAsUploaded(flight);
         }
 
-        return new FlightUploadResponse(flight, csvFile, droneLogBookResponse);
+        return new FlightUploadResponse(flight, csvFile, droneLogbookResponse);
     }
 }

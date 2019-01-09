@@ -302,11 +302,11 @@
                                 <fileVersion>${project.version}.0.0</fileVersion>
                                 <txtFileVersion>${project.version}</txtFileVersion>
                                 <companyName>-</companyName>
-                                <fileDescription>DroneLogBook telemetry uploader</fileDescription>
+                                <fileDescription>DroneLogbook telemetry uploader</fileDescription>
                                 <copyright>Copyright © 2018</copyright>
                                 <productVersion>${project.version}.0.0</productVersion>
                                 <txtProductVersion>${project.version}</txtProductVersion>
-                                <productName>DroneLogBook uploader</productName>
+                                <productName>DroneLogbook uploader</productName>
                                 <internalName>${distribution.name}</internalName>
                                 <originalFilename>${distribution.name}.exe</originalFilename>
                             </versionInfo>

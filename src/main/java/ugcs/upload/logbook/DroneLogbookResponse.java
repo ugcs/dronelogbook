@@ -3,7 +3,7 @@ package ugcs.upload.logbook;
 import lombok.ToString;
 import org.json.JSONObject;
 import ugcs.common.operation.Operation;
-import ugcs.exceptions.logbook.LogBookAuthorizationFailed;
+import ugcs.exceptions.logbook.LogbookAuthorizationFailed;
 
 import java.util.List;
 import java.util.Optional;
@@ -18,7 +18,7 @@ import static java.util.Optional.ofNullable;
  * @see FlightUploadPerformerFactory
  */
 @ToString
-public class DroneLogBookResponse {
+public class DroneLogbookResponse {
     private final static int UNDEFINED_STATUS_VALUE = -1;
     private final static int WRONG_EMAIL_STATUS_VALUE = 1;
     private final static int WRONG_PASSWORD_STATUS_VALUE = 2;
@@ -31,21 +31,21 @@ public class DroneLogBookResponse {
 
     private final String url;
 
-    static DroneLogBookResponse fromList(List<String> stringList) {
+    static DroneLogbookResponse fromList(List<String> stringList) {
         final Matcher matcher = JSON_OBJECT_PATTERN.matcher(String.join(" ", stringList));
         if (matcher.find()) {
-            return new DroneLogBookResponse(new JSONObject(matcher.group()));
+            return new DroneLogbookResponse(new JSONObject(matcher.group()));
         }
-        return new DroneLogBookResponse();
+        return new DroneLogbookResponse();
     }
 
-    private DroneLogBookResponse(JSONObject jsonObject) {
+    private DroneLogbookResponse(JSONObject jsonObject) {
         this.status = jsonObject.has("status") ? jsonObject.getInt("status") : UNDEFINED_STATUS_VALUE;
         this.description = jsonObject.has("description") ? jsonObject.getString("description") : null;
         this.url = jsonObject.has("url") ? jsonObject.getString("url") : null;
     }
 
-    private DroneLogBookResponse() {
+    private DroneLogbookResponse() {
         this.status = UNDEFINED_STATUS_VALUE;
         this.description = null;
         this.url = null;
@@ -74,8 +74,8 @@ public class DroneLogBookResponse {
     public void assertAuthorizationSucceed() {
         if (isAuthorizationFailed()) {
             throw getDescription()
-                    .map(LogBookAuthorizationFailed::new)
-                    .orElseGet(LogBookAuthorizationFailed::new);
+                    .map(LogbookAuthorizationFailed::new)
+                    .orElseGet(LogbookAuthorizationFailed::new);
         }
     }
 

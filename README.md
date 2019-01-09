@@ -38,7 +38,7 @@ server.password=ugcs_password
 ```
 
 
-## Uploading telemetry data to DroneLogBook 
+## Uploading telemetry data to DroneLogbook 
 
 Firstly, you will need www.dronelogbook.com account information added to `client.properties` file:
 

@@ -2,14 +2,14 @@ package ugcs.exceptions.logbook;
 
 import ugcs.exceptions.ExpectedException;
 
-public class LogBookAuthorizationFailed extends ExpectedException {
+public class LogbookAuthorizationFailed extends ExpectedException {
     static String INCORRECT_CREDENTIALS_MESSAGE = "Incorrect DroneLogbook username or password. Please try again.";
 
-    public LogBookAuthorizationFailed() {
-        super("DroneLogBook login failed.");
+    public LogbookAuthorizationFailed() {
+        super("DroneLogbook login failed.");
     }
 
-    public LogBookAuthorizationFailed(String message) {
+    public LogbookAuthorizationFailed(String message) {
         super(getAuthorizationFailedMessage(message));
     }
 
@@ -24,6 +24,6 @@ public class LogBookAuthorizationFailed extends ExpectedException {
             return INCORRECT_CREDENTIALS_MESSAGE;
         }
 
-        return "DroneLogBook login failed: " + message;
+        return "DroneLogbook login failed: " + message;
     }
 }

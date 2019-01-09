@@ -10,25 +10,25 @@ import java.nio.file.Path;
 /**
  * Result for flight upload operation
  *
- * @see LogBookUploader#uploadFlight
+ * @see LogbookUploader#uploadFlight
  */
 public class FlightUploadResponse {
     private final FlightTelemetry flightTelemetry;
     private final File flightFile;
-    private final DroneLogBookResponse droneLogBookResponse;
+    private final DroneLogbookResponse droneLogbookResponse;
 
-    FlightUploadResponse(FlightTelemetry flightTelemetry, File flightFile, DroneLogBookResponse droneLogBookResponse) {
+    FlightUploadResponse(FlightTelemetry flightTelemetry, File flightFile, DroneLogbookResponse droneLogbookResponse) {
         this.flightTelemetry = flightTelemetry;
         this.flightFile = flightFile;
-        this.droneLogBookResponse = droneLogBookResponse;
+        this.droneLogbookResponse = droneLogbookResponse;
     }
 
     public FlightTelemetry getFlightTelemetry() {
         return flightTelemetry;
     }
 
-    public DroneLogBookResponse getDroneLogBookResponse() {
-        return droneLogBookResponse;
+    public DroneLogbookResponse getDroneLogbookResponse() {
+        return droneLogbookResponse;
     }
 
     @SneakyThrows

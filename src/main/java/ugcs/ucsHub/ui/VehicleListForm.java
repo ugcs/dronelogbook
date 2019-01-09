@@ -10,8 +10,8 @@ import ugcs.processing.telemetry.CsvFileNameGenerator;
 import ugcs.processing.telemetry.FlightTelemetry;
 import ugcs.processing.telemetry.FlightTelemetryProcessor;
 import ugcs.processing.telemetry.tracks.VehicleTracksProcessor;
-import ugcs.upload.logbook.DroneLogBookResponse;
-import ugcs.upload.logbook.LogBookUploader;
+import ugcs.upload.logbook.DroneLogbookResponse;
+import ugcs.upload.logbook.LogbookUploader;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -172,13 +172,13 @@ public class VehicleListForm extends JPanel {
         return datePicker.getSelectedFlightsLimit();
     }
 
-    private DroneLogBookResponse uploadFlightTelemetry(FlightTelemetry flightTelemetry) {
+    private DroneLogbookResponse uploadFlightTelemetry(FlightTelemetry flightTelemetry) {
         final String url = settings().getUploadServerUrl();
         final Path pathForUploadedFiles = settings().getUploadedFlightsPath();
-        return new LogBookUploader(url, settings().getUploadServerLogin(), settings().getUploadServerPassword())
+        return new LogbookUploader(url, settings().getUploadServerLogin(), settings().getUploadServerPassword())
                 .uploadFlight(flightTelemetry)
                 .storeFlightTelemetry(new CsvFileNameGenerator(pathForUploadedFiles, flightTelemetry).generateUnique())
-                .getDroneLogBookResponse();
+                .getDroneLogbookResponse();
     }
 
     private static void saveTelemetry(FlightTelemetryProcessor flightTelemetryProcessor, Flight flight) {
@@ -189,7 +189,7 @@ public class VehicleListForm extends JPanel {
                 flightTelemetryProcessor.getAllFieldCodes());
     }
 
-    private Future<Operation<Identity<?>, DroneLogBookResponse>> submitFlightForUploading(Flight flight) {
+    private Future<Operation<Identity<?>, DroneLogbookResponse>> submitFlightForUploading(Flight flight) {
         return performerFactory().getUploadPerformer().submit(flight.getId(), () -> {
             final FlightTelemetryProcessor flightTelemetryProcessor = new FlightTelemetryProcessor(flight);
 
@@ -211,12 +211,12 @@ public class VehicleListForm extends JPanel {
     private void uploadCurrentlySelectedFlights() {
         final Set<? extends Flight> selectedFlights = flightTable.getSelectedFlights();
 
-        final List<Future<Operation<Identity<?>, DroneLogBookResponse>>> uploadOperationFutures = selectedFlights.stream()
+        final List<Future<Operation<Identity<?>, DroneLogbookResponse>>> uploadOperationFutures = selectedFlights.stream()
                 .map(this::submitFlightForUploading)
                 .collect(toList());
 
-        final List<Operation<Identity<?>, DroneLogBookResponse>> uploadResults = waitWithProgressBarForm()
-                .withMessageTemplate(" {0} of {1} flights uploaded to DroneLogBook ")
+        final List<Operation<Identity<?>, DroneLogbookResponse>> uploadResults = waitWithProgressBarForm()
+                .withMessageTemplate(" {0} of {1} flights uploaded to DroneLogbook ")
                 .waitOnFutures(uploadOperationFutures, this);
 
         flightTable.repaint();

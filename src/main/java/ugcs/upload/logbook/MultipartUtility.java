@@ -3,7 +3,7 @@ package ugcs.upload.logbook;
 import lombok.SneakyThrows;
 import ugcs.common.security.MD5HashCalculator;
 import ugcs.exceptions.ExpectedException;
-import ugcs.exceptions.logbook.LogBookAuthorizationFailed;
+import ugcs.exceptions.logbook.LogbookAuthorizationFailed;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -126,8 +126,8 @@ public class MultipartUtility {
         writer.flush();
     }
 
-    public DroneLogBookResponse performRequest() {
-        return DroneLogBookResponse.fromList(perform());
+    public DroneLogbookResponse performRequest() {
+        return DroneLogbookResponse.fromList(perform());
     }
 
     private List<String> perform() {
@@ -145,12 +145,12 @@ public class MultipartUtility {
                     if (isAuthorisationTest) {
                         return readAllStrings(httpConn.getErrorStream());
                     }
-                    throw new LogBookAuthorizationFailed();
+                    throw new LogbookAuthorizationFailed();
                 default:
-                    throw new ExpectedException("Uploading data to DroneLogBook failed.");
+                    throw new ExpectedException("Uploading data to DroneLogbook failed.");
             }
         } catch (IOException connectException) {
-            throw new ExpectedException("DroneLogBook service unavailable.", connectException);
+            throw new ExpectedException("DroneLogbook service unavailable.", connectException);
         } finally {
             httpConn.disconnect();
             writer.close();
