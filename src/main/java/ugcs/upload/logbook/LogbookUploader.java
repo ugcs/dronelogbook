@@ -55,7 +55,7 @@ public class LogbookUploader {
                 .addFilePart("data", csvFile)
                 .performRequest();
 
-        if (droneLogbookResponse.isUploadSucceed()) {
+        if (droneLogbookResponse.isUploadSucceed() || droneLogbookResponse.isFlightDuplicated()) {
             storage().storeAsUploaded(flight);
         }
 

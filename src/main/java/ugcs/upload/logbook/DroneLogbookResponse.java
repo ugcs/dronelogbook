@@ -71,6 +71,12 @@ public class DroneLogbookResponse {
         return getUrl().isPresent();
     }
 
+    public boolean isFlightDuplicated() {
+        return isWarning() && getDescription()
+                .filter(s -> s.contains("Duplicate") && s.contains("file"))
+                .isPresent();
+    }
+
     public void assertAuthorizationSucceed() {
         if (isAuthorizationFailed()) {
             throw getDescription()

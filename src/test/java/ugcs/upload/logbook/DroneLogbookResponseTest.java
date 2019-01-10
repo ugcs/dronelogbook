@@ -13,19 +13,36 @@ class DroneLogbookResponseTest {
     void testSuccessResponse() {
         final ArrayList<String> droneLogbookSuccessResponseStub =
                 list("  { " +
-                        "\"status\": 1, " +
+                        "\"status\": 0, " +
                         "\"description\": \"Test description.\", " +
                         "\"url\": \"http:\\\\\\\\host:port?some_var=some_val%12\"" +
                         "}   ");
 
         final DroneLogbookResponse droneLogbookResponse = fromList(droneLogbookSuccessResponseStub);
 
-        assertThat(droneLogbookResponse.getStatus()).isEqualTo(1);
+        assertThat(droneLogbookResponse.getStatus()).isEqualTo(0);
         assertThat(droneLogbookResponse.getDescription().isPresent()).isTrue();
         assertThat(droneLogbookResponse.getDescription().get()).isEqualTo("Test description.");
         assertThat(droneLogbookResponse.getUrl().isPresent()).isTrue();
         assertThat(droneLogbookResponse.getUrl().get()).isEqualTo("http:\\\\host:port?some_var=some_val%12");
         assertThat(droneLogbookResponse.isWarning()).isFalse();
         assertThat(droneLogbookResponse.isUploadSucceed()).isTrue();
+        assertThat(droneLogbookResponse.isFlightDuplicated()).isFalse();
+    }
+
+    @Test
+    void testFlightDuplicationResponse() {
+        final ArrayList<String> droneLogbookDuplicateFlightResponse =
+                list("{\"status\":0,\"description\":\"Duplicate file\"}");
+
+        final DroneLogbookResponse droneLogbookResponse = fromList(droneLogbookDuplicateFlightResponse);
+
+        assertThat(droneLogbookResponse.getStatus()).isEqualTo(0);
+        assertThat(droneLogbookResponse.getDescription().isPresent()).isTrue();
+        assertThat(droneLogbookResponse.getDescription().get()).isEqualTo("Duplicate file");
+        assertThat(droneLogbookResponse.getUrl().isPresent()).isFalse();
+        assertThat(droneLogbookResponse.isWarning()).isTrue();
+        assertThat(droneLogbookResponse.isUploadSucceed()).isFalse();
+        assertThat(droneLogbookResponse.isFlightDuplicated()).isTrue();
     }
 }
