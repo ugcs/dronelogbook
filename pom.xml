@@ -4,7 +4,7 @@
     <groupId>UgCS</groupId>
     <artifactId>telemetrySyncTool</artifactId>
     <packaging>jar</packaging>
-    <version>1.3</version>
+    <version>1.3.1</version>
     <name>Telemetry Sync Tool</name>
     <url>https://github.com/ugcs/dronelogbook.git</url>
 
@@ -299,12 +299,12 @@
                                 <maxHeapSize>${jvm.max.heap.size.mb}</maxHeapSize>
                             </jre>
                             <versionInfo>
-                                <fileVersion>${project.version}.0.0</fileVersion>
+                                <fileVersion>${project.version}.0</fileVersion>
                                 <txtFileVersion>${project.version}</txtFileVersion>
                                 <companyName>-</companyName>
                                 <fileDescription>DroneLogbook telemetry uploader</fileDescription>
                                 <copyright>Copyright © 2018</copyright>
-                                <productVersion>${project.version}.0.0</productVersion>
+                                <productVersion>${project.version}.0</productVersion>
                                 <txtProductVersion>${project.version}</txtProductVersion>
                                 <productName>DroneLogbook uploader</productName>
                                 <internalName>${distribution.name}</internalName>
