@@ -10,7 +10,7 @@ This is a tool to import telemetry data from [UgCS](www.ugcs.com) to [DroneLogbo
 
 2. Run `telemetrySyncTool-1.3.1.jar` (in Linux you may have to add execution permissions on jar-file).
 
-3. All configurations are available through `client.properties` file located in `<user_home>/.dronelogbook` _application data folder_ (e. g. for Windows it is `C:\Users\<user_name>\.dronelogbook`).
+3. All configurations are available through `client.properties` file located in `<user_home>/.dronelogbook` _application data folder_ (e. g. `~/.dronelogbook` for Linux/Mac and `C:\Users\<user_name>\.dronelogbook` for Windows).
 
 > **Note**: To enable telemetry logging for emulators add the following line to the `<path to UgCS installation>\server\ucs\ucs.properties` file:
 > ```properties
@@ -19,17 +19,34 @@ This is a tool to import telemetry data from [UgCS](www.ugcs.com) to [DroneLogbo
 
 ## Building application from sources
 * Download sources from the repository
-* Change to the directory where `pom.xml` is located and run the command (JDK version 8 or higher is required):
+* Change to the directory where `pom.xml` is located and run the command ([JDK version 8](https://jdk.java.net/8/) or higher is required):
 ```bash
+# Linux/Mac:
+./mvnw clean package
+```
+```cmd
+# Windows:
 mvnw clean package
 ```
+
+>**Note**: For Maven to work you'll need to set up `JAVA_HOME` environment variable:
+```bash
+# Linux/Mac:
+echo "export JAVA_HOME=/path/to/jdk/root/directory" >> ~/.bash_profile
+```
+```cmd
+# Windows:
+setx -m JAVA_HOME "C:\path\to\jdk\root\directory"
+```
+ 
 * after successful build you'll find executable `telemetrySyncTool-1.3.1.jar` application in `distr/multi-platform` directory
-* for Windows you may use `ditr/windows-executable/telemetrySyncTool.exe`
+* for Windows exe-file is built in `ditr/windows-executable` directory
+* for Mac the distribution can be found in `distr/mac-application` directory
 
 ## Connection with UgCS
-Application is developed for [UgCS](www.ugcs.com) version 3.0.
+Application is compatible with [UgCS](www.ugcs.com) version 3.0 or higher.
 
-Default localhost admin account is set up at `client.properties` file. Please update it if you use different account:
+Default localhost admin account is set up at `client.properties`. Please update it if you use different account:
 ```properties
 server.host=location_of_ugcs_host
 server.port=ugcs_server_port
@@ -40,25 +57,7 @@ server.password=ugcs_password
 
 ## Uploading telemetry data to DroneLogbook 
 
-Firstly, you will need www.dronelogbook.com account information added to `client.properties` file:
-
-```properties
-upload.server.url=https://www.dronelogbook.com/webservices/importFlight-ugcs.php
-upload.server.login=dronelogbook_login
-upload.server.password=dronelogbook_password_or_md5_hash
-```
-
-Uploading process of acquired telemetry starts if you click on `Upload` button.
-
-Acquired telemetry data will be saved as `.csv` file to `<application data folder>\telemetry` directory by default. You can change telemetry storing directory in `client.properties`:
-```properties
- telemetry.file.folder=path_to_telemetry_folder
- ```
-
-Successfully uploaded flight's telemetry will be saved to `uploaded` directory by default which is resolved relative to `application data folder` unless it is absolute. For each flight separate file is created. You can change target directory of uploaded files in `client.properties`:
- ```properties
- uploaded.file.folder=path_to_upload_folder
- ```
+Uploading process of acquired telemetry starts if you select the drone, choose the filter in the bottom of the application, select flights and click on `Upload` button.
  
  License
  -------
