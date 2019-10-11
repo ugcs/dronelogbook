@@ -225,7 +225,9 @@ public final class Settings implements SessionSettings {
             final String version = versionProperties.getProperty("project.version");
             final String buildNumber = versionProperties.getProperty("build.number");
             final boolean isReleaseBuild = "true".equals(versionProperties.getProperty("project.release", ""));
-            return version + (isReleaseBuild ? "" : format(", build %s", buildNumber));
+            final String maxMemory = (Runtime.getRuntime().maxMemory() / (1024 * 1024)) + " Mb";
+
+            return version + (isReleaseBuild ? "" : format(", build %s, Max mem: %s", buildNumber, maxMemory));
         }
     }
 
