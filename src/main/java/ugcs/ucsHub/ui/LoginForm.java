@@ -1,5 +1,6 @@
 package ugcs.ucsHub.ui;
 
+import ugcs.common.helpers.JvmHelper;
 import ugcs.ucsHub.ui.components.JPasswordFieldEx;
 
 import javax.swing.*;
@@ -30,6 +31,10 @@ public class LoginForm extends JPanel {
         JPanel centerPanel = new JPanel();
         centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
         this.add(alignCenter(centerPanel), BorderLayout.CENTER);
+
+        if (JvmHelper.isCurrentJre32Bit()) {
+            centerPanel.add(new JreWarningForm());
+        }
 
         final JPanel loginPanel = new JPanel(new BorderLayout());
         loginPanel.add(alignLeft(new JLabel("UCS login:")), WEST);

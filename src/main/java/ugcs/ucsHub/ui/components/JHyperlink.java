@@ -14,6 +14,17 @@ import java.net.URISyntaxException;
 public class JHyperlink extends JLabel {
 
     public JHyperlink(String hyperlink, String text) {
+        this(() -> {
+            if (Desktop.isDesktopSupported()) {
+                try {
+                    Desktop.getDesktop().browse(new URI(hyperlink));
+                } catch (IOException | URISyntaxException ignored) {
+                }
+            }
+        }, hyperlink, text);
+    }
+
+    public JHyperlink(Runnable action, String hyperlink, String text) {
         super(String.format("<html><a href=\\\"%s\\\">%s</a></html>", hyperlink, text));
 
         setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -21,12 +32,7 @@ public class JHyperlink extends JLabel {
         addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                if (Desktop.isDesktopSupported()) {
-                    try {
-                        Desktop.getDesktop().browse(new URI(hyperlink));
-                    } catch (IOException | URISyntaxException ignored) {
-                    }
-                }
+                action.run();
             }
         });
     }
