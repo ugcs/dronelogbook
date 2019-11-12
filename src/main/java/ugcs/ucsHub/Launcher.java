@@ -1,13 +1,13 @@
 package ugcs.ucsHub;
 
+import ugcs.common.helpers.JvmHelper;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import static java.lang.Runtime.getRuntime;
 import static java.lang.String.format;
-import static java.nio.file.Files.exists;
 import static ugcs.ucsHub.Settings.settings;
 
 /**
@@ -22,21 +22,25 @@ public class Launcher {
             return;
         }
 
-        final Path javaBinDirPath = Paths.get(System.getProperty("java.home"), "bin");
-        final Path javaBinPath = exists(javaBinDirPath.resolve("javaw"))
-                ? javaBinDirPath.resolve("javaw")
-                : javaBinDirPath.resolve("java");
-
+        final Path javaBinPath = JvmHelper.getJavaBinPath();
         final String jarPath =
                 new File(Launcher.class.getProtectionDomain().getCodeSource().getLocation().getPath()).toString();
 
         final String[] cmdArray = {
                 javaBinPath.toString(),
-                format("-Xmx%dm", MAX_HEAP_SIZE_MB),
+                format("-Xmx%dm", getMaxHeapSizeMb()),
                 "-jar", jarPath,
                 "ExecutedFromLauncher"
         };
 
         getRuntime().exec(cmdArray);
+    }
+
+    private static long getMaxHeapSizeMb() {
+        if (JvmHelper.isCurrentJre32Bit()) {
+            return 1024;
+        }
+
+        return MAX_HEAP_SIZE_MB;
     }
 }
