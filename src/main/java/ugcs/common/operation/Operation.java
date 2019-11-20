@@ -5,9 +5,9 @@ import ugcs.common.identity.Identity;
 
 import java.util.Optional;
 import java.util.concurrent.Callable;
-import java.util.stream.Stream;
 
 import static java.util.Optional.ofNullable;
+import static ugcs.common.operation.State.CANCELLED;
 import static ugcs.common.operation.State.FAULT;
 import static ugcs.common.operation.State.INITIAL;
 import static ugcs.common.operation.State.PERFORMED;
@@ -53,19 +53,23 @@ public class Operation<T extends Identity<?>, R> {
         return new Operation<>(operation.getId(), null, FAULT, error, operation.getOperation());
     }
 
-    public Optional<R> getResult() {
-        return ofNullable(result);
+    static <T extends Identity<?>, R> Operation<T, R> toCancelled(Operation<T, R> operation) {
+        return new Operation<>(operation.getId(), null, CANCELLED, null, operation.getOperation());
     }
 
-    public Stream<R> getResultAsStream() {
-        return getResult().map(Stream::of).orElse(Stream.empty());
+    public Optional<R> getResult() {
+        return ofNullable(result);
     }
 
     public Optional<Throwable> getError() {
         return ofNullable(error);
     }
 
-    public boolean isError () {
-        return getError().isPresent();
+    public boolean isNotStarted() {
+        return INITIAL == getState();
+    }
+
+    public boolean isCancelled() {
+        return CANCELLED == getState();
     }
 }

@@ -7,5 +7,6 @@ public enum State {
     INITIAL,
     PERFORMING,
     PERFORMED,
-    FAULT
+    FAULT,
+    CANCELLED
 }

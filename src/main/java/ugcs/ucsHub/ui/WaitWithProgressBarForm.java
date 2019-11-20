@@ -2,10 +2,13 @@ package ugcs.ucsHub.ui;
 
 import lombok.SneakyThrows;
 import ugcs.common.operation.FutureWrapper;
+import ugcs.common.operation.OperationPerformer;
+import ugcs.ucsHub.ActionOnCloseWindowAdapter;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicProgressBarUI;
 import java.awt.*;
+import java.awt.event.WindowListener;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -16,6 +19,10 @@ import static java.awt.Color.decode;
 import static java.text.MessageFormat.format;
 import static java.util.stream.Collectors.toList;
 import static javax.swing.BorderFactory.createEmptyBorder;
+import static javax.swing.JOptionPane.OK_CANCEL_OPTION;
+import static javax.swing.JOptionPane.OK_OPTION;
+import static javax.swing.JOptionPane.PLAIN_MESSAGE;
+import static javax.swing.JOptionPane.showConfirmDialog;
 import static ugcs.ucsHub.Settings.settings;
 
 /**
@@ -24,6 +31,7 @@ import static ugcs.ucsHub.Settings.settings;
 public class WaitWithProgressBarForm extends JDialog {
 
     private static String DEFAULT_MESSAGE_TEMPLATE = "{0} of {1} completed";
+    private static String DEFAULT_CANCEL_MESSAGE = "Do you want to cancel all waiting operations?";
     private static Color PROGRESS_COLOR = decode("0x74BD44");
 
     private final JProgressBar progressBar;
@@ -33,13 +41,13 @@ public class WaitWithProgressBarForm extends JDialog {
 
     private int totalCount = 1;
     private String messageTemplate = DEFAULT_MESSAGE_TEMPLATE;
+    private String cancelMessage = DEFAULT_CANCEL_MESSAGE;
 
     private WaitWithProgressBarForm() {
         super((JFrame) null, true);
 
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
 
-        setTitle("Please wait...");
         JPanel mainPanel = new JPanel(new BorderLayout());
 
         JPanel progressBarPanel = new JPanel(new BorderLayout());
@@ -92,14 +100,35 @@ public class WaitWithProgressBarForm extends JDialog {
         return this;
     }
 
+    public WaitWithProgressBarForm withCancelMessage(String cancelMessage) {
+        this.cancelMessage = cancelMessage;
+        return this;
+    }
+
     @SneakyThrows
-    public <T> List<T> waitOnFutures(List<Future<T>> futures, Component parentOrNull) {
+    public <T> List<T> waitOnFutures(List<Future<T>> futures, Component parentOrNull, OperationPerformer operationPerformer) {
         final ExecutorService executorService = Executors.newSingleThreadExecutor();
         totalCount = futures.size();
         progressCounter.set(0);
         progressBar.setMaximum(totalCount);
         progressBar.setMinimum(0);
+
+        ActionOnCloseWindowAdapter actionOnCloseButtonClick = null;
+
         try {
+            actionOnCloseButtonClick = new ActionOnCloseWindowAdapter(() -> {
+                final int dialogResult = showConfirmDialog(WaitWithProgressBarForm.this, cancelMessage, "Cancel",
+                        OK_CANCEL_OPTION, PLAIN_MESSAGE, settings().getQuestionIcon()
+                );
+
+                if (dialogResult == OK_OPTION) {
+                    removeAllCloseActionListeners();
+                    updateTitle("Cancelling...", Font.BOLD);
+                    operationPerformer.cancelAllWaitingOperations();
+                }
+            });
+            addWindowListener(actionOnCloseButtonClick);
+
             final Future<List<T>> resultFuture = executorService.submit(() -> {
                 try {
                     updateProgress(0, parentOrNull);
@@ -113,10 +142,22 @@ public class WaitWithProgressBarForm extends JDialog {
                 }
             });
 
+            updateTitle("Please wait...", Font.PLAIN);
             setVisible(true);
             return resultFuture.get();
         } finally {
+            removeAllCloseActionListeners();
             executorService.shutdown();
+        }
+    }
+
+    private void updateTitle(String title, int fontType) {
+        setTitle(title);
+        try {
+            final Component titleComponent = getLayeredPane().getComponent(0);
+            final Font titleFont = titleComponent.getFont().deriveFont(fontType);
+            titleComponent.setFont(titleFont);
+        } catch (ArrayIndexOutOfBoundsException itsOkNotToUpdateFontType) {
         }
     }
 
@@ -132,5 +173,13 @@ public class WaitWithProgressBarForm extends JDialog {
             pack();
             setLocationRelativeTo(parentOrNull);
         });
+    }
+
+    private void removeAllCloseActionListeners() {
+        for (WindowListener windowFocusListener : getWindowListeners()) {
+            if (windowFocusListener instanceof ActionOnCloseWindowAdapter) {
+                removeWindowListener(windowFocusListener);
+            }
+        }
     }
 }

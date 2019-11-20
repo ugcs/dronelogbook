@@ -217,7 +217,8 @@ public class VehicleListForm extends JPanel {
 
         final List<Operation<Identity<?>, DroneLogbookResponse>> uploadResults = waitWithProgressBarForm()
                 .withMessageTemplate(" {0} of {1} flights uploaded to DroneLogbook ")
-                .waitOnFutures(uploadOperationFutures, this);
+                .withCancelMessage("Do you want to cancel uploading?")
+                .waitOnFutures(uploadOperationFutures, this, performerFactory().getUploadPerformer());
 
         flightTable.repaint();
 

@@ -127,21 +127,28 @@ final class UploadReportForm extends JPanel {
             final JPanel reportRow = new JPanel();
             reportRow.setLayout(new BoxLayout(reportRow, BoxLayout.X_AXIS));
 
-            final String identityTextRepresentation = operationResult.getId().toString();
-            final String statusString = operationStatusString(operationResult);
-            reportRow.add(new JLabel(format("[ %s ] - %s:", identityTextRepresentation, statusString)));
-
             operationResult.getResult()
-                    .ifPresent(uploadResponse -> formReportRow(uploadResponse, reportRow));
+                    .ifPresent(uploadResponse -> formReportRowWithDroneLogbookResponse(uploadResponse, reportRow, operationResult));
 
-            operationResult.getError().ifPresent(error -> formReportRow(error, reportRow));
+            operationResult.getError()
+                    .ifPresent(error -> formReportRowWithError(error, reportRow, operationResult));
+
+            if (operationResult.isCancelled()) {
+                formReportRowForCancelledOperation(reportRow, operationResult);
+            }
 
             reportRow.add(Box.createHorizontalGlue());
             this.add(reportRow);
         });
     }
 
-    private void formReportRow(DroneLogbookResponse droneLogbookResponse, JPanel rowContainer) {
+    private void formReportRowWithDroneLogbookResponse(DroneLogbookResponse droneLogbookResponse,
+                                                       JPanel rowContainer,
+                                                       Operation<Identity<?>, DroneLogbookResponse> operationResult) {
+        final String identityTextRepresentation = operationResult.getId().toString();
+        final String statusString = operationStatusString(operationResult);
+        rowContainer.add(new JLabel(format("[ %s ] - %s:", identityTextRepresentation, statusString)));
+
         final String description = droneLogbookResponse.getDescription()
                 .map(String::trim)
                 .map(s -> s.endsWith(".") ? s : s.concat("."))
@@ -154,9 +161,21 @@ final class UploadReportForm extends JPanel {
         rowContainer.setBackground(getResponseColor(droneLogbookResponse));
     }
 
-    private void formReportRow(Throwable error, JPanel rowContainer) {
+    private void formReportRowWithError(Throwable error,
+                                        JPanel rowContainer,
+                                        Operation<Identity<?>, DroneLogbookResponse> operationResult) {
+        final String identityTextRepresentation = operationResult.getId().toString();
+        final String statusString = operationStatusString(operationResult);
+        rowContainer.add(new JLabel(format("[ %s ] - %s:", identityTextRepresentation, statusString)));
+
         rowContainer.add(new JLabel(error.getMessage()));
         rowContainer.setBackground(ERROR_COLOR);
+    }
+
+    private void formReportRowForCancelledOperation(JPanel rowContainer,
+                                        Operation<Identity<?>, DroneLogbookResponse> operationResult) {
+        final String identityTextRepresentation = operationResult.getId().toString();
+        rowContainer.add(new JLabel(format("[ %s ] - upload cancelled.", identityTextRepresentation)));
     }
 
     private Color getResponseColor(DroneLogbookResponse droneLogbookResponse) {
